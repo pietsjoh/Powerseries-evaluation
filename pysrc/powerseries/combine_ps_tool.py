@@ -172,7 +172,7 @@ single spectrum (ss), multiple spectra (ms)]: """)
         #     return 1
         # else:
         for i, file in enumerate(self.fileDict.keys()):
-            print(f"[{i}]   {file}")
+            print(f"[{i}]   (scale: {self.fileDict[file].powerScale})   {file}")
             print()
         selectFileStr = input("select file for scaling: ")
         logger.debug(f"User input for selectFileStr, fileIdx: {selectFileStr}")
