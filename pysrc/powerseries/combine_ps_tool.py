@@ -156,21 +156,6 @@ single spectrum (ss), multiple spectra (ms)]: """)
 
     def scale_outputPower(self):
         logger.debug("Calling scale_outputPower()")
-        # if len(list(self.fileDict.keys())) < 2:
-        #     logger.warning("ValueError: Less than 2 files selected. No need to rescale data. Aborting.")
-        #     return 0
-        # elif len(list(self.fileDict.keys())) == 2:
-        #     scaleStr = input("scale: ")
-        #     logger.debug(f"User input for scale_outputPower(), scale: {scaleStr}")
-        #     if scaleStr == "q":
-        #         return 0
-        #     scale = misc.float_decode(scaleStr)
-        #     if scale == None:
-        #         return 0
-        #     fileName = list(self.fileDict.keys())[0]
-        #     self.fileDict[fileName].powerScale = scale
-        #     return 1
-        # else:
         for i, file in enumerate(self.fileDict.keys()):
             print(f"[{i}]   (scale: {self.fileDict[file].powerScale})   {file}")
             print()
