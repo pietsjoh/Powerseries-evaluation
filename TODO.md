@@ -152,7 +152,8 @@
 
 > combine_ps_tool.py
 
-- more verbose scale_routine()
+- read data directly from the data directory (only AllSpectra.dat, include all subdirs)
+- more verbose scale_routine() [x]
 - loop for scale and plot s -> until satisfied [x]
 - add help function
 - switch the order of the selected files to match plot_multiple_spectra() [x]
