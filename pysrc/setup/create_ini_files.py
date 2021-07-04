@@ -40,6 +40,8 @@ if __name__ == "__main__":
     configPowerseries.add_section("combine_ps_tool.py")
     configPowerseries.add_section("eval_ps.py")
     configPowerseries.add_section("plot_ps.py")
+    configPowerseries.set("combine_ps_tool.py", "; add file mode (data or diameter)", None)
+    configPowerseries.set("combine_ps_tool.py", "add file mode", "data\n")
     configPowerseries.set("combine_ps_tool.py", "; default diameter", None)
     configPowerseries.set("combine_ps_tool.py", "diameter", "4\n")
     configPowerseries.set("combine_ps_tool.py", "; default path to the data directory", None)
