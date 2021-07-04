@@ -11,13 +11,16 @@
 There is a Windows and a Linux version available.
 The installation should be completed by running either the /scripts/linux/build.sh or the
 \scripts\windows\build.bat script.
+
 After running the build script the to be analyzed data should be copied into the empty data directory.
+
 Now run the sort_data.sh / sort_data.bat script.
 
 ## Workflow
 
 The .ini files in the config directory can be adapted to match one's needs.
 They mostly contain the default values for the program.
+
 The settings of the [plot_ps.py] section can be changed mid run.
 The settings of the other sections cannot be changed once the program runs.
 However, the values of the [eval_ps.py] section can be changed using console inputs while
