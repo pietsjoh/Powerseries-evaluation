@@ -31,6 +31,22 @@ class CombinePowerSeriesTool:
         self.diameter = misc.diameter_decode(config["combine_ps_tool.py"]["diameter"].replace(" ", ""), returnStr=True)
         self.fineSpectraDirName = config["combine_ps_tool.py"]["fine spectra dir name"].replace(" ", "")
         self.sortedDataDirName = config["combine_ps_tool.py"]["sorted data dir name"].replace(" ", "")
+        self.addFileMode = config["combine_ps_tool.py"]["add file mode"].replace(" ", "")
+
+    @property
+    def addFileMode(self):
+        return self._addFileMode
+
+    @addFileMode.setter
+    def addFileMode(self, value):
+        logger.debug(f"Setting addFileMode to {value}.")
+        if value == "diameter":
+            self._addFileMode = "diameter"
+        elif value == "data":
+            self._addFileMode = "data"
+        else:
+            logger.error(f"{value} is an invalid argument for addFileMode (only diameter and data are accepted). Using data.")
+            self._addFileMode = "data"
 
     def set_diameter(self):
         logger.debug("Calling set_diameter()")
@@ -278,9 +294,15 @@ single spectrum (ss), multiple spectra (ms)]: """)
         elif case == "set diameter":
             self.set_diameter()
             return 1
+        elif case == "change add file mode":
+            self.addFileMode = input("Add file mode: ")
+            return 1
         elif case == "add":
-             self.add_file_diameter()
-             return 1
+            if self.addFileMode == "diameter":
+                self.add_file_diameter()
+            else:
+                self.add_file_data()
+            return 1
         elif case == "del":
             self.del_file()
             return 1
