@@ -38,8 +38,34 @@ class CombinePowerSeriesTool:
         logger.debug(f"User input for set_diameter(): {diameterStr}")
         self.diameter = misc.diameter_decode(diameterStr, returnStr=True)
 
-    def add_file(self):
-        logger.debug("Calling add_file()")
+    def add_file_data(self):
+        logger.debug("Calling add_file_data()")
+        dataPath = (headDir / "data").resolve()
+        if not dataPath.exists():
+            logger.critical(f"Directory path does not exist {str(dataPath)}")
+            return 0
+        spectraPaths = list(dataPath.rglob("*AllSpectra.dat"))
+        for i, file in enumerate(spectraPaths):
+            fileName = file.name
+            print(f"[{i}]   {fileName}")
+            print()
+
+        fileIdxStr = input("select file to add: ")
+        logger.debug(f"User input for add_file_data(), select file to add: {fileIdxStr}")
+        fileIdx = misc.int_decode(fileIdxStr)
+        if fileIdx == None:
+            return 0
+        if fileIdx >= len(spectraPaths):
+            logger.warning(f"ValueError: The selected index [{fileIdx}] exceeds the max value [{len(spectraPaths)}]")
+            return 0
+
+        filePath = spectraPaths[fileIdx]
+        logger.debug(f"Selected file path {filePath}")
+        fileName = filePath.name
+        self.fileDict[fileName] = PowerSeriesTool(filePath)
+
+    def add_file_diameter(self):
+        logger.debug("Calling add_file_diameter()")
         if self.diameter == None:
             logger.warning("AttributeError: No diameter selected. Select one now.")
             self.set_diameter()
@@ -55,7 +81,7 @@ class CombinePowerSeriesTool:
             print()
 
         fileIdxStr = input("select file to add: ")
-        logger.debug(f"User input for add_file(), select file to add: {fileIdxStr}")
+        logger.debug(f"User input for add_file_diameter(), select file to add: {fileIdxStr}")
         fileIdx = misc.int_decode(fileIdxStr)
         if fileIdx == None:
             return 0
@@ -253,7 +279,7 @@ single spectrum (ss), multiple spectra (ms)]: """)
             self.set_diameter()
             return 1
         elif case == "add":
-             self.add_file()
+             self.add_file_diameter()
              return 1
         elif case == "del":
             self.del_file()
