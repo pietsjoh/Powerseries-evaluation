@@ -39,7 +39,7 @@ class LoggingConfig:
                 "formatter": "simple",
                 "filename": str((logsDirPath / "debug.log").resolve()),
                 "maxBytes": 1048576,
-                "backupCount": 3,
+                "backupCount": 0,
                 "encoding": "utf8"
             },
 
@@ -49,7 +49,7 @@ class LoggingConfig:
                 "formatter": "simple",
                 "filename": str((logsDirPath / "info.log").resolve()),
                 "maxBytes": 1048576,
-                "backupCount": 3,
+                "backupCount": 0,
                 "encoding": "utf8"
             },
 
@@ -59,7 +59,7 @@ class LoggingConfig:
                 "formatter": "simple",
                 "filename": str((logsDirPath / "error.log").resolve()),
                 "maxBytes": 1048576,
-                "backupCount": 3,
+                "backupCount": 0,
                 "encoding": "utf8"
             },
 
@@ -69,7 +69,7 @@ class LoggingConfig:
                 "formatter": "simple",
                 "filename": str((logsDirPath / "warnings.log").resolve()),
                 "maxBytes": 1048576,
-                "backupCount": 3,
+                "backupCount": 0,
                 "encoding": "utf8"
             },
 
@@ -79,7 +79,7 @@ class LoggingConfig:
                 "formatter": "simple",
                 "filename": str((logsDirPath / "critical.log").resolve()),
                 "maxBytes": 1048576,
-                "backupCount": 3,
+                "backupCount": 0,
                 "encoding": "utf8"
             }
         },
