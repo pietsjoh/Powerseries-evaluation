@@ -419,6 +419,9 @@ class PlotPowerSeries:
             self.thresholdOutput = 1 / p[1]
             self.uncThresholdOutput = np.sqrt(cov[1, 1]) / p[1]
             self.thresholdInput = self.in_out_curve(self.thresholdOutput, *p)
+            if self.thresholdInput < self.minInputPower:
+                logger.warning(f"""The estimated threshold [{self.thresholdInput} mW] is smaller than the lowest measured input power [{self.minInputPower} mW].
+Hence, the Q-factor (taken at the inputpower which is closest to the threshold) will be overestimated.""")
             thresholdIdx = np.argmin(np.abs(self.inputPower - self.thresholdInput))
             self.QFactorThreshold = self.QFactorArr[thresholdIdx]
             self.uncQFactorThreshold = self.uncQFactorArr[thresholdIdx]
