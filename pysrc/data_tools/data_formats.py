@@ -15,8 +15,10 @@ logger = loggerObj.init_logger(__name__)
 class DataQlab2:
     rowsToSkip = [1, 3]
     name = "QLAB2"
+    diameterIndicator = "np7509_ni_"
+    temperatureIndicator = "µm_"
 
-    def __init__(self, dataPath, diameterIndicator="np7509_ni_", temperatureIndicator="µm_"):
+    def __init__(self, dataPath):
         assert isinstance(dataPath, pathlib.PurePath)
         assert dataPath.exists()
         try:
@@ -32,8 +34,6 @@ class DataQlab2:
             self.lenInputPower = self.inputPower.size
             self.data.drop([0], axis=0, inplace=True)
             self.columns = self.data.columns
-            self.diameterIndicator = diameterIndicator
-            self.temperatureIndicator = temperatureIndicator
             self.strFilePath = str(dataPath)
             self.maxEnergy = np.amax(self.energies)
             self.minEnergy = np.amin(self.energies)
