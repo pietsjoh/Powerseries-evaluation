@@ -55,6 +55,7 @@ class EvalPowerSeries:
             logger.debug("""EvalPowerSeries object initialized.
                 file name: {}""".format(DataObj.fileName))
             self.read_powerseries_ini_file()
+            self.read_powerseries_ini_file_data_model()
 
     @property
     def dataModel(self):
@@ -137,6 +138,16 @@ class EvalPowerSeries:
             else:
                 self.exclude = []
         self.backgroundFitMode = config["eval_ps.py"]["background fit mode"].replace(" ", "")
+        try:
+            self.dataModel = config["eval_ps.py"]["data model"].replace(" ", "")
+        except AssertionError:
+            raise TypeError("Config file value for data model is invalid.")
+
+    def read_powerseries_ini_file_data_model(self):
+        logger.debug("Calling read_powerseries_ini_file()")
+        configIniPath = (headDir / "config" / "powerseries.ini").resolve()
+        config = ConfigParser()
+        config.read(str(configIniPath))
         try:
             self.dataModel = config["eval_ps.py"]["data model"].replace(" ", "")
         except AssertionError:

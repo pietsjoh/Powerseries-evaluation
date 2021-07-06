@@ -18,7 +18,7 @@ class PowerSeriesTool(EvalPowerSeries):
     maxInputPowerRange = None
 
     def __init__(self, filePath):
-        self.read_powerseries_ini_file()
+        self.read_powerseries_ini_file_data_model()
         DataObj = self.dataModel(filePath)
         super().__init__(DataObj)
         logger.debug("""PowerSeriesTool initialized.
