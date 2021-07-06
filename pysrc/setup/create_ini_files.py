@@ -48,6 +48,8 @@ if __name__ == "__main__":
     configPowerseries.set("combine_ps_tool.py", "sorted data dir name", "sorted_data\n")
     configPowerseries.set("combine_ps_tool.py", "; data directory 'fine'-indicator", None)
     configPowerseries.set("combine_ps_tool.py", "fine spectra dir name", "fine_spectra")
+    configPowerseries.set("eval_ps.py", "; the data model that is used (available: Qlab2)", None)
+    configPowerseries.set("eval_ps.py", "data model", "Qlab2\n")
     configPowerseries.set("eval_ps.py", "; distance between snapshots", None)
     configPowerseries.set("eval_ps.py", "snapshots", "0\n")
     configPowerseries.set("eval_ps.py", "; background fit modes (available: spline, constant, local_all, local_left, local_right, offset, none/disable", None)
