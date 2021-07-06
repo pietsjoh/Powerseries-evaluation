@@ -1,10 +1,9 @@
 import pandas as pd
 import numpy as np
 import sys
-from pathlib import Path
 import pathlib
 
-headDirPath = Path(__file__).resolve().parents[1]
+headDirPath = pathlib.Path(__file__).resolve().parents[1]
 sys.path.append(str(headDirPath))
 
 from setup.config_logging import LoggingConfig
@@ -13,10 +12,9 @@ import utils.misc as misc
 loggerObj = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
 
-## currently set up for QLab2
-class Data:
-    name = "DataObj"
+class DataQlab2:
     rowsToSkip = [1, 3]
+    name = "DataQlab2"
 
     def __init__(self, dataPath, diameterIndicator="np7509_ni_", temperatureIndicator="µm_"):
         assert isinstance(dataPath, pathlib.PurePath)
@@ -45,11 +43,11 @@ class Data:
             assert len(self.data.columns) == self.lenInputPower, f"{len(self.data.columns)}, {self.lenInputPower}"
             logger.info(f"Data from {self.fileName} successfully loaded.")
 
-    def __len__(self):
-        return self.lenInputPower
-
     def __getitem__(self, number):
         return self.data[self.columns[number]].to_numpy()[::-1]
+
+    def __len__(self):
+        return self.lenInputPower
 
     @property
     def diameter(self):
