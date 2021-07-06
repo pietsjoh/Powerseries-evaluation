@@ -8,7 +8,7 @@ srcDirPath = (headDir / "pysrc").resolve()
 sys.path.append(str(srcDirPath))
 
 from peak_fit.single_peak_fit_models import GaussianPeakFit, LorentzPeakFit, VoigtPeakFit, PseudoVoigtPeakFit
-from data_tools.data_import import Data
+from data_tools.data_formats import DataQlab2
 from peak_fit.single_peak_fit_base import PeakFitSuper
 from setup.config_logging import LoggingConfig
 import utils.misc as misc
@@ -16,7 +16,9 @@ import utils.misc as misc
 loggerObj = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
 
-class EvalPowerSeries(Data):
+class EvalPowerSeries:
+    fitModelList = {"LORENTZ": LorentzPeakFit, "GAUSS": GaussianPeakFit, "VOIGT": VoigtPeakFit, "PSEUDOVOIGT": PseudoVoigtPeakFit}
+    dataModelList = {"QLAB2" : DataQlab2}
     _snapshots = 10
     _initRange = None
     _maxInitRange = 0
@@ -29,11 +31,68 @@ class EvalPowerSeries(Data):
     _enableBackgroundFit = False
     _backgroundFitMode = "constant"
 
-    def __init__(self, filePath, diameterIndicator="np7509_ni_"):
-        super().__init__(filePath, diameterIndicator=diameterIndicator)
-        logger.debug("""EvalPowerSeries object initialized.
-            file path: {}""".format(filePath))
-        self.read_powerseries_ini_file()
+    def __init__(self, DataObj):
+        try:
+            self.check_DataObj_attributes(DataObj)
+            assert hasattr(DataObj, "name")
+            self.dataModel = DataObj.name
+        except AssertionError:
+            logger.exception("DataObj does not satisfy the requirements. Aborting.")
+            raise ValueError("DataObj did not satisfy the requirements.")
+        else:
+            self.data = DataObj
+            self.wavelengths = self.data.wavelengths
+            self.energies = self.data.energies
+            self.inputPower = self.data.inputPower
+            self.lenInputPower = self.data.lenInputPower
+            self.maxEnergy = self.data.maxEnergy
+            self.minEnergy = self.data.minEnergy
+            self.minInputPower = self.data.minInputPower
+            self.maxInputPower = self.data.maxInputPower
+            self.fileName = self.data.fileName
+            self.temperature = self.data.temperature
+            self.diameter = self.data.diameter
+            logger.debug("""EvalPowerSeries object initialized.
+                file name: {}""".format(DataObj.fileName))
+            self.read_powerseries_ini_file()
+
+    @property
+    def dataModel(self):
+        return self._dataModel
+
+    @dataModel.setter
+    def dataModel(self, value):
+        logger.debug(f"Setting dataModel to {value}.")
+        if not value.upper() in self.dataModelList.keys():
+            logger.error(f"{value} is not a valid data model (subclass of DataSuper). Aborting.")
+            raise AssertionError("Invalid data model.")
+        else:
+            self._dataModel = self.dataModelList[value.upper()]
+
+    @staticmethod
+    def check_DataObj_attributes(DataObj) -> None:
+        assert hasattr(DataObj, "__getitem__")
+        assert hasattr(DataObj, "energies")
+        assert hasattr(DataObj, "wavelengths")
+        assert hasattr(DataObj, "inputPower")
+        assert hasattr(DataObj, "maxEnergy")
+        assert hasattr(DataObj, "minEnergy")
+        assert hasattr(DataObj, "minInputPower")
+        assert hasattr(DataObj, "maxInputPower")
+        assert hasattr(DataObj, "lenInputPower")
+        assert hasattr(DataObj, "fileName")
+        assert isinstance(DataObj.energies, np.ndarray)
+        assert isinstance(DataObj.inputPower, np.ndarray)
+        assert isinstance(DataObj.wavelengths, np.ndarray)
+        assert np.issubdtype(type(DataObj.lenInputPower), np.integer)
+        assert isinstance(DataObj.fileName, str)
+        assert (np.issubdtype(type(DataObj.minEnergy), np.integer) or np.issubdtype(type(DataObj.minEnergy), np.floating))
+        assert (np.issubdtype(type(DataObj.maxEnergy), np.integer) or np.issubdtype(type(DataObj.maxEnergy), np.floating))
+        assert (np.issubdtype(type(DataObj.minInputPower), np.integer) or np.issubdtype(type(DataObj.minInputPower), np.floating))
+        assert (np.issubdtype(type(DataObj.maxInputPower), np.integer) or np.issubdtype(type(DataObj.maxInputPower), np.floating))
+        assert (DataObj.energies >= 0).all()
+        assert (DataObj.inputPower >= 0).all()
+        assert (DataObj.wavelengths >= 0).all()
 
     def read_powerseries_ini_file(self):
         logger.debug("Calling read_powerseries_ini_file()")
@@ -78,6 +137,10 @@ class EvalPowerSeries(Data):
             else:
                 self.exclude = []
         self.backgroundFitMode = config["eval_ps.py"]["background fit mode"].replace(" ", "")
+        try:
+            self.dataModel = config["eval_ps.py"]["data model"].replace(" ", "")
+        except AssertionError:
+            raise TypeError("Config file value for data model is invalid.")
 
     def energy_to_idx(self, energy):
         logger.debug(f"Calling energy_to_idx(), energy: {energy}")
@@ -180,8 +243,8 @@ Setting snapshots to the max possible value.""".format(self._snapshots, self.len
                         if idx < 0:
                             logger.warning(f"ValueError: Index [{idx}] is smaller than 0. Setting {idx} to 0.")
                             idxList[i] = 0
-                        if idx >= self[0].size:
-                            logger.warning(f"ValueError: Index [{idx}] is larger than the max value {self[0].size - 1}. Setting {idx} to the max value.")
+                        if idx >= self.data[0].size:
+                            logger.warning(f"ValueError: Index [{idx}] is larger than the max value {self.data[0].size - 1}. Setting {idx} to the max value.")
                             idxList[i] = self.data[0].size - 1
                 else:
                     logger.error(f"ValueError: {self._initRange} has identical elements (-> no range). Setting initialRange to None.")
@@ -232,9 +295,8 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
 
     def check_input_fitmodel(self, value):
         logger.debug("Calling check_input_fitmodel()")
-        fitmodelList = {"LORENTZ": LorentzPeakFit, "GAUSS": GaussianPeakFit, "VOIGT": VoigtPeakFit, "PSEUDOVOIGT": PseudoVoigtPeakFit}
-        if value.upper() in fitmodelList.keys():
-            self.fitModel = fitmodelList[value.upper()]
+        if value.upper() in self.fitModelList.keys():
+            self.fitModel = self.fitModelList[value.upper()]
         else:
             logger.error(f"ValueError: {value} is not a valid model (gauss, lorentz, voigt and pseudovoigt are implemented). Using Lorentz now.")
             self.fitModel = LorentzPeakFit
@@ -393,11 +455,11 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
                 logger.debug(f"i = {i}, snap = {snap}")
                 if i <= self.maxInitRange:
                     logger.debug(f"maxInitRange = {self.maxInitRange}")
-                    Fit = self._fitModel(self.energies, self[i], intCoverage=self.intCoverage,
+                    Fit = self._fitModel(self.energies, self.data[i], intCoverage=self.intCoverage,
 initRange=self.initRange, fitRangeScale=self.fitRangeScale, constantPeakWidth=self.constantPeakWidth,
 backgroundFitMode=self.backgroundFitMode)
                 else:
-                    Fit = self._fitModel(self.energies, self[i], intCoverage=self.intCoverage,
+                    Fit = self._fitModel(self.energies, self.data[i], intCoverage=self.intCoverage,
 initRange=None, fitRangeScale=self.fitRangeScale, constantPeakWidth=self.constantPeakWidth,
 backgroundFitMode=self.backgroundFitMode)
                 Fit.run()
@@ -444,7 +506,7 @@ backgroundFitMode=self.backgroundFitMode)
     def access_single_spectrum(self, idx):
         logger.debug("Calling access_single_spectrum()")
         assert 0 <= idx < self.lenInputPower
-        return self._fitModel(self.energies, self[idx], intCoverage=self.intCoverage, initRange=self.initRange,
+        return self._fitModel(self.energies, self.data[idx], intCoverage=self.intCoverage, initRange=self.initRange,
 fitRangeScale=self.fitRangeScale, constantPeakWidth=self.constantPeakWidth, backgroundFitMode=self.backgroundFitMode)
 
 
