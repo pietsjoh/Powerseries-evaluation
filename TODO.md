@@ -162,7 +162,9 @@
 
 > combine_ps_tool.py
 
-- read data directly from the data directory (only AllSpectra.dat, include all subdirs)
+- read data directly from the data directory (only AllSpectra.dat, include all subdirs) [x]
+  - restructure this
+  - more general approach and seperate adding process
 - more verbose scale_routine() [x]
 - loop for scale and plot s -> until satisfied [x]
 - add help function
