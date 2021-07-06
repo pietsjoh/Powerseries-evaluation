@@ -1,3 +1,4 @@
+from configparser import ConfigParser
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[2]))
@@ -16,8 +17,10 @@ class PowerSeriesTool(EvalPowerSeries):
     minInputPowerRange = None
     maxInputPowerRange = None
 
-    def __init__(self, filePath, diameterIndicator="np7509_ni_"):
-        super().__init__(filePath, diameterIndicator=diameterIndicator)
+    def __init__(self, filePath):
+        self.read_powerseries_ini_file()
+        DataObj = self.dataModel(filePath)
+        super().__init__(DataObj)
         logger.debug("""PowerSeriesTool initialized.
             filepath: {}""".format(filePath))
 
