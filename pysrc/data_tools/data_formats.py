@@ -14,7 +14,7 @@ logger = loggerObj.init_logger(__name__)
 
 class DataQlab2:
     rowsToSkip = [1, 3]
-    name = "DataQlab2"
+    name = "QLAB2"
 
     def __init__(self, dataPath, diameterIndicator="np7509_ni_", temperatureIndicator="µm_"):
         assert isinstance(dataPath, pathlib.PurePath)
