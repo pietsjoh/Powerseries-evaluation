@@ -4,6 +4,11 @@
 
 ### General
 
+- config file:
+  - list of fitmodels, list of data formats
+  - selected data format
+  - temperatureIndicator
+  - diameterIndicator
 - write a function that prints the results in the right format with rounded uncertainties
 - add logging messages for bootstrap (paramBounds, initialParamGuesses, useWeights, useBounds, bootstrap setup)
   - should make it easier to debug which way in the BST is taken
@@ -63,8 +68,13 @@
 
 - add QLab 5 data import
 - add indicator string attribute (date)
-- change to abstract base class (qlab2, qlab5 inherit)
+- change to abstract base class (qlab2, qlab5 inherit) [x]
+  - not the prefered solution here
+  - instead checker method in EvalPowerSeries
 - add config for indicator strings and data directory
+- add general indicator method to extract info from file name
+  - indicator + name of attribute should be specified
+  - output in ps_tool.py config method
 
 > sort_data.py
 
