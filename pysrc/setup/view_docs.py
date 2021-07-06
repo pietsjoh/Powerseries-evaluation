@@ -1,3 +1,8 @@
+"""This script is used to start a webserver at Host: localhost, Port: 0 (defaults to a non-used port).
+The files in head/docs/build/html hosted (contains the documentation of the project).
+The default webbrowser is opened to view the html files.
+To shutdown the server, this script accepts user input in the console where this script has been executed.
+"""
 import webbrowser
 import socketserver
 import threading
@@ -6,20 +11,36 @@ import http.server
 
 headDirPath = Path(__file__).parents[2]
 docsBuildDirPath = str((headDirPath / "docs" / "build" / "html").resolve())
+"""str: Path to the html files of the documentation
+"""
 
 HOST, PORT = "localhost", 0
 
 class Handler(http.server.SimpleHTTPRequestHandler):
+    """Request handler for the webserver. This is only used to suppress log messages.
+    """
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(directory=docsBuildDirPath, *args, **kwargs)
 
     def log_message(self, format: str, *args) -> None:
+        """Overwrite log_message to suppress log messages in the console.
+        """
         pass
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    """A threaded TCP server is used to run the server thread as a daemon in the background.
+    Consequently, the server can be shutdown by user input in the console.
+    """
     pass
 
 def shutdown_server():
+    """A simple function that returns 0 or 1 based on user input. This used to shutdown the webserver.
+    
+    Returns
+    -------
+    int
+        0 if user input is q or exit, 1 otherwise
+    """
     userInput = input("Shutdown server: 'q' or 'exit: ")
     if userInput in ["q", "exit"]:
         return 0
