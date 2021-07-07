@@ -29,7 +29,7 @@ sys.path.append(str(srcDirPath))
 
 # -- Project information -----------------------------------------------------
 
-project = 'Peak data evaluation'
+project = 'Powerseries-evaluation'
 copyright = '2021, Johannes Pietsch'
 author = 'Johannes Pietsch'
 
