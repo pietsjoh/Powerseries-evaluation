@@ -1,5 +1,6 @@
 """Creates docs/source/conf.py and docs/source/index.rst.
 These are the configuration files for the documentation.
+Executed during build process.
 """
 if __name__ == "__main__":
     from pathlib import Path

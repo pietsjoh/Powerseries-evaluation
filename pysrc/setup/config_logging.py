@@ -1,6 +1,6 @@
 """This script contains everything to set up the logging configuration as well as the debugging configuration.
 Upon execution the config/logging.ini file is read and the setup/config_logging.json file is updated accordingly.
-This defines the logging setup.
+This defines the logging setup. Executed during build process.
 """
 import json
 from pathlib import Path
