@@ -1,7 +1,6 @@
 import numpy as np
 import scipy.optimize as optimize
 import matplotlib.pyplot as plt
-import inspect
 
 import sys
 from pathlib import Path
