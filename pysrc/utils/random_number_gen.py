@@ -1,3 +1,6 @@
+"""This file contains a pseudo-random number generator.
+Can create integers, uniform distributed and normal distributed floats.
+"""
 import numpy.random as random
 import numpy as np
 
