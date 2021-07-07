@@ -6,6 +6,7 @@ if __name__ == "__main__":
     headDirPath = Path(__file__).parents[2]
     docsSourcePath = (headDirPath / "docs" / "source").resolve()
 
+    ## format of conf.py file
     confpyFile = """# Configuration file for the Sphinx documentation builder.
 #
 # This file only contains a selection of the most common options. For a full
@@ -63,10 +64,12 @@ html_static_path = ['_static']
 # favicon (image in the tab or bookmarks)
 html_favicon = str((headDirPath / "res" / 'jp_logo_schnitt.jpg').resolve())"""
 
+    ## Writing / creating conf.py file
     confpyPath = str((docsSourcePath / "conf.py").resolve())
     with open(confpyPath, "w") as f:
         f.write(confpyFile)
 
+    ## format of index.rst file
     indexrstFile = """.. Peak data evaluation documentation master file, created by
    sphinx-quickstart on Wed May 26 18:39:20 2021.
    You can adapt this file completely to your liking, but it should at least
@@ -93,6 +96,7 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`"""
 
+    ## write / create index.rst file
     indexrstPath = str((docsSourcePath / "index.rst").resolve())
     with open(indexrstPath, "w") as f:
         f.write(indexrstFile)
