@@ -1,6 +1,6 @@
-## Create docs/source/conf.py and docs/source/index.rst
-## Then remove those files from git -> no need to include docs in git
-## Adapt build scipts accordingly
+"""Creates docs/source/conf.py and docs/source/index.rst.
+These are the configuration files for the documentation.
+"""
 if __name__ == "__main__":
     from pathlib import Path
     headDirPath = Path(__file__).parents[2]
