@@ -122,6 +122,19 @@ class LoggingConfig:
         """Writes the information saved in the attributes (from read_logging_ini_file) to a json file.
 
         The json file can be found in setup/config_logging.json.
+
+        Parameters
+        ----------
+        consoleLevel: str, default="DEBUG"
+            logging level of the console
+
+        enableConsoleLogging: bool, default=True
+            if False then no logging messages will be printed in the console independent of the console level
+
+        enabledFileList: list, default=None
+            list of logging files that should be created.
+            When None then no debug files are created
+            example: [debug, info, error, warnings, critical] or subsample of this list
         """
         assert isinstance(consoleLevel, str)
         assert consoleLevel.upper() in self.loggingLevelList
@@ -153,19 +166,7 @@ class LoggingConfig:
     def read_logging_ini_file(self):
         """Reads the config/logging.ini file and saves the configurations as attributes.
 
-        The following attributes are set by this method:
-
-        Attributes
-        ----------
-        consoleLevel: str
-            logging level of the console
-
-        enableConsoleLogging: bool
-            if False then no logging messages will be printed in the console independent of the console level
-
-        enabledFileList: list
-            list of logging files that should be created.
-            example: [debug, info, error, warnings, critical] or subsample of this list
+        These attributes correspond to the parameters of write_logging_json_file.
         """
         configIniPath = (self.headDirPath / "config" / "logging.ini").resolve()
         config = ConfigParser()
