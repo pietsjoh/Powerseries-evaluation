@@ -9,12 +9,13 @@ import threading
 from pathlib import Path
 import http.server
 
-headDirPath = Path(__file__).parents[2]
-docsBuildDirPath = str((headDirPath / "docs" / "build" / "html").resolve())
+headDirPath: Path = Path(__file__).parents[2]
+docsBuildDirPath: Path = str((headDirPath / "docs" / "build" / "html").resolve())
 """str: Path to the html files of the documentation
 """
 
-HOST, PORT = "localhost", 0
+HOST: str = "localhost"
+PORT: int = 0
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     """Request handler for the webserver. This is only used to suppress log messages.
@@ -35,13 +36,13 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 
 def shutdown_server():
     """A simple function that returns 0 or 1 based on user input. This used to shutdown the webserver.
-    
+
     Returns
     -------
     int
         0 if user input is q or exit, 1 otherwise
     """
-    userInput = input("Shutdown server: 'q' or 'exit: ")
+    userInput: str = input("Shutdown server: 'q' or 'exit: ")
     if userInput in ["q", "exit"]:
         return 0
     else:
@@ -49,9 +50,11 @@ def shutdown_server():
 
 if __name__ == "__main__":
     with ThreadedTCPServer((HOST, PORT), Handler) as server:
+        ip: int
+        port: int
         ip, port = server.server_address
         print(f"Serving at port: {port}")
-        server_thread = threading.Thread(target=server.serve_forever)
+        server_thread: threading.Thread = threading.Thread(target=server.serve_forever)
         server_thread.daemon = True
         server_thread.start()
         print(f"Opening documentation in the web browser.")

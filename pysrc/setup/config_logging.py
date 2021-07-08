@@ -7,6 +7,9 @@ from pathlib import Path
 from configparser import ConfigParser
 import logging
 import logging.config
+import typing
+
+listOrNone = typing.Union[list, None] # used for type hint
 
 class LoggingConfig:
     """Contains the methods to provide the logging and debugging setup.
@@ -15,21 +18,21 @@ class LoggingConfig:
     Moreover, the config/debugging.ini is read.
     Finally, a logger object can be created which should be used to create logging messages.
     """
-    headDirPath = Path(__file__).parents[2].resolve()
+    headDirPath: Path = Path(__file__).parents[2].resolve()
 
-    configLogJsonPath = (headDirPath / "pysrc" / "setup" / "config_logging.json").resolve()
+    configLogJsonPath: Path = (headDirPath / "pysrc" / "setup" / "config_logging.json").resolve()
     """default path to the config_logging.json file
     """
 
-    logsDirPath = (headDirPath / "logs").resolve()
+    logsDirPath: Path = (headDirPath / "logs").resolve()
     """default path to the logs directory
     """
 
-    loggingLevelList = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+    loggingLevelList: list[str] = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     """list: list of available logging levels. This used to check whether invalid options are provided in the config file.
     """
 
-    configFileBase = {
+    configFileBase: dict = {
         "version": 1,
         "disable_existing_loggers": 0,
         "formatters": {
@@ -113,12 +116,13 @@ class LoggingConfig:
     """dict: Contains the logging configuration in a format that can easily transformed into a json file.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Upon initialization the debugging ini file is read.
         """
         self.read_debugging_ini_file()
 
-    def write_logging_json_file(self, consoleLevel="DEBUG", enableConsoleLogging=True, enabledFileList=None):
+    def write_logging_json_file(self, consoleLevel: str="DEBUG", enableConsoleLogging: bool=True,
+                                enabledFileList : listOrNone=None) -> None:
         """Writes the information saved in the attributes (from read_logging_ini_file) to a json file.
 
         The json file can be found in setup/config_logging.json.
@@ -140,16 +144,16 @@ class LoggingConfig:
         assert consoleLevel.upper() in self.loggingLevelList
         assert isinstance(enableConsoleLogging, bool)
         if enabledFileList is None:
-            enabledFileList = []
-        disabledFileList = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        handlersList = ["console", "debug_file", "info_file", "warning_file", "error_file", "critical_file"]
+            enabledFileList: list = []
+        disabledFileList: list = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        handlersList: list = ["console", "debug_file", "info_file", "warning_file", "error_file", "critical_file"]
         for i in enabledFileList:
             assert isinstance(i, str)
             assert i.upper() in self.loggingLevelList
             disabledFileList.remove(i.upper())
 
         for i in disabledFileList:
-            dictKey = i.lower() + "_file"
+            dictKey: str = i.lower() + "_file"
             del self.configFileBase["handlers"][dictKey]
             handlersList.remove(dictKey)
 
@@ -163,7 +167,7 @@ class LoggingConfig:
         with open(str(self.configLogJsonPath), "w", encoding="utf-8") as f:
             json.dump(self.configFileBase, f, ensure_ascii=False, indent=4)
 
-    def read_logging_ini_file(self):
+    def read_logging_ini_file(self) -> None:
         """Reads the config/logging.ini file and saves the configurations as attributes.
 
         These attributes correspond to the parameters of write_logging_json_file.
@@ -175,7 +179,7 @@ class LoggingConfig:
         self.enableConsoleLogging = self.check_true_false(config["logging configuration"]["enable console logging"].replace(" ", ""))
         self.enabledFileList = config["logging configuration"]["enabled file list"].replace(" ", "").split(",")
 
-    def read_debugging_ini_file(self):
+    def read_debugging_ini_file(self) -> None:
         """Reads the config/debugging.ini file and saves the configurations as attributes.
 
         The following attributes are set by this method:
@@ -194,10 +198,13 @@ class LoggingConfig:
         debugFWHM: bool
             if True then the estimated and the fitted FWHM will be shown in the snapshots
         """
-        configIniPath = (self.headDirPath / "config" / "debugging.ini").resolve()
-        config = ConfigParser()
+        configIniPath: Path = (self.headDirPath / "config" / "debugging.ini").resolve()
+        config: ConfigParser = ConfigParser()
         config.read(str(configIniPath))
-        self.enableDebugging = self.check_true_false(config["debugging configuration"]["enable debugging"].replace(" ", ""))
+        self.enableDebugging: bool = self.check_true_false(config["debugging configuration"]["enable debugging"].replace(" ", ""))
+        self.debugFitRange: bool
+        self.debuginitialRange: bool
+        self.debugFWHM: bool
         if not self.enableDebugging:
             self.debugFitRange = False
             self.debuginitialRange = False
@@ -208,7 +215,7 @@ class LoggingConfig:
             self.debugFWHM = self.check_true_false(config["debugging configuration"]["fwhm"].replace(" ", ""))
 
     @staticmethod
-    def check_true_false(var):
+    def check_true_false(value: str) -> bool:
         """This method is used to transform strings into bools.
 
         The function is independent of uppercase or lowercase inputs.
@@ -228,16 +235,14 @@ class LoggingConfig:
         ValueError
             if var is neither true nor false
         """
-        if var.upper() == "TRUE" or var == "1":
-            var = True
-            return var
-        elif var.upper() == "FALSE" or var == "0":
-            var = False
-            return var
+        if value.upper() == "TRUE" or value == "1":
+            return True
+        elif value.upper() == "FALSE" or value == "0":
+            return False
         else:
-            raise ValueError(f"{var} can only be true or false (check .ini file)")
+            raise ValueError(f"{value} can only be true or false (check .ini file)")
 
-    def run_logging_config(self):
+    def run_logging_config(self) -> None:
         """Updates the setup/config_logging.json file with the information from the config/logging.ini file.
         """
         self.read_logging_ini_file()
@@ -246,7 +251,7 @@ class LoggingConfig:
             enabledFileList=self.enabledFileList)
 
 ## instantiating a logger for files
-    def init_logger(self, name):
+    def init_logger(self, name: str) -> logging.Logger:
         """Initializes a logger object.
 
         The logger should be initialized in the files where logging is desired.
@@ -267,8 +272,7 @@ class LoggingConfig:
             config = json.load(f)
         logging.config.dictConfig(config)
         logging.getLogger('matplotlib').setLevel(logging.WARNING)
-        logger = logging.getLogger(name)
-        return logger
+        return logging.getLogger(name)
 
 if __name__ == "__main__":
     runLoggingConfig = LoggingConfig()

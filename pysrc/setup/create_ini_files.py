@@ -6,12 +6,12 @@ if __name__ == "__main__":
     from configparser import ConfigParser
     from pathlib import Path
 
-    headDir = Path(__file__).parents[2]
-    configDir = (headDir / "config").resolve()
+    headDir: Path = Path(__file__).parents[2]
+    configDir: Path = (headDir / "config").resolve()
 
     ## create debugging.ini file
-    debuggingFilePath = (configDir / "debugging.ini").resolve()
-    configDebugging = ConfigParser(allow_no_value=True)
+    debuggingFilePath: Path = (configDir / "debugging.ini").resolve()
+    configDebugging: ConfigParser = ConfigParser(allow_no_value=True)
     configDebugging.add_section("debugging configuration")
     configDebugging.set("debugging configuration", "enable debugging", "false\n")
     configDebugging.set("debugging configuration", "fit range", "false\n")
@@ -22,8 +22,8 @@ if __name__ == "__main__":
         configDebugging.write(configFile)
 
     ## create logging.ini file
-    loggingFilePath = (configDir / "logging.ini").resolve()
-    configLogging = ConfigParser(allow_no_value=True)
+    loggingFilePath: Path = (configDir / "logging.ini").resolve()
+    configLogging: ConfigParser = ConfigParser(allow_no_value=True)
     configLogging.add_section("logging configuration")
     configLogging.set("logging configuration", "; to apply these changes, use the run_logging_config.sh script", None)
     configLogging.set("logging configuration", "; available logging level: debug, info, warning, error, critical\n", None)
@@ -39,8 +39,8 @@ if __name__ == "__main__":
         configLogging.write(configFile)
 
     ## create powerseries.ini file
-    powerseriesFilePath = (configDir / "powerseries.ini").resolve()
-    configPowerseries = ConfigParser(allow_no_value=True)
+    powerseriesFilePath: Path = (configDir / "powerseries.ini").resolve()
+    configPowerseries: ConfigParser = ConfigParser(allow_no_value=True)
     configPowerseries.add_section("combine_ps_tool.py")
     configPowerseries.add_section("eval_ps.py")
     configPowerseries.add_section("plot_ps.py")
