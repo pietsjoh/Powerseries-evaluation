@@ -122,7 +122,7 @@ class LoggingConfig:
         self.read_debugging_ini_file()
 
     def write_logging_json_file(self, consoleLevel: str="DEBUG", enableConsoleLogging: bool=True,
-                                enabledFileList : listOrNone=None) -> None:
+                                enabledFileList: listOrNone=None) -> None:
         """Writes the information saved in the attributes (from read_logging_ini_file) to a json file.
 
         The json file can be found in setup/config_logging.json.
@@ -148,11 +148,14 @@ class LoggingConfig:
         assert isinstance(consoleLevel, str)
         assert consoleLevel.upper() in self.loggingLevelList
         assert isinstance(enableConsoleLogging, bool)
+        enabledFileListTmp: list
         if enabledFileList is None:
-            enabledFileList: list = []
+            enabledFileListTmp = []
+        else:
+            enabledFileListTmp = enabledFileList
         disabledFileList: list = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         handlersList: list = ["console", "debug_file", "info_file", "warning_file", "error_file", "critical_file"]
-        for i in enabledFileList:
+        for i in enabledFileListTmp:
             assert isinstance(i, str)
             assert i.upper() in self.loggingLevelList
             disabledFileList.remove(i.upper())
