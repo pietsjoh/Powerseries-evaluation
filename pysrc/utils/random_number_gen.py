@@ -16,9 +16,7 @@ eps: float = np.finfo(float).eps
 """float: precision of float
 """
 
-
-
-class RandomState:
+class RNGenerator:
     def __init__(self, seed: intOrNone=None, printSeed: bool=True) -> None:
         """A pseudo-random number generator.
 
@@ -144,8 +142,3 @@ class RandomState:
         assert sigma > eps
 
         return self.gen.normal(loc=mu, scale=sigma, size=size)
-
-def generator(seed=None):
-    """Returns a 'RandomState' random number generator, printing it's random seed.
-    """
-    return RandomState(seed, True)
