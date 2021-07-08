@@ -36,18 +36,20 @@ class RandomState:
         AssertionError:
             When seed or printSeed are invalid datatypes, or when seed is out of range [0, maxInt32] 
         """
-        if seed == None:
-            seed = random.randint(low=0, high=maxInt32)
+        seedTmp: int
+        if seed is None:
+            seedTmp = random.randint(low=0, high=maxInt32)
         else:
-            assert np.issubdtype(type(seed), np.integer)
-            assert 0 <= seed <= maxInt32
+            seedTmp = seed
+            assert np.issubdtype(type(seedTmp), np.integer)
+            assert 0 <= seedTmp <= maxInt32
 
         assert isinstance(printSeed, bool)
         if printSeed:
-            print("random seed:{}".format(seed) )
+            print("random seed:{}".format(seedTmp) )
 
-        self.seed: int = seed
-        self.gen = random.default_rng( seed )
+        self.seed: int = seedTmp
+        self.gen = random.default_rng( self.seed )
 
     def integers(self, low: int=0, high: int=1, size: int=1) -> np.ndarray:
         """Generates an 'np.ndarray' of 'size' integers.
