@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt # type: ignore
 import numpy as np
 import typing
 
@@ -10,9 +10,10 @@ sys.path.append(str(headDir))
 from utils.random_number_gen import generator
 
 number = typing.Union[int, float]
+numberOrArray = typing.Union[number, np.ndarray]
 intOrNone = typing.Union[int, None]
 
-def lorentz(w: number, A: number, gamma: number, w0: number) -> float:
+def lorentz(w: numberOrArray, A: number, gamma: number, w0: number) -> float:
     """Lorentzian function:
 
     .. math::
