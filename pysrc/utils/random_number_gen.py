@@ -49,7 +49,7 @@ class RandomState:
         self.seed: int = seed
         self.gen = random.default_rng( seed )
 
-    def integers(self, low: int=0, high: int=1, size: int=1) -> np.ndarray[int]:
+    def integers(self, low: int=0, high: int=1, size: int=1) -> np.ndarray:
         """Generates an 'np.ndarray' of 'size' integers.
         The integers lie in the range ['low', 'high').
 
@@ -80,7 +80,7 @@ class RandomState:
 
         return self.gen.integers(low=low, high=high, size=size)
 
-    def uniform(self, low: number=0, high: number=1, size: int=1) -> np.ndarray[float]:
+    def uniform(self, low: number=0, high: number=1, size: int=1) -> np.ndarray:
         """Generates an 'np.ndarray' of 'size' floats.
         The floats lie in the range ['low', 'high').
         The floats are uniformly distributed.
@@ -112,7 +112,7 @@ class RandomState:
 
         return (high - low)*self.gen.random(size) + low
 
-    def normal(self, mu: number=0, sigma: number=1, size: int=1) -> np.ndarray[float]:
+    def normal(self, mu: number=0, sigma: number=1, size: int=1) -> np.ndarray:
         """Generates an 'np.ndarray' of 'size' floats.
         The floats are distributed according to the normal distribution N(mu, sigma).
 
