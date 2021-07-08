@@ -285,5 +285,5 @@ class LoggingConfig:
         return logging.getLogger(name)
 
 if __name__ == "__main__":
-    runLoggingConfig = LoggingConfig()
+    runLoggingConfig: LoggingConfig = LoggingConfig()
     runLoggingConfig.run_logging_config()
