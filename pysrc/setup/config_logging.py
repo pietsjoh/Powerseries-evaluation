@@ -139,6 +139,11 @@ class LoggingConfig:
             list of logging files that should be created.
             When None then no debug files are created
             example: [debug, info, error, warnings, critical] or subsample of this list
+
+        Raises
+        ------
+        AssertionError:
+            when consoleLevel, enableConsoleLogging or enabledFileList are invalid datatypes
         """
         assert isinstance(consoleLevel, str)
         assert consoleLevel.upper() in self.loggingLevelList
@@ -266,6 +271,11 @@ class LoggingConfig:
         -------
         logger: logging.Logger
             logger object that can be used to write logging messages
+
+        Raises
+        ------
+        AssertionError:
+            when the config_logging.json file does not exist
         """
         assert self.configLogJsonPath.exists()
         with open(str(self.configLogJsonPath), "r") as f:
