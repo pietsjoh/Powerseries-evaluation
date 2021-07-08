@@ -1,70 +1,79 @@
 import numpy as np
-import scipy.optimize as optimize
-import matplotlib.pyplot as plt
+import scipy.optimize as optimize # type: ignore
+import matplotlib.pyplot as plt # type: ignore
+import typing
 
 import sys
 from pathlib import Path
-headDir = Path(__file__).parents[1].resolve()
+headDir: Path = Path(__file__).parents[1].resolve()
 sys.path.append(str(headDir))
-from utils.random_number_gen import generator
+
+from utils.random_number_gen import RNGenerator
 import utils.misc as misc
 from setup.config_logging import LoggingConfig
-loggerObj = LoggingConfig()
+loggerObj: LoggingConfig = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
 
+number = typing.Union[float, int]
+tupleOrNone = typing.Union[tuple, None]
+arrayOrNone = typing.Union[np.ndarray, None]
+intOrNone = typing.Union[int, None]
+
 class Bootstrap:
-    def __init__(self, inputData, outputData, fitFunc, parameter=0, pGuess=None, paramBounds=None, weights=None, iterGuess=False, gen=None):
+    def __init__(self, inputData: np.ndarray, outputData: np.ndarray, fitFunc, parameter: int=0,
+                pGuess: tupleOrNone=None, paramBounds: tupleOrNone=None, weights: arrayOrNone=None,
+                iterGuess: bool=False, seed: intOrNone=None):
         assert isinstance(inputData, np.ndarray)
         assert isinstance(outputData, np.ndarray)
         assert outputData.size == inputData.size
-        if gen == None:
-            self.gen = generator()
-        else:
-            self.gen = gen
-        self.outputData = outputData
-        self.inputData = inputData
-        self.N = inputData.size
+
+        self.gen: RNGenerator = RNGenerator(seed)
+        self.outputData: np.ndarray = outputData
+        self.inputData: np.ndarray = inputData
+        self.N: int = inputData.size
         self.func = fitFunc
-        self.parameter = parameter
-        self.pGuess = pGuess
-        self.weights = weights
+        self.parameter: int = parameter
+        self.pGuess: tupleOrNone = pGuess
+        self.weights: arrayOrNone = weights
         if weights is not None:
             assert len(weights) == outputData.size
-        self.paramBounds = paramBounds
+        self.paramBounds: tupleOrNone = paramBounds
         if self.paramBounds is None:
             self.paramBounds = -np.inf, np.inf
         assert isinstance(self.paramBounds, tuple)
         assert len(self.paramBounds) == 2
         assert isinstance(iterGuess, bool)
-        self.iterGuess = iterGuess
-        self.parameterOriginal = np.nan
-        self.parameterErrorMeanBiasCorr = np.nan
-        self.parameterMean = np.nan
-        self.parameterErrorMean = np.nan
+        self.iterGuess: bool = iterGuess
+        self.parameterOriginal: number = np.nan
+        self.parameterErrorMeanBiasCorr: number = np.nan
+        self.parameterMean: number = np.nan
+        self.parameterErrorMean: number = np.nan
 
-    def gen_bootstrap_samples(self, numSamples, lenSamples):
+    def gen_bootstrap_samples(self, numSamples: int, lenSamples: int):
         if lenSamples > self.N:
             lenSamples = self.N
             logger.warning(f"length of bootstrap samples ({lenSamples}) is larger then the length of the data ({self.N}). Setting the length to the data size.")
-        self.numSamples = numSamples
-        self.lenSamples = lenSamples
-        N = self.numSamples * self.lenSamples
-        indices = self.gen.integers(low=0, high=self.N, size=N)
-        self.inSamples = self.inputData[indices]
-        self.outSamples = self.outputData[indices]
+        self.numSamples: int = numSamples
+        self.lenSamples: int = lenSamples
+        N: int = self.numSamples * self.lenSamples
+        indices: np.ndarray = self.gen.integers(low=0, high=self.N, size=N)
+        self.inSamples: np.ndarray = self.inputData[indices]
+        self.outSamples: np.ndarray = self.outputData[indices]
 
     def statistical_error(self):
+        self.p: np.ndarray
         try:
             self.p, _ = optimize.curve_fit(self.func, self.inputData, self.outputData, p0=self.pGuess, bounds=self.paramBounds, sigma=self.weights)
         except RuntimeError:
             logger.error("Initial fitting did not work in bootstrap. Aborting.")
             return False
         else:
-            self.parameterArr = np.empty(self.numSamples + 1)
+            self.parameterArr: np.ndarray = np.empty(self.numSamples + 1)
             self.parameterArr[0] = self.p[self.parameter]
             if self.iterGuess:
                 self.pGuess = self.p
             for i in range(self.numSamples):
+                p: np.ndarray
                 try:
                     p, _ = optimize.curve_fit(self.func, self.inSamples[i : i + self.lenSamples], self.outSamples[i : i + self.lenSamples], p0=self.pGuess, bounds=self.paramBounds, sigma=self.weights)
                 except RuntimeError:
@@ -79,19 +88,19 @@ class Bootstrap:
             return True
 
     def plot_histo(self):
-        maxP = np.amax(self.parameterArr)
-        minP = np.amin(self.parameterArr)
+        maxP: number = np.amax(self.parameterArr)
+        minP: number = np.amin(self.parameterArr)
         if maxP == minP:
             logger.error("Fitting did not work. All parameters are identical.")
             pass
         else:
-            numberOfBins = misc.histo_number_of_bins(self.parameterArr)
+            numberOfBins: int = misc.histo_number_of_bins(self.parameterArr)
             plt.hist(self.parameterArr, numberOfBins)
             plt.show()
 
-    def run(self, numSamples, lenSamples, plotHisto=True):
+    def run(self, numSamples: int, lenSamples: int, plotHisto: bool=True):
         self.gen_bootstrap_samples(numSamples=numSamples, lenSamples=lenSamples)
-        checkFitFlag = self.statistical_error()
+        checkFitFlag: bool = self.statistical_error()
         if checkFitFlag:
             if plotHisto:
                 self.plot_histo()
