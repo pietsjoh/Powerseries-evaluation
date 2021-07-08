@@ -8,10 +8,11 @@ import socketserver
 import threading
 from pathlib import Path
 import http.server
+from typing import Any
 
 headDirPath: Path = Path(__file__).parents[2]
-docsBuildDirPath: Path = str((headDirPath / "docs" / "build" / "html").resolve())
-"""str: Path to the html files of the documentation
+docsBuildDirPath: Path = (headDirPath / "docs" / "build" / "html").resolve()
+"""pathlib.Path: Path to the html files of the documentation
 """
 
 HOST: str = "localhost"
@@ -20,10 +21,10 @@ PORT: int = 0
 class Handler(http.server.SimpleHTTPRequestHandler):
     """Request handler for the webserver. This is only used to suppress log messages.
     """
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(directory=docsBuildDirPath, *args, **kwargs)
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, directory=docsBuildDirPath, **kwargs) # type: ignore
 
-    def log_message(self, format: str, *args) -> None:
+    def log_message(self, format: str, *args: Any) -> None:
         """Overwrite log_message to suppress log messages in the console.
         """
         pass
@@ -50,7 +51,7 @@ def shutdown_server():
 
 if __name__ == "__main__":
     with ThreadedTCPServer((HOST, PORT), Handler) as server:
-        ip: int
+        ip: str
         port: int
         ip, port = server.server_address
         print(f"Serving at port: {port}")
