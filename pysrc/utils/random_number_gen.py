@@ -6,7 +6,7 @@ import numpy as np
 import typing
 
 intOrNone = typing.Union[int, None]
-number = typing.Union[float, int]
+number = typing.Union[float, int, np.number]
 
 maxInt32: int = 2**31 - 1
 """int: largest signed 32-bit representible integer

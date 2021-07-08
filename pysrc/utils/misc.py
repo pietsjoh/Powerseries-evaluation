@@ -10,7 +10,7 @@ from setup.config_logging import LoggingConfig
 loggerObj: LoggingConfig = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
 
-number = typing.Union[float, int]
+number = typing.Union[float, int, np.number]
 listOfNums = list[number]
 listOrArray = typing.Union[list, np.ndarray]
 intOrNone = typing.Union[int, None]
@@ -64,7 +64,7 @@ def unc_mean(values: listOrArray, intv: str="1sigma") -> number:
         alpha = intv
 
     stud_t: number = stats.t.interval(alpha, dof)[1]
-    std = np.std(values, ddof=1) # type: ignore
+    std: number = np.std(values, ddof=1)
     unc_mean: number = stud_t*std/np.sqrt(n)
     return unc_mean
 
@@ -82,8 +82,8 @@ def histo_number_of_bins(data: listOrArray) -> int:
         number of histogram bins
     """
     assert isinstance(data, (list, np.ndarray))
-    maxData: number = max(data)
-    minData: number = min(data)
+    maxData: number = np.amax(data)
+    minData: number = np.amin(data)
     widthOfBins: number = 2*stats.iqr(data) / len(data)**(1/3)
     numberOfBins: int = int(np.ceil(( maxData - minData ) / widthOfBins))
     return numberOfBins

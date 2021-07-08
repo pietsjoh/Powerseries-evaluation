@@ -9,7 +9,7 @@ sys.path.append(str(headDir))
 
 from utils.random_number_gen import RNGenerator
 
-number = typing.Union[int, float]
+number = typing.Union[int, float, np.number]
 numberOrArray = typing.Union[number, np.ndarray]
 intOrNone = typing.Union[int, None]
 
