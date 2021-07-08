@@ -7,13 +7,13 @@ from pathlib import Path
 headDir = Path(__file__).parents[1].resolve()
 sys.path.append(str(headDir))
 
-from utils.random_number_gen import generator
+from utils.random_number_gen import RNGenerator
 
 number = typing.Union[int, float]
 numberOrArray = typing.Union[number, np.ndarray]
 intOrNone = typing.Union[int, None]
 
-def lorentz(w: numberOrArray, A: number, gamma: number, w0: number) -> float:
+def lorentz(w: numberOrArray, A: number, gamma: number, w0: number) -> numberOrArray:
     """Lorentzian function:
 
     .. math::
@@ -56,8 +56,8 @@ def mock_data_gen_1_spec(x: np.ndarray, maxNumPeaks: int, seed: intOrNone=None, 
     np.ndarray:
         output data of the spectrum (intensities)
     """
-    gen = generator(seed)
-    numPeaks: np.ndarray = gen.integers(low=1, high=maxNumPeaks, size=1)[0]
+    gen = RNGenerator(seed)
+    numPeaks: int = gen.integers(low=1, high=maxNumPeaks, size=1)[0]
     y: np.ndarray = gen.normal(size=x.size)
     AArr: np.ndarray = gen.uniform(low=1, high=100, size=numPeaks)
     w0Arr: np.ndarray = gen.uniform(low=550, high=950, size=numPeaks)
