@@ -158,7 +158,7 @@ def diameter_decode(strDia: str, returnStr: bool=False) -> numberOrNone:
 
     Returns
     -------
-    float, int:
+    float/int:
         when resturnStr=False
     str:
         when returnStr=True
