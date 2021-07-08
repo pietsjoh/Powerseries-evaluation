@@ -1,5 +1,5 @@
 import numpy as np
-import scipy.stats as stats
+import scipy.stats as stats # type: ignore
 import typing
 
 import sys
@@ -64,7 +64,7 @@ def unc_mean(values: listOrArray, intv: str="1sigma") -> float:
         alpha = intv
 
     stud_t: number = stats.t.interval(alpha, dof)[1]
-    std: number = np.std(values, ddof=1)
+    std = np.std(values, ddof=1) # type: ignore
     unc_mean: number = stud_t*std/np.sqrt(n)
     return unc_mean
 
@@ -143,7 +143,7 @@ def float_decode(strFloat: str) -> floatOrNone:
         else:
             return value
 
-def diameter_decode(strDia: str, returnStr: bool=False) -> numberOrNone:
+def diameter_decode(strDia: str, returnStr: bool=False) -> typing.Union[numberOrNone, str]:
     """Checks whether a string could be transformed into a diameter.
 
     Here it is checked whether the extracted diameter is part of a specified list (diameterList).
@@ -166,10 +166,10 @@ def diameter_decode(strDia: str, returnStr: bool=False) -> numberOrNone:
         if no number could be detected or if the diameter is not part of the specified list
     """
     try:
-        diameter = int(strDia[:2])
+        diameter: number = int(strDia[:2])
     except ValueError:
         try:
-            diameter2 = int(strDia[2])
+            diameter2: number = int(strDia[2])
         except ValueError:
             try:
                 diameter = int(strDia[:1])
@@ -180,9 +180,9 @@ def diameter_decode(strDia: str, returnStr: bool=False) -> numberOrNone:
             logger.error(f"IndexError: The diameter string '{strDia}' could not be converted to a number.")
             return None
         else:
-            diameter: number = int(strDia[:1]) + diameter2 / 10
+            diameter = int(strDia[:1]) + diameter2 / 10
     else:
-        diameter: number = int(strDia[:2])
+        diameter = int(strDia[:2])
     if diameter not in diameterList:
         logger.error(f"ValueError: The diameter '{diameter}' is not part of the provided list of possible diameters.")
         return None
