@@ -17,6 +17,8 @@ class LoggingConfig:
     This class can be used to read the config/logging.ini file and create a setup/config_logging.json file.
     Moreover, the config/debugging.ini is read.
     Finally, a logger object can be created which should be used to create logging messages.
+
+    Upon initialization the debugging ini file is read.
     """
     headDirPath: Path = Path(__file__).parents[2].resolve()
 
@@ -117,8 +119,6 @@ class LoggingConfig:
     """
 
     def __init__(self) -> None:
-        """Upon initialization the debugging ini file is read.
-        """
         self.read_debugging_ini_file()
 
     def write_logging_json_file(self, consoleLevel: str="DEBUG", enableConsoleLogging: bool=True,

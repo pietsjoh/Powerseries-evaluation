@@ -27,12 +27,10 @@ arrayLikeOrNone = typing.Union[np.ndarray, list, tuple, None]
 intOrNone = typing.Union[int, None]
 
 class Bootstrap:
-    """Can calculate the uncertainty for 1 fit parameter using the bootstrap method.
-    """
     def __init__(self, inputData: np.ndarray, outputData: np.ndarray, fitFunc: Callable, parameter: int=0,
                 pGuess: arrayLikeOrNone=None, paramBounds: tupleOrNone=None, weights: arrayOrNone=None,
                 iterGuess: bool=False, seed: intOrNone=None) -> None:
-        """Upon initialization the provided arguments are read.
+        """Can calculate the uncertainty for 1 fit parameter using the bootstrap method.
 
         expected setup: outputData = fitFunc(inputData, *args, **kwargs)
         The parameters (pGuess, paramBounds and weights) are (when not None) directly passed
