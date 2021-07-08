@@ -252,6 +252,7 @@ class LoggingConfig:
 
     def run_logging_config(self) -> None:
         """Updates the setup/config_logging.json file with the information from the config/logging.ini file.
+        This is done by calling self.read_logging_ini_file() and self.write_logging_json_file().
         """
         self.read_logging_ini_file()
         self.write_logging_json_file(consoleLevel=self.consoleLevel,
