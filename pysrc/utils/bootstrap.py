@@ -1,7 +1,13 @@
+"""Contains a class that makes it possible to estimate the error of
+a fit parameter using the bootstrap method.
+
+Running this script provides an example.
+"""
 import numpy as np
 import scipy.optimize as optimize # type: ignore
 import matplotlib.pyplot as plt # type: ignore
 import typing
+from collections.abc import Callable
 
 import sys
 from pathlib import Path
@@ -14,15 +20,55 @@ from setup.config_logging import LoggingConfig
 loggerObj: LoggingConfig = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
 
-number = typing.Union[float, int]
+number = typing.Union[float, int, np.number]
 tupleOrNone = typing.Union[tuple, None]
 arrayOrNone = typing.Union[np.ndarray, None]
+arrayLikeOrNone = typing.Union[np.ndarray, list, tuple, None]
 intOrNone = typing.Union[int, None]
 
 class Bootstrap:
-    def __init__(self, inputData: np.ndarray, outputData: np.ndarray, fitFunc, parameter: int=0,
-                pGuess: tupleOrNone=None, paramBounds: tupleOrNone=None, weights: arrayOrNone=None,
-                iterGuess: bool=False, seed: intOrNone=None):
+    """Can calculate the uncertainty for 1 fit parameter using the bootstrap method.
+    """
+    def __init__(self, inputData: np.ndarray, outputData: np.ndarray, fitFunc: Callable, parameter: int=0,
+                pGuess: arrayLikeOrNone=None, paramBounds: tupleOrNone=None, weights: arrayOrNone=None,
+                iterGuess: bool=False, seed: intOrNone=None) -> None:
+        """Upon initialization the provided arguments are read.
+
+        expected setup: outputData = fitFunc(inputData, *args, **kwargs)
+        The parameters (pGuess, paramBounds and weights) are (when not None) directly passed
+        into scipy.optimize.curve_fit as (p0, paramBounds and sigma).
+
+        Parameters
+        ----------
+        inputData: np.ndarray
+
+        outputData: np.ndarray
+
+        fitFunc: Callable
+
+        parameter: int, default=0
+            index of the parameter of the function for which the bootstrap method should be applied
+            as the first argument of the function needs to correspond to the inputData
+            (scipy.optimize.curve_fit requirement), 0 means the argument at position 1
+            Example: f(x, a, b); parameter=0 -> bootstrap for a will be performed
+
+        pGuess: tuple/list/np.ndarray/None, default=None
+            Initial parameter guesses for the fit
+
+        paramBounds: tuple/None, default=None
+            Bounds for the fit parameters, used for every fit
+
+        weights: np.ndarray/None, default=None
+            weights for the fitting process
+
+        iterGuess: bool, default=False
+            if True, then the results of the initial fit are used as initial guesses for the rest of the bootstrap method
+            otherwise, the parameter pGuess is used for all fits
+
+        seed: int/None, default=None
+            seed of the random-number-generator
+            Provide a seed to achieve reproducible results for the bootstrap process.
+        """
         assert isinstance(inputData, np.ndarray)
         assert isinstance(outputData, np.ndarray)
         assert outputData.size == inputData.size
@@ -31,9 +77,9 @@ class Bootstrap:
         self.outputData: np.ndarray = outputData
         self.inputData: np.ndarray = inputData
         self.N: int = inputData.size
-        self.func = fitFunc
+        self.func: Callable = fitFunc
         self.parameter: int = parameter
-        self.pGuess: tupleOrNone = pGuess
+        self.pGuess: arrayLikeOrNone = pGuess
         self.weights: arrayOrNone = weights
         if weights is not None:
             assert len(weights) == outputData.size
@@ -49,7 +95,17 @@ class Bootstrap:
         self.parameterMean: number = np.nan
         self.parameterErrorMean: number = np.nan
 
-    def gen_bootstrap_samples(self, numSamples: int, lenSamples: int):
+    def gen_bootstrap_samples(self, numSamples: int, lenSamples: int) -> None:
+        """Generates samples of (inputData, outputData).
+
+        Parameters
+        ----------
+        numSamples: int
+            number of Samples that shall be generated
+
+        lenSamples: int
+            number of data points which shall be used for each sample
+        """
         if lenSamples > self.N:
             lenSamples = self.N
             logger.warning(f"length of bootstrap samples ({lenSamples}) is larger then the length of the data ({self.N}). Setting the length to the data size.")
@@ -60,7 +116,20 @@ class Bootstrap:
         self.inSamples: np.ndarray = self.inputData[indices]
         self.outSamples: np.ndarray = self.outputData[indices]
 
-    def statistical_error(self):
+    def statistical_error(self) -> bool:
+        """Performs the fitting of the bootstrap procedure.
+        Calculates the value of the original fit parameter,
+        the mean of the bootstrap distribution,
+        the error of the mean of the bootstrap distribution
+        and the error of the original fit parameter (standard deviation + deviation from mean).
+        This calculation uses the generated samples.
+
+        Returns
+        -------
+        bool:
+            False, when the fit of the original data did not work
+            True, otherwise
+        """
         self.p: np.ndarray
         try:
             self.p, _ = optimize.curve_fit(self.func, self.inputData, self.outputData, p0=self.pGuess, bounds=self.paramBounds, sigma=self.weights)
@@ -87,7 +156,10 @@ class Bootstrap:
             self.parameterErrorMeanBiasCorr = np.std(self.parameterArr[1:], ddof=0) + abs(np.mean(self.parameterArr[1:]) - self.parameterArr[0])
             return True
 
-    def plot_histo(self):
+    def plot_histo(self) -> None:
+        """Plots a histogram of the bootstrap distribution.
+        Passes when there is only 1 distinct value in the bootstrap result array.
+        """
         maxP: number = np.amax(self.parameterArr)
         minP: number = np.amin(self.parameterArr)
         if maxP == minP:
@@ -98,7 +170,24 @@ class Bootstrap:
             plt.hist(self.parameterArr, numberOfBins)
             plt.show()
 
-    def run(self, numSamples: int, lenSamples: int, plotHisto: bool=True):
+    def run(self, numSamples: int, lenSamples: int, plotHisto: bool=True) -> None:
+        """Main method.
+        Performs the bootstrap method by running self.gen_bootstrap_samples() and self.statistical_error().
+        Generates the samples and calculates the uncertainties.
+        Can also plot the bootstrap distribution using self.plot_histo().
+
+        Parameters
+        ----------
+        numSamples: int
+            number of Samples that shall be generated, input of self.gen_bootstrap_samples()
+
+        lenSamples: int
+            number of data points which shall be used for each sample, input of self.gen_bootstrap_samples()
+
+        plotHisto: bool
+            if True, plots bootstrap distribution using self.plot_histo()
+            if False, no plot is shown
+        """
         self.gen_bootstrap_samples(numSamples=numSamples, lenSamples=lenSamples)
         checkFitFlag: bool = self.statistical_error()
         if checkFitFlag:
