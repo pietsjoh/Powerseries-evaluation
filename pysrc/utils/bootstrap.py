@@ -199,6 +199,13 @@ class Bootstrap:
 
     @property
     def results(self):
+        """Tuple of bootstrap results.
+
+        Contains the value of the original fit parameter,
+        the error of the original fit parameter (standard deviation + deviation from mean).
+        the mean of the bootstrap distribution,
+        and the error of the mean of the bootstrap distribution
+        """
         return self.parameterOriginal, self.parameterErrorMeanBiasCorr, self.parameterMean, self.parameterErrorMean
 
 if __name__ == "__main__":
