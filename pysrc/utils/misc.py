@@ -11,7 +11,7 @@ loggerObj: LoggingConfig = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
 
 number = typing.Union[float, int]
-listOfNums = list[number] # used for type hints
+listOfNums = list[number]
 listOrArray = typing.Union[list, np.ndarray]
 intOrNone = typing.Union[int, None]
 floatOrNone = typing.Union[float, None]
@@ -21,7 +21,7 @@ diameterList: listOfNums = sorted(list(range(1, 21, 1)) + list(np.arange(1.5, 8.
 """list: List of available diameters
 """
 
-def unc_mean(values: listOrArray, intv: str="1sigma") -> float:
+def unc_mean(values: listOrArray, intv: str="1sigma") -> number:
     """
     Calculates the uncertainty for the mean of the values using the student-t-distribution.
 
