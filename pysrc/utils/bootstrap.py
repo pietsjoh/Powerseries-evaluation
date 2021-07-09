@@ -32,7 +32,7 @@ class Bootstrap:
                 iterGuess: bool=False, seed: intOrNone=None) -> None:
         """Can calculate the uncertainty for 1 fit parameter using the bootstrap method.
 
-        expected setup: outputData = fitFunc(inputData, *args, **kwargs)
+        expected setup: outputData = fitFunc(inputData, \*args, \*\*kwargs)
         The parameters (pGuess, paramBounds and weights) are (when not None) directly passed
         into scipy.optimize.curve_fit as (p0, paramBounds and sigma).
 
