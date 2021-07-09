@@ -54,7 +54,7 @@ call deactivate
 
 @REM run unit tests
 @echo run unit tests
-call .\scripts\windows\test.bat 10
+call .\scripts\windows\unit_tests.bat 10
 
 @REM if data directory does not exist then create it
 if not exist .\data (echo Creating data directory && mkdir .\data)
