@@ -65,14 +65,17 @@ html_static_path = ['_static']
 # favicon (image in the tab or bookmarks)
 html_favicon = str((headDirPath / "res" / 'jp_logo_schnitt.jpg').resolve())
 
-# include __init__ methods in documentation
-def skip(app, what, name, obj, would_skip, options):
-    if name == "__init__":
-        return False
-    return would_skip
+# include dunder methods in documentation
+napoleon_include_special_with_doc = True
 
-def setup(app):
-    app.connect("autodoc-skip-member", skip)
+# include __init__ methods in documentation
+# def skip(app, what, name, obj, would_skip, options):
+#     if name == "__init__":
+#         return False
+#     return would_skip
+
+# def setup(app):
+#     app.connect("autodoc-skip-member", skip)
 """
 
     ## Writing / creating conf.py file
