@@ -22,6 +22,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     """Request handler for the webserver. This is only used to suppress log messages.
     """
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialized with the directory set to docsBuildDirPath.
+        """
         super().__init__(*args, directory=docsBuildDirPath, **kwargs) # type: ignore
 
     def log_message(self, format: str, *args: Any) -> None:
