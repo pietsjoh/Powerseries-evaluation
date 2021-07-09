@@ -6,3 +6,4 @@ scipy==1.6.0
 sphinx-rtd-theme==0.5.2
 sphinxcontrib-napoleon==0.7
 mypy==0.910
+snakeviz==2.1.0
