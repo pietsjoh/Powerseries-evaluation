@@ -7,7 +7,6 @@ import numpy as np
 import scipy.optimize as optimize # type: ignore
 import matplotlib.pyplot as plt # type: ignore
 import typing
-from collections.abc import Callable
 
 import sys
 from pathlib import Path
@@ -27,7 +26,7 @@ arrayLikeOrNone = typing.Union[np.ndarray, list, tuple, None]
 intOrNone = typing.Union[int, None]
 
 class Bootstrap:
-    def __init__(self, inputData: np.ndarray, outputData: np.ndarray, fitFunc: Callable, parameter: int=0,
+    def __init__(self, inputData: np.ndarray, outputData: np.ndarray, fitFunc: typing.Callable, parameter: int=0,
                 pGuess: arrayLikeOrNone=None, paramBounds: tupleOrNone=None, weights: arrayOrNone=None,
                 iterGuess: bool=False, seed: intOrNone=None) -> None:
         """Can calculate the uncertainty for 1 fit parameter using the bootstrap method.
@@ -75,7 +74,7 @@ class Bootstrap:
         self.outputData: np.ndarray = outputData
         self.inputData: np.ndarray = inputData
         self.N: int = inputData.size
-        self.func: Callable = fitFunc
+        self.func: typing.Callable = fitFunc
         self.parameter: int = parameter
         self.pGuess: arrayLikeOrNone = pGuess
         self.weights: arrayOrNone = weights
