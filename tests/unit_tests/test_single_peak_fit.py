@@ -8,7 +8,7 @@ sys.path.append(str(headDir))
 
 from pysrc.peak_fit.single_peak_fit_base import PeakFitSuper
 from pysrc.peak_fit.single_peak_fit_models import *
-from pysrc.utils.random_number_gen import generator
+from pysrc.utils.random_number_gen import RNGenerator
 from pysrc.utils.mock_data_gen import mock_data_gen_1_spec
 
 ## If I want to test fit_peak(), then every model needs to be tested
@@ -66,7 +66,7 @@ class TestPeakFitSuper:
 
     def test_peak_in_initialRange(self, seed=None):
         TestObj = PeakFitSuper(x, y)
-        gen = generator(seed=seed)
+        gen = RNGenerator(seed=seed)
         initialRange = tuple(gen.uniform(low=0, high=x.size - 1, size=2))
         print(f"initial range: {initialRange}")
         try:
@@ -80,7 +80,7 @@ class TestPeakFitSuper:
 
     def test_peakHeightEstimate(self, seed=None):
         TestObj = PeakFitSuper(x, y)
-        gen = generator(seed=seed)
+        gen = RNGenerator(seed=seed)
         initialRange = tuple(gen.uniform(low=0, high=x.size - 1, size=2))
         print(f"initial range: {initialRange}")
         try:
