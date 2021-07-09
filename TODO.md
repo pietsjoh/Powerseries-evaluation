@@ -4,6 +4,9 @@
 
 ### General
 
+- docs
+  - move __init__ doc to base def
+  - add all attributes description to base class
 - config file:
   - list of fitmodels, list of data formats
   - selected data format
