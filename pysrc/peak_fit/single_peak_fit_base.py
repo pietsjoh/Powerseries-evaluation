@@ -1,28 +1,31 @@
-from os import stat
 import numpy as np
-import matplotlib.pyplot as plt
-import scipy.signal as signal
-import scipy.optimize as optimize
-import scipy.ndimage as ndi
+import matplotlib.pyplot as plt # type: ignore
+import scipy.signal as signal # type: ignore
+import scipy.optimize as optimize # type: ignore
+import scipy.ndimage as ndi # type: ignore
 import copy
-import scipy.interpolate as interpolate
+import scipy.interpolate as interpolate # type: ignore
 from functools import partial
+import typing
 
 import sys
 from pathlib import Path
-headDirPath = Path(__file__).resolve().parents[1]
+headDirPath: Path = Path(__file__).resolve().parents[1]
 sys.path.append(str(headDirPath))
 from setup.config_logging import LoggingConfig
 
-loggerObj = LoggingConfig()
+loggerObj: LoggingConfig = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
 
-class PeakFitSuper:
-    smoothGauss = 7
-    smoothSpline = 0
+tupleIntOrNone = typing.Union[tuple[int, int], None]
+number = typing.Union[int, float, np.number]
 
-    def __init__(self, wavelengths, intensity, initRange=None, intCoverage=1,
-    fitRangeScale=5, constantPeakWidth=50, backgroundFitMode="spline"):
+class PeakFitSuper:
+    smoothGauss: number = 7
+    smoothSpline: number = 0
+
+    def __init__(self, wavelengths: np.ndarray, intensity: np.ndarray, initRange: tupleIntOrNone=None, intCoverage: number=1,
+                fitRangeScale: number=5, constantPeakWidth: int=50, backgroundFitMode: str="spline") -> None:
         assert isinstance(wavelengths, np.ndarray)
         assert isinstance(intensity, np.ndarray)
         assert np.issubdtype(type(intCoverage), np.integer) or np.issubdtype(type(intCoverage), np.floating)
@@ -31,20 +34,30 @@ class PeakFitSuper:
         assert np.issubdtype(type(constantPeakWidth), np.integer)
         assert (0 <= constantPeakWidth <= (wavelengths.size / 2))
         assert backgroundFitMode in ["spline", "constant", "local_all", "local_left", "local_right", "offset", "none", "disable"]
-        self.wavelengths = wavelengths
-        self.minWavelength = np.amin(self.wavelengths)
-        self.maxWavelength = np.amax(self.wavelengths)
-        self.data = intensity
-        self.originalData = copy.deepcopy(self.data)
-        self.fitRangeScale = fitRangeScale
-        self.intCoverage = intCoverage
-        self.constantPeakWidth = constantPeakWidth
-        self.initialRange = initRange
-        self.backgroundFitMode = backgroundFitMode
+
+        self.wavelengths: np.ndarray = wavelengths
+        self.minWavelength: number = np.amin(self.wavelengths)
+        self.maxWavelength: number = np.amax(self.wavelengths)
+        self.data: np.ndarray = intensity
+        self.originalData: np.ndarray = copy.deepcopy(self.data)
+        self.fitRangeScale: number = fitRangeScale
+        self.intCoverage: number = intCoverage
+        self.constantPeakWidth: int = constantPeakWidth
+        self.initialRange: tupleIntOrNone = initRange
+        self.backgroundFitMode: str = backgroundFitMode
+
+        self.muFit: number
+        self.fwhmFit: number
+        self.integratedPeak: number
+        self.uncintegratedPeak: number
+        self.uncFwhmFit: number
+        self.uncMuFit: number
         logger.debug("PeakFitSuper object initialized.")
 
-    def run(self):
+    def run(self) -> None:
         logger.debug("Calling PeakFitSuper.run()")
+        foundPeakFlag: bool
+        convergenceFitFlag: bool
         try:
             self.get_peak(initialRange=self.initialRange, peakWidth=self.constantPeakWidth)
         except RuntimeError:
@@ -96,78 +109,78 @@ class PeakFitSuper:
             self.uncFwhmFit = np.nan
             self.uncMuFit = np.nan
         logger.debug("""Results:
-    mu = {} \u00B1 {}
-    fwhm = {} \u00B1 {}
-    integrated Intensity = {} \u00B1 {}""".format(self.muFit, self.uncMuFit,
-    self.fwhmFit, self.uncFwhmFit,
-    self.integratedPeak, self.uncintegratedPeak))
+                    mu = {} \u00B1 {}
+                    fwhm = {} \u00B1 {}
+                    integrated Intensity = {} \u00B1 {}""".format(self.muFit, self.uncMuFit,
+                    self.fwhmFit, self.uncFwhmFit,
+                    self.integratedPeak, self.uncintegratedPeak))
 
-    def get_peak(self, initialRange=None, peakWidth=50):
+    def get_peak(self, initialRange: tupleIntOrNone=None, peakWidth: int=50) -> None:
         ## setting an initial range, where the algorithm looks for the peak
         ## looking for all peaks
         logger.debug("Calling PeakFitSuper.get_peak()")
         assert isinstance(initialRange, (tuple, type(None)))
+        peaks: np.ndarray
         peaks, _ = signal.find_peaks(self.data)
         if isinstance(initialRange, tuple):
             assert len(initialRange) == 2
-            assert np.issubdtype(type(initialRange[0]), np.integer) or np.issubdtype(type(initialRange[0]), np.floating)
-            assert np.issubdtype(type(initialRange[1]), np.integer) or np.issubdtype(type(initialRange[1]), np.floating)
-            minIdx = min(initialRange)
-            maxIdx = max(initialRange)
+            assert np.issubdtype(type(initialRange[0]), np.integer)
+            assert np.issubdtype(type(initialRange[1]), np.integer)
+            minIdx: int = min(initialRange)
+            maxIdx: int = max(initialRange)
             logger.debug(f"Detected initial range: [{minIdx}, {maxIdx}]")
-            peakList = []
+            peakList: list = []
             for peak in peaks:
                 if (minIdx <= peak) and (maxIdx >= peak):
                     peakList.append(peak)
             peaks = np.array(peakList)
         # logger.debug(f"All found peaks: {peaks}")
-        prominences = signal.peak_prominences(self.data, peaks, wlen=2*peakWidth)[0]
+        prominences: np.ndarray = signal.peak_prominences(self.data, peaks, wlen=2*peakWidth)[0]
         if len(prominences) == 0:
             raise RuntimeError("No peak could be found")
-        self.peak = peaks[np.argmax(prominences)]
-        self.peakHeightEstimate = self.data[self.peak]
+        self.peak: int = peaks[np.argmax(prominences)]
+        self.peakHeightEstimate: number = self.data[self.peak]
         if self.peakHeightEstimate <= 0:
             raise ValueError(f"The estimated height of peak ({self.peakHeightEstimate}) is below 0")
-        self.fwhmEstimate = signal.peak_widths(self.data, np.array([self.peak]), rel_height=0.5, wlen=2*peakWidth)[0][0]
+        self.fwhmEstimate: number = signal.peak_widths(self.data, np.array([self.peak]), rel_height=0.5, wlen=2*peakWidth)[0][0]
         logger.debug(f"Found peak at: {self.wavelengths[self.peak]} nm/eV, index: [{self.peak}]")
         logger.debug(f"Estimate of FWHM: {np.abs(self.wavelengths[1] - self.wavelengths[0])*self.fwhmEstimate} nm/eV, index length: [{self.fwhmEstimate}]")
         logger.debug(f"Estimate of the Height: {self.peakHeightEstimate} a.u.")
 
-    def remove_background_smoothspline(self, smoothSpline=0, smoothGauss=7, peakWidth=50):
+    def remove_background_smoothspline(self, smoothSpline: number=0, smoothGauss: number=7, peakWidth: int=50) -> None:
         logger.debug(f"Calling remove_background_smoothspline(); smoothspline: {smoothSpline}, smoothGauss: {smoothGauss}, peakWidth: {peakWidth}")
         try:
-            dataBeforePeak = self.data[: self.peak - peakWidth - round(self.fwhmEstimate)]
-            dataAfterPeak = self.data[self.peak + peakWidth + round(self.fwhmEstimate) + 1 :]
+            dataBeforePeak: np.ndarray = self.data[: self.peak - peakWidth - round(self.fwhmEstimate)] # type: ignore
+            dataAfterPeak: np.ndarray = self.data[self.peak + peakWidth + round(self.fwhmEstimate) + 1 :] # type: ignore
         except IndexError:
             logger.error("""Data range for peak exclusion exceeded while trying to use spline background removal.
 Either lower constantPeakWidth or use a different background fitting method.""")
         else:
             dataBeforePeak = ndi.gaussian_filter1d(dataBeforePeak, sigma=smoothGauss)
             dataAfterPeak = ndi.gaussian_filter1d(dataAfterPeak, sigma=smoothGauss)
-            dataWithoutPeak = np.hstack((dataBeforePeak, dataAfterPeak))
-            wavelengthsBeforePeak = self.wavelengths[: self.peak - peakWidth - round(self.fwhmEstimate)]
-            wavelengthsAfterPeak = self.wavelengths[self.peak + peakWidth + round(self.fwhmEstimate) + 1 :]
-            wavelengthsWithoutPeak = np.hstack((wavelengthsBeforePeak, wavelengthsAfterPeak))
+            dataWithoutPeak: np.ndarray = np.hstack((dataBeforePeak, dataAfterPeak))
+            wavelengthsBeforePeak: np.ndarray = self.wavelengths[: self.peak - peakWidth - round(self.fwhmEstimate)]  # type: ignore
+            wavelengthsAfterPeak: np.ndarray = self.wavelengths[self.peak + peakWidth + round(self.fwhmEstimate) + 1 :]  # type: ignore
+            wavelengthsWithoutPeak: np.ndarray = np.hstack((wavelengthsBeforePeak, wavelengthsAfterPeak))
             logger.debug(f"Exclusion range smooth spline: [{min(wavelengthsBeforePeak)}, {max(wavelengthsAfterPeak)}]")
-            self.spline = interpolate.UnivariateSpline(wavelengthsWithoutPeak, dataWithoutPeak)
+            self.spline: interpolate.UnivariateSpline = interpolate.UnivariateSpline(wavelengthsWithoutPeak, dataWithoutPeak)
             self.spline.set_smoothing_factor(smoothSpline)
             self.data = self.data - self.spline(self.wavelengths)
 
-    def remove_background_local_mean(self, peakWidth=50, peakWidthScale=3, mode="all"):
+    def remove_background_local_mean(self, peakWidth: int=50, peakWidthScale: number=3, mode: str="all") -> None:
         logger.debug(f"Calling remove_background_local_mean(); peakWidth: {peakWidth}, peakWidthScale: {peakWidthScale}")
         assert mode in ["left", "right", "all"]
         try:
-            dataBeforePeak = self.data[self.peak - peakWidthScale*peakWidth - round(self.fwhmEstimate) : self.peak - peakWidth - round(self.fwhmEstimate) + 1]
-            dataAfterPeak = self.data[self.peak + peakWidth + round(self.fwhmEstimate) : self.peak + peakWidthScale*peakWidth + round(self.fwhmEstimate) + 1]
-            logger.debug(f"indices before peak: [{self.peak - peakWidthScale*peakWidth - round(self.fwhmEstimate)}, {self.peak - peakWidth - round(self.fwhmEstimate)}]")
-            logger.debug(f"indices after peak: [{self.peak + peakWidth + round(self.fwhmEstimate)}, {self.peak + peakWidthScale*peakWidth + round(self.fwhmEstimate)}]")
-            logger.debug(f"wavelength before peak: [{self.wavelengths[self.peak - peakWidthScale*peakWidth - round(self.fwhmEstimate)]}, {self.wavelengths[self.peak - peakWidth - round(self.fwhmEstimate)]}]")
-            logger.debug(f"wavelength after peak: [{self.wavelengths[self.peak + peakWidth + round(self.fwhmEstimate)]}, {self.wavelengths[self.peak + peakWidthScale*peakWidth + round(self.fwhmEstimate)]}]")
+            dataBeforePeak: np.ndarray = self.data[self.peak - peakWidthScale*peakWidth - round(self.fwhmEstimate) : self.peak - peakWidth - round(self.fwhmEstimate) + 1]  # type: ignore
+            dataAfterPeak: np.ndarray = self.data[self.peak + peakWidth + round(self.fwhmEstimate) : self.peak + peakWidthScale*peakWidth + round(self.fwhmEstimate) + 1]  # type: ignore
+            logger.debug(f"indices before peak: [{self.peak - peakWidthScale*peakWidth - round(self.fwhmEstimate)}, {self.peak - peakWidth - round(self.fwhmEstimate)}]")  # type: ignore
+            logger.debug(f"wavelength before peak: [{self.wavelengths[self.peak - peakWidthScale*peakWidth - round(self.fwhmEstimate)]}, {self.wavelengths[self.peak - peakWidth - round(self.fwhmEstimate)]}]")  # type: ignore
+            logger.debug(f"wavelength after peak: [{self.wavelengths[self.peak + peakWidth + round(self.fwhmEstimate)]}, {self.wavelengths[self.peak + peakWidthScale*peakWidth + round(self.fwhmEstimate)]}]")  # type: ignore
         except IndexError:
             logger.error("""Data range for peak exclusion exceeded while trying to use local background removal.
 Either lower constantPeakWidth or use a different background fitting method. Now the 'none/disable' method will be used for only this spectrum.""")
         else:
-            dataAroundPeak = np.concatenate((dataBeforePeak, dataAfterPeak))
+            dataAroundPeak: np.ndarray = np.concatenate((dataBeforePeak, dataAfterPeak))
             if mode == "all":
                 self.data = self.originalData - np.median(dataAroundPeak)
             elif mode == "left":
@@ -175,12 +188,12 @@ Either lower constantPeakWidth or use a different background fitting method. Now
             elif mode == "right":
                 self.data = self.originalData - np.median(dataAfterPeak)
 
-    def fit_peak(self, intCoverage=1, fitRangeScale=2):
+    def fit_peak(self, intCoverage: number=1, fitRangeScale: number=2) -> None:
         logger.debug("Calling PeakFitSuper.fit_peak()")
         assert hasattr(self, "peak")
-        fitRange = round(fitRangeScale*self.fwhmEstimate)
+        fitRange: int = round(fitRangeScale*self.fwhmEstimate)  # type: ignore
         try:
-            fitWavelengths = self.wavelengths[self.peak - fitRange : self.peak + fitRange + 1]
+            fitWavelengths: np.ndarray = self.wavelengths[self.peak - fitRange : self.peak + fitRange + 1]
         except IndexError:
             logger.error("Fitrange exceeds dataset. Lower fit range scale to enable fitting.")
         else:
@@ -188,27 +201,31 @@ Either lower constantPeakWidth or use a different background fitting method. Now
             if len(fitWavelengths) <= 3:
                 logger.warning(f"Less than 3 points are used for the fitting. Aborting fitting proccss.")
                 raise RuntimeError("Not enough points for fitting.")
-            fitData = self.data[self.peak - fitRange : self.peak + fitRange + 1]
+            fitData: np.ndarray = self.data[self.peak - fitRange : self.peak + fitRange + 1]
             self.set_p0()
+            self.p: np.ndarray
+            self.cov: np.ndarray
             if self.backgroundFitMode == "offset":
-                self.p0.append(np.median(self.data))
-                lowerBounds, higherBounds = self.paramBounds
+                self.p0.append(np.median(self.data))  # type: ignore
+                lowerBounds: list
+                higherBounds: list
+                lowerBounds, higherBounds = self.paramBounds  # type: ignore
                 lowerBounds.append(0)
                 higherBounds.append(np.inf)
-                paramBounds = (lowerBounds, higherBounds)
-                self.p, self.cov = optimize.curve_fit(self, fitWavelengths, fitData, p0=self.p0, bounds=paramBounds)
+                paramBounds: tuple[list, list] = (lowerBounds, higherBounds)
+                self.p, self.cov = optimize.curve_fit(self, fitWavelengths, fitData, p0=self.p0, bounds=paramBounds)  # type: ignore
             else:
-                f = partial(self, offset=0)
-                self.p, self.cov = optimize.curve_fit(f, fitWavelengths, fitData, p0=self.p0, bounds=self.paramBounds)
+                f: typing.Callable = partial(self, offset=0)
+                self.p, self.cov = optimize.curve_fit(f, fitWavelengths, fitData, p0=self.p0, bounds=self.paramBounds)  # type: ignore
                 self.p = np.append(self.p, 0)
-            logger.debug(f"Fit initial guesses: {self.p0}")
+            logger.debug(f"Fit initial guesses: {self.p0}")  # type: ignore
             logger.debug(f"Fit results: {self.p}")
             self.muFit = self.p[1]
             self.integratedPeak = self.p[0] * intCoverage
             self.uncMuFit = np.sqrt(self.cov[1, 1])
             self.uncintegratedPeak = intCoverage * np.sqrt(self.cov[0, 0])
 
-    def plot_original_data(self, block=True):
+    def plot_original_data(self, block: bool=True) -> None:
         plt.plot(self.wavelengths, self.originalData)
         plt.xlabel("Energy [eV]")
         plt.ylabel("Intensity [a. u.]")
@@ -220,7 +237,7 @@ Either lower constantPeakWidth or use a different background fitting method. Now
             plt.pause(1)
             plt.close("all")
 
-    def plot_interpolation(self, block=True):
+    def plot_interpolation(self, block: bool=True) -> None:
         assert hasattr(self, "spline")
         fig, axs = plt.subplots(nrows=1, ncols=2)
         ax1, ax2 = axs
@@ -234,10 +251,10 @@ Either lower constantPeakWidth or use a different background fitting method. Now
             plt.pause(1)
             plt.close("all")
 
-    def plot_fit(self, block=True):
+    def plot_fit(self, block: bool=True) -> None:
         assert hasattr(self, "p")
-        wavelengthsPlotArray = np.linspace(self.wavelengths[0], self.wavelengths[-1], 1000)
-        outputPlotArray = self(wavelengthsPlotArray, *self.p)
+        wavelengthsPlotArray: np.ndarray = np.linspace(self.wavelengths[0], self.wavelengths[-1], 1000)
+        outputPlotArray: np.ndarray = self(wavelengthsPlotArray, *self.p)
         fig, axs = plt.subplots(nrows=1, ncols=2)
         ax1, ax2 = axs
         ax1.plot(self.wavelengths, self.originalData)
@@ -252,7 +269,7 @@ Either lower constantPeakWidth or use a different background fitting method. Now
             plt.pause(1)
             plt.close("all")
 
-    def plot_fitRange_without_fit(self):
+    def plot_fitRange_without_fit(self) -> None:
         assert hasattr(self, "peak")
         assert hasattr(self, "fwhmEstimate")
         fig, axs = plt.subplots(nrows=1, ncols=2)
@@ -261,9 +278,9 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         if hasattr(self, "spline"):
             ax1.plot(self.wavelengths, self.spline(self.wavelengths))
         ax2.plot(self.wavelengths, self.data)
-        fitRange = round(self.fitRangeScale * self.fwhmEstimate)
-        leftBoundary = self.wavelengths[self.peak - fitRange]
-        rightBoundary = self.wavelengths[self.peak + fitRange]
+        fitRange: int = round(self.fitRangeScale * self.fwhmEstimate) # type: ignore
+        leftBoundary: number = self.wavelengths[self.peak - fitRange]
+        rightBoundary: number = self.wavelengths[self.peak + fitRange]
         ax2.axvline(x=leftBoundary, color="black")
         ax2.axvline(x=rightBoundary, color="black")
         ax1.set_title("Original data")
@@ -271,21 +288,21 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         ax2.plot(self.wavelengths[self.peak], self.data[self.peak], "+", color="black")
         plt.show()
 
-    def plot_fitRange_with_fit(self):
+    def plot_fitRange_with_fit(self) -> None:
         assert hasattr(self, "peak")
         assert hasattr(self, "fwhmEstimate")
         assert hasattr(self, "p")
-        wavelengthsPlotArray = np.linspace(self.wavelengths[0], self.wavelengths[-1], 1000)
-        outputPlotArray = self(wavelengthsPlotArray, *self.p)
+        wavelengthsPlotArray: np.ndarray = np.linspace(self.wavelengths[0], self.wavelengths[-1], 1000)
+        outputPlotArray: np.ndarray = self(wavelengthsPlotArray, *self.p)
         fig, axs = plt.subplots(nrows=1, ncols=2)
         ax1, ax2 = axs
         ax1.plot(self.wavelengths, self.originalData)
         if hasattr(self, "spline"):
             ax1.plot(self.wavelengths, self.spline(self.wavelengths))
         ax2.plot(self.wavelengths, self.data)
-        fitRange = round(self.fitRangeScale * self.fwhmEstimate)
-        leftBoundary = self.wavelengths[self.peak - fitRange]
-        rightBoundary = self.wavelengths[self.peak + fitRange]
+        fitRange: int = round(self.fitRangeScale * self.fwhmEstimate) # type: ignore
+        leftBoundary: number = self.wavelengths[self.peak - fitRange]
+        rightBoundary: number = self.wavelengths[self.peak + fitRange]
         ax1.axvline(x=leftBoundary, color="black")
         ax1.axvline(x=rightBoundary, color="black")
         ax2.axvline(x=leftBoundary, color="black")
@@ -297,13 +314,15 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         ax2.plot(self.muFit, self(self.muFit, *self.p), "x", color="black")
         plt.show()
 
-    def plot_initRange_without_fit(self):
+    def plot_initRange_without_fit(self) -> None:
         assert hasattr(self, "peak")
         if isinstance(self.initialRange, tuple):
             assert len(self.initialRange) == 2
+            idx1: int
+            idx2: int
             idx1, idx2 = self.initialRange
-            boundary1 = self.wavelengths[idx1]
-            boundary2 = self.wavelengths[idx2]
+            boundary1: number = self.wavelengths[idx1]
+            boundary2: number = self.wavelengths[idx2]
             fig, axs = plt.subplots(nrows=1, ncols=2)
             ax1, ax2 = axs
             ax1.plot(self.wavelengths, self.originalData)
@@ -320,16 +339,18 @@ Either lower constantPeakWidth or use a different background fitting method. Now
             fig.suptitle("No initial Range selected")
             plt.show()
 
-    def plot_initRange_with_fit(self):
+    def plot_initRange_with_fit(self) -> None:
         assert hasattr(self, "peak")
         assert hasattr(self, "p")
-        wavelengthsPlotArray = np.linspace(self.wavelengths[0], self.wavelengths[-1], 1000)
-        outputPlotArray = self(wavelengthsPlotArray, *self.p)
+        wavelengthsPlotArray: np.ndarray = np.linspace(self.wavelengths[0], self.wavelengths[-1], 1000)
+        outputPlotArray: np.ndarray = self(wavelengthsPlotArray, *self.p)
         if isinstance(self.initialRange, tuple):
             assert len(self.initialRange) == 2
+            idx1: int
+            idx2: int
             idx1, idx2 = self.initialRange
-            boundary1 = self.wavelengths[idx1]
-            boundary2 = self.wavelengths[idx2]
+            boundary1: number = self.wavelengths[idx1]
+            boundary2: number = self.wavelengths[idx2]
             fig, axs = plt.subplots(nrows=1, ncols=2)
             ax1, ax2 = axs
             ax1.plot(self.wavelengths, self.originalData)
@@ -351,21 +372,21 @@ Either lower constantPeakWidth or use a different background fitting method. Now
             fig.suptitle("No initial Range selected")
             plt.show()
 
-    def plot_fwhm(self):
+    def plot_fwhm(self) -> None:
         assert hasattr(self, "peak")
         assert hasattr(self, "p")
-        wavelengthsPlotArray = np.linspace(self.wavelengths[0], self.wavelengths[-1], 1000)
-        outputPlotArray = self(wavelengthsPlotArray, *self.p)
+        wavelengthsPlotArray: np.ndarray = np.linspace(self.wavelengths[0], self.wavelengths[-1], 1000)
+        outputPlotArray: np.ndarray = self(wavelengthsPlotArray, *self.p)
         fig, axs = plt.subplots(nrows=1, ncols=3)
         ax1, ax2, ax3 = axs
         ax1.plot(self.wavelengths, self.data)
         ax2.plot(self.wavelengths, self.data)
-        fwhmEstimate1 = self.wavelengths[self.peak - round(self.fwhmEstimate/2)]
-        fwhmEstimate2 = self.wavelengths[self.peak + round(self.fwhmEstimate/2)]
+        fwhmEstimate1: number = self.wavelengths[self.peak - round(self.fwhmEstimate/2)] # type: ignore
+        fwhmEstimate2: number = self.wavelengths[self.peak + round(self.fwhmEstimate/2)] # type: ignore
         ax1.axvline(x=fwhmEstimate1, color="black", linestyle="--")
         ax1.axvline(x=fwhmEstimate2, color="black", linestyle="--")
-        fwhm1 = self.muFit - self.fwhmFit/2
-        fwhm2 = self.muFit + self.fwhmFit/2
+        fwhm1: number = self.muFit - self.fwhmFit/2
+        fwhm2: number = self.muFit + self.fwhmFit/2
         ax2.axvline(x=fwhm1, color="black")
         ax2.axvline(x=fwhm2, color="black")
         ax1.plot(wavelengthsPlotArray, outputPlotArray)
@@ -384,39 +405,48 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         ax3.plot(self.muFit, self(self.muFit, *self.p), "x", color="black")
         plt.show()
 
-    def plot_fwhmEstimate(self):
+    def plot_fwhmEstimate(self) -> None:
         assert hasattr(self, "peak")
         fig, ax = plt.subplots(nrows=1, ncols=1)
         ax.plot(self.wavelengths, self.data)
-        fwhmEstimate1 = self.wavelengths[self.peak - round(self.fwhmEstimate/2)]
-        fwhmEstimate2 = self.wavelengths[self.peak + round(self.fwhmEstimate/2)]
+        fwhmEstimate1: number = self.wavelengths[self.peak - round(self.fwhmEstimate/2)] # type: ignore
+        fwhmEstimate2: number = self.wavelengths[self.peak + round(self.fwhmEstimate/2)] # type: ignore
         ax.axvline(x=fwhmEstimate1, color="black")
         ax.axvline(x=fwhmEstimate2, color="black")
         ax.plot(self.wavelengths[self.peak], self.data[self.peak], "+", color="black")
         ax.set_title("fwhm estimate")
         plt.show()
 
-    def plot_exclusionRange(self):
+    def plot_exclusionRange(self) -> None:
         assert hasattr(self, "spline")
         fig, axs = plt.subplots(nrows=1, ncols=2)
         ax1, ax2 = axs
         ax1.plot(self.wavelengths, self.originalData)
         ax1.plot(self.wavelengths, self.spline(self.wavelengths))
         ax2.plot(self.wavelengths, self.data)
-        leftBoundary = self.wavelengths[self.peak - self.constantPeakWidth - round(self.fwhmEstimate)]
-        rightBoundary = self.wavelengths[self.peak + self.constantPeakWidth + round(self.fwhmEstimate)]
+        leftBoundary: number = self.wavelengths[self.peak - self.constantPeakWidth - round(self.fwhmEstimate)] # type: ignore
+        rightBoundary: number = self.wavelengths[self.peak + self.constantPeakWidth + round(self.fwhmEstimate)] # type: ignore
         ax1.axvline(x=leftBoundary, color="black")
         ax1.axvline(x=rightBoundary, color="black")
         fig.suptitle("Peak exclusion range visualized")
         plt.show()
 
     @classmethod
-    def __init_subclass__(cls, *args, **kwargs):
-        super().__init_subclass__(*args, **kwargs)
+    def __init_subclass__(cls, *args, **kwargs) -> None:
+        super().__init_subclass__(*args, **kwargs) # type: ignore
         assert hasattr(cls, "set_p0")
         assert hasattr(cls, "set_fwhm")
         assert hasattr(cls, "__call__")
         assert hasattr(cls, "name")
+
+    def __call__(self, *args):
+        pass
+
+    def set_fwhm(self):
+        pass
+
+    def set_p0(self):
+        pass
 
     @property
     def outputParameters(self):
