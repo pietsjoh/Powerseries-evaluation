@@ -1,0 +1,9 @@
+@echo off
+set current_dir=%cd%
+cd %~dp0
+cd ..\..
+call .\env\Scripts\activate.bat
+python .\tests\performance_tests\test_combine_ps_tool.py
+snakeviz .\tests\performance_tests\performance_profile.prof
+call deactivate
+cd %current_dir%
