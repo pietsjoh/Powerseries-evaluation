@@ -211,7 +211,7 @@ class PeakFitSuper:
                     self.plot_original_data(block=True)
                 else:
                     convergenceFitFlag = True
-                    self.set_fwhm()
+                    self.set_fwhm() # type: ignore
         if not foundPeakFlag or not convergenceFitFlag:
             self.muFit = np.nan
             self.fwhmFit = np.nan
@@ -426,7 +426,7 @@ Either lower constantPeakWidth or use a different background fitting method. Now
                 logger.warning(f"Less than 3 points are used for the fitting. Aborting fitting proccss.")
                 raise RuntimeError("Not enough points for fitting.")
             fitData: np.ndarray = self.data[self.peak - fitRange : self.peak + fitRange + 1]
-            self.set_p0()
+            self.set_p0() # type: ignore
             self.p: np.ndarray
             self.cov: np.ndarray
             if self.backgroundFitMode == "offset":
@@ -439,7 +439,7 @@ Either lower constantPeakWidth or use a different background fitting method. Now
                 paramBounds: tuple[list, list] = (lowerBounds, higherBounds)
                 self.p, self.cov = optimize.curve_fit(self, fitWavelengths, fitData, p0=self.p0, bounds=paramBounds)  # type: ignore
             else:
-                f: typing.Callable = partial(self, offset=0)
+                f: typing.Callable = partial(self, offset=0) # type: ignore
                 self.p, self.cov = optimize.curve_fit(f, fitWavelengths, fitData, p0=self.p0, bounds=self.paramBounds)  # type: ignore
                 self.p = np.append(self.p, 0)
             logger.debug(f"Fit initial guesses: {self.p0}")  # type: ignore
@@ -503,7 +503,7 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         """
         assert hasattr(self, "p")
         wavelengthsPlotArray: np.ndarray = np.linspace(self.wavelengths[0], self.wavelengths[-1], 1000)
-        outputPlotArray: np.ndarray = self(wavelengthsPlotArray, *self.p)
+        outputPlotArray: np.ndarray = self(wavelengthsPlotArray, *self.p) # type: ignore
         fig, axs = plt.subplots(nrows=1, ncols=2)
         ax1, ax2 = axs
         ax1.plot(self.wavelengths, self.originalData)
@@ -561,7 +561,7 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         assert hasattr(self, "fwhmEstimate")
         assert hasattr(self, "p")
         wavelengthsPlotArray: np.ndarray = np.linspace(self.wavelengths[0], self.wavelengths[-1], 1000)
-        outputPlotArray: np.ndarray = self(wavelengthsPlotArray, *self.p)
+        outputPlotArray: np.ndarray = self(wavelengthsPlotArray, *self.p) # type: ignore
         fig, axs = plt.subplots(nrows=1, ncols=2)
         ax1, ax2 = axs
         ax1.plot(self.wavelengths, self.originalData)
@@ -579,7 +579,7 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         ax2.set_title("Fitting range + fitted data")
         ax2.plot(wavelengthsPlotArray, outputPlotArray)
         ax1.plot(self.wavelengths[self.peak], self.originalData[self.peak], "+", color="black")
-        ax2.plot(self.muFit, self(self.muFit, *self.p), "x", color="black")
+        ax2.plot(self.muFit, self(self.muFit, *self.p), "x", color="black") # type: ignore
         plt.show()
 
     def plot_initRange_without_fit(self) -> None:
@@ -630,7 +630,7 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         assert hasattr(self, "peak")
         assert hasattr(self, "p")
         wavelengthsPlotArray: np.ndarray = np.linspace(self.wavelengths[0], self.wavelengths[-1], 1000)
-        outputPlotArray: np.ndarray = self(wavelengthsPlotArray, *self.p)
+        outputPlotArray: np.ndarray = self(wavelengthsPlotArray, *self.p) # type: ignore
         if isinstance(self.initialRange, tuple):
             assert len(self.initialRange) == 2
             idx1: int
@@ -648,7 +648,7 @@ Either lower constantPeakWidth or use a different background fitting method. Now
             ax2.axvline(x=boundary2, color="black")
             ax2.plot(wavelengthsPlotArray, outputPlotArray)
             ax1.plot(self.wavelengths[self.peak], self.originalData[self.peak], "+", color="black")
-            ax2.plot(self.muFit, self(self.muFit, *self.p), "x", color="black")
+            ax2.plot(self.muFit, self(self.muFit, *self.p), "x", color="black") # type: ignore
             fig.suptitle("initial range and peak visualized")
             plt.show()
         else:
@@ -666,7 +666,7 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         assert hasattr(self, "peak")
         assert hasattr(self, "p")
         wavelengthsPlotArray: np.ndarray = np.linspace(self.wavelengths[0], self.wavelengths[-1], 1000)
-        outputPlotArray: np.ndarray = self(wavelengthsPlotArray, *self.p)
+        outputPlotArray: np.ndarray = self(wavelengthsPlotArray, *self.p) # type: ignore
         fig, axs = plt.subplots(nrows=1, ncols=3)
         ax1, ax2, ax3 = axs
         ax1.plot(self.wavelengths, self.data)
@@ -682,7 +682,7 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         ax1.plot(wavelengthsPlotArray, outputPlotArray)
         ax2.plot(wavelengthsPlotArray, outputPlotArray)
         ax1.plot(self.wavelengths[self.peak], self.data[self.peak], "+", color="black")
-        ax2.plot(self.muFit, self(self.muFit, *self.p), "x", color="black")
+        ax2.plot(self.muFit, self(self.muFit, *self.p), "x", color="black") # type: ignore
         ax1.set_title("fwhm estimate")
         ax2.set_title("fwhm fit")
         ax3.plot(self.wavelengths, self.data)
@@ -692,7 +692,7 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         ax3.axvline(x=fwhm2, color="black")
         ax3.plot(wavelengthsPlotArray, outputPlotArray)
         ax3.plot(self.wavelengths[self.peak], self.data[self.peak], "+", color="black")
-        ax3.plot(self.muFit, self(self.muFit, *self.p), "x", color="black")
+        ax3.plot(self.muFit, self(self.muFit, *self.p), "x", color="black") # type: ignore
         plt.show()
 
     def plot_fwhmEstimate(self) -> None:
@@ -736,15 +736,6 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         assert hasattr(cls, "set_fwhm")
         assert hasattr(cls, "__call__")
         assert hasattr(cls, "name")
-
-    def __call__(self, *args):
-        pass
-
-    def set_fwhm(self):
-        pass
-
-    def set_p0(self):
-        pass
 
     @property
     def outputParameters(self):
