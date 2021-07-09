@@ -87,6 +87,7 @@
 
 > single_peak_fit_base.py
 
+- rework local background extraction, better control of the range
 - peak exclusion may return error (remove_background_local/spline) [x]
   - when exclusion range exceeds data set [x]
 - maybe use local not median for constant mode [x]
