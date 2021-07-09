@@ -1,3 +1,5 @@
+"""Contains the base class that performs the peak fitting.
+"""
 import numpy as np
 import matplotlib.pyplot as plt # type: ignore
 import scipy.signal as signal # type: ignore
@@ -21,11 +23,114 @@ tupleIntOrNone = typing.Union[tuple[int, int], None]
 number = typing.Union[int, float, np.number]
 
 class PeakFitSuper:
+    """Abstract Base Class that finds a peak in a spectrum and fits the peak. Use derived classes to
+    define the fit model. The class supports the use of an initial range, where the peak should lie.
+    Moreover, the fitrange can be adapted aswell as the handling of the background. These parameters
+    are explained in the __init__ method section.
+    Also contains different plots to visualize the configuration and the examined spectrum.
+    In the config/debugging.ini file it can be selected which plots should be shown as snapshots.
+    """
     smoothGauss: number = 7
+    """float/int: default sigma for gaussian filter used in self.remove_background_smoothspline()
+    """
     smoothSpline: number = 0
+    """float/int: default smoothing factor for the spline used in self.remove_background_smoothspline()
+    """
 
-    def __init__(self, wavelengths: np.ndarray, intensity: np.ndarray, initRange: tupleIntOrNone=None, intCoverage: number=1,
-                fitRangeScale: number=5, constantPeakWidth: int=50, backgroundFitMode: str="spline") -> None:
+    def __init__(self, wavelengths: np.ndarray, intensity: np.ndarray, initRange: tupleIntOrNone=None,
+                intCoverage: number=1, fitRangeScale: number=5, constantPeakWidth: int=50,
+                backgroundFitMode: str="local_left") -> None:
+        """Upon initialization attributes are set.
+
+        Parameters
+        ----------
+        wavelengths: np.ndarray
+            Wavelengths of the spectrum (usually as energies in units of [eV])
+
+        intensity: np.ndarray
+            The intensity of each Wavlength (count rate of detector)
+
+        initRange: tuple/None, default=None
+            When set to None, no initial range is used
+            Otherwise the program looks only for peaks in between [min(initRange), max(initRange)]
+
+        intCoverage: int/float, default=1
+            The outputpower corresponds to the integrated peak. This parameter can change this integration range.
+            This parameter should lie in the range [0, 1]. The outputpower will always be 0, when set to 0.
+            When set to 1 the integration is performed over all wavelengths (-inf, inf), even for negative wavelengths.
+            However, the wavelengths near the peak contribute mostly to the integral as the peak models should vanish fast
+            as the wavelength goes to +/- inf.
+
+        fitRangeScale: int/float, default=1
+            Determines range of data points that are used for the fitting process. It scales the estimated FWHM of the peak.
+            Then the data near the estimated peak location is used for the fitting
+
+            .. math::
+                fitRange = round(fitRangeScale\cdot FWHMEstimate)
+            .. math::
+                fitData = data[peak - fitRange: peak + fitRange + 1]
+
+        constantPeakWidth: int, default=50
+            Extra number of data points that should be added to the FWHMEstimate when estimating the peak width.
+            This is used for some background extraction methods.
+            Namely, smooth_spline and all local methods. For smooth_spline it is used to vary the peak exclusion range.
+            The area [peak +/- (fwhmEstimate + constantPeakWidth)] around the peak that should not be smoothed.
+
+            For the local methods, it provides the peak exclusion range.
+            Meaning that in the area [peak +/- (fwhmEstimate + constantPeakWidth)] no data points are used to calculate
+            the local mean. Furthermore, the other boundary is calculated by scaling constantPeakWidth.
+            The scaling parameter is currently set to 3.
+            In the future this may be altered to gain better control of the local mean method.
+            Therefore a different parameter may be introduced.
+
+            Moreover, this parameter defines the window length for prominence and width calculation of the peak.
+            For more information on this look up the documentation for self.get_peak().
+
+        backgroundFitMode: str, default="local_left"
+            Selects the way the background of the data is handled. My recommendation is to use one of the local methods.
+            These seems to produce the most consistent results for the S-shapes.
+            When the background is lower on the left side of the peak than on the right side of the peak,
+            then I tend to use local_left instead of local_all. This ended up producing better results for me.
+            Usually, I use local_left for everything, because if one of my data sets is skewed than the left side
+            was pretty much always lower than the right side. If the data set is not skewed it also does not make
+            visible (in the S-shape) difference whether local_all, local_right or local_left is used.
+
+            Options
+            -------
+            local_all:
+                Subtracts the local mean from the data set and then performs the fitting.
+                In this particular method, the mean is calculated for both sides of the peak.
+                The area close to the peak is excluded in this calculation. The size of this area can be varied
+                by changing the constantPeakWidth parameter.
+                On the "right" side the area used for the mean calculation looks like this.
+
+                .. math::
+                    localData = [peak + fwhmEstimate + constantPeakWidth : peak + fwhmEstimate + 3\cdot constantPeakWidth]
+
+                The left side looks similar (- instead of +). The scaling parameter 3 is currently hard coded into the routine
+                and cannot be varied in runtime.
+
+            local_left:
+                Same as local_all, but only the mean of the "right" side (+) is used.
+
+            local_right:
+                Same as local_all, but only the mean of the "left" side (-) is used.
+
+            spline:
+                Uses spline interpolation to flatten the background, the area around the peak is excluded.
+                The size of the area can be varied by changing constantPeakWidth.
+                This is the heaviest transformation (most expensive and biggest change on the data set).
+                The form of the S-shape (especially the tails) is dependent on the peak exclusion range.
+
+            constant:
+                Subtracts the median of the complete data set (intensities) from the data set.
+
+            offset:
+                The background is not changed, but an offset is used in the fitting process (f(x, \*args) + b)
+
+            none/disable:
+                The background is not changed and no offset is used
+        """
         assert isinstance(wavelengths, np.ndarray)
         assert isinstance(intensity, np.ndarray)
         assert np.issubdtype(type(intCoverage), np.integer) or np.issubdtype(type(intCoverage), np.floating)
@@ -55,6 +160,12 @@ class PeakFitSuper:
         logger.debug("PeakFitSuper object initialized.")
 
     def run(self) -> None:
+        """Main method, performs the peak finding, background handling and fitting using
+        the remove_background methods, self.get_peak() and self.fit_peak().
+        Should handle all possible errors (peak not found, peak could not be fitted).
+        In these cases the original data should be shown and the results should equal np.nan.
+        Upon finishing successful, the output properties are set (output power, fwhm, mode wavelength).
+        """
         logger.debug("Calling PeakFitSuper.run()")
         foundPeakFlag: bool
         convergenceFitFlag: bool
@@ -116,6 +227,33 @@ class PeakFitSuper:
                     self.integratedPeak, self.uncintegratedPeak))
 
     def get_peak(self, initialRange: tupleIntOrNone=None, peakWidth: int=50) -> None:
+        """Finds the most prominant peak using scipy.signal.find_peaks()
+        and sorting the results based on their prominence (calculated by scipy.signal.peak_prominences()).
+        Prominance means the height of the peak
+        relative to the lowest point inside a window around the peak.
+        Moreover, the peak height and width are estimated.
+        The peak height corresponds to the intensity value
+        of the peak position. The width is estimated using scipy.signal.peak_widths().
+        The wavelength/energy range in which the peak should lie can be selected using
+        the initialRange parameter.
+
+        The estimations of the peak position, height and width are used as
+        initial parameters for the fitting process.
+
+        In run the parameters are set to their corresponding class attributes
+        (initialRange=self.initRange; peakWidth=self.constantPeakWidth)
+
+        Parameters
+        ----------
+        initialRange: tuple/None, default=None
+            When set to None, no initial range is used
+            Otherwise the program looks only for peaks in between [min(initRange), max(initRange)]
+
+        peakWidth: int, default=50
+            Determines the window length (wlen=2\*peakWidth) of scipy.signal.peak_prominences() and scipy.signal.peak_widths().
+            Thereby the range of data points for both methods is limited. Currently, this parameter is hard coded and cannot be
+            changed in runtime.
+        """
         ## setting an initial range, where the algorithm looks for the peak
         ## looking for all peaks
         logger.debug("Calling PeakFitSuper.get_peak()")
@@ -148,6 +286,28 @@ class PeakFitSuper:
         logger.debug(f"Estimate of the Height: {self.peakHeightEstimate} a.u.")
 
     def remove_background_smoothspline(self, smoothSpline: number=0, smoothGauss: number=7, peakWidth: int=50) -> None:
+        """Fits the background by first smoothing the data set using a gaussian filter (scipy.ndimage.gaussian_filter1d())
+        and then performing a spline interpolation (scipy.interpolate.UnivariateSpline()). In this process the area around the peak is excluded.
+        Personally, I achieved the best results by only using the gaussian filter and not the smoothing spline factor.
+
+        In run these parameters are set to their corresponding class attributes
+        (peakWidth=self.constantPeakWidth; smoothSpline=self.smoothSpline, smoothGauss=self.smoothGauss)
+
+        Parameters
+        ----------
+        smoothGauss: int/float, default=7
+            sigma for the gaussian filter, (scipy.ndimage.gaussian_filter1d()).
+            Larger values for sigma smoothes the data set more.
+
+        smoothSpline: int/float, default=0
+            smoothing factor for the Spline (spl.set_smoothing_factor(smoothSpline)).
+            Smoothes the spline interpolation itself.
+
+        peakWidth: int, default=50
+            Defines the peak exclusion range.
+            The area [peak +/- (fwhmEstimate + constantPeakWidth)] around the peak that should not be smoothed.
+
+        """
         logger.debug(f"Calling remove_background_smoothspline(); smoothspline: {smoothSpline}, smoothGauss: {smoothGauss}, peakWidth: {peakWidth}")
         try:
             dataBeforePeak: np.ndarray = self.data[: self.peak - peakWidth - round(self.fwhmEstimate)] # type: ignore
@@ -168,6 +328,41 @@ Either lower constantPeakWidth or use a different background fitting method.""")
             self.data = self.data - self.spline(self.wavelengths)
 
     def remove_background_local_mean(self, peakWidth: int=50, peakWidthScale: number=3, mode: str="all") -> None:
+        """Removes the background by subtracting the local mean from the data set.
+
+        Parameters
+        ----------
+        peakWidth: int, default=50
+            Defines the boundaries of the subset that is used to calculate the local mean.
+            The area near the peak is excluded.
+
+            .. math::
+                    localDataRight = [peak + fwhmEstimate + constantPeakWidth : peak + fwhmEstimate + 3\cdot constantPeakWidth]
+
+            .. math::
+                    localDataLeft = [peak - fwhmEstimate - constantPeakWidth : peak - fwhmEstimate - 3\cdot constantPeakWidth]
+
+            In run() this parameter is set to self.constantPeakWidth.
+
+        peakWidthScale: int, default=3
+            Scales peakWidth to define the outer boundary. Currently, this parameter is hard coded and cannot be changed in runtime.
+
+        mode: str, default="all"
+            Selects which method should be used ("all", "local_left" or "local_right").
+            The differences between these modes are explained in the options section.
+
+        Options
+            -------
+            local_all:
+                Here the mean is calculated for both sides of the peak.
+                The area close to the peak is excluded in this calculation.
+
+            local_left:
+                Same as local_all, but only the mean of the "right" side (+) is used.
+
+            local_right:
+                Same as local_all, but only the mean of the "left" side (-) is used.
+        """
         logger.debug(f"Calling remove_background_local_mean(); peakWidth: {peakWidth}, peakWidthScale: {peakWidthScale}")
         assert mode in ["left", "right", "all"]
         try:
@@ -188,7 +383,36 @@ Either lower constantPeakWidth or use a different background fitting method. Now
             elif mode == "right":
                 self.data = self.originalData - np.median(dataAfterPeak)
 
-    def fit_peak(self, intCoverage: number=1, fitRangeScale: number=2) -> None:
+    def fit_peak(self, intCoverage: number=1, fitRangeScale: number=1) -> None:
+        """Fits the selected peak using the fitmodel of the derived class.
+        Calulates the final parameters (mode wavelengh, integrated intensity and FWHM).
+
+        The range of the fit and the range of the integration for the intensity can be varied.
+        In run() the attributes are used as parameters
+        (intCoverage=self.intCoverage, fitRangeScale=self.fitRangeScale)
+
+        Parameters
+        ----------
+        intCoverage: float/int, default=1
+            This parameter should lie in the range [0, 1].
+            The resulting fit function is integrated to calculate the integrated intensity,
+            which is used as the output power. This parameter has the following role.
+
+            .. math::
+                output Power = intCoverage\cdot integrated intensity
+
+            If this parameter is 1, then the integration is performed for the complete range
+            of wavelengths (-inf, +inf). For 0, it should always return 0.
+
+        fitRangeScale: int/float, default=1
+            For the fit not the complete data set is used. Only a small part around the peak should be used
+            to get the best results for the fit. This parameter scales the estimated FWHM to get the fitRange.
+
+            .. math::
+                fitRange = round(fitRangeScale\cdot FWHMEstimate)
+            .. math::
+                fitData = data[peak - fitRange: peak + fitRange + 1]
+        """
         logger.debug("Calling PeakFitSuper.fit_peak()")
         assert hasattr(self, "peak")
         fitRange: int = round(fitRangeScale*self.fwhmEstimate)  # type: ignore
@@ -226,6 +450,14 @@ Either lower constantPeakWidth or use a different background fitting method. Now
             self.uncintegratedPeak = intCoverage * np.sqrt(self.cov[0, 0])
 
     def plot_original_data(self, block: bool=True) -> None:
+        """Plots the original data (x: energy, y:intensity)
+
+        Parameters
+        ----------
+        block: bool, default=True
+            if False, the image will be shut close after 1 sec
+            otherwise it will stay on the screen until manually closed
+        """
         plt.plot(self.wavelengths, self.originalData)
         plt.xlabel("Energy [eV]")
         plt.ylabel("Intensity [a. u.]")
@@ -238,6 +470,15 @@ Either lower constantPeakWidth or use a different background fitting method. Now
             plt.close("all")
 
     def plot_interpolation(self, block: bool=True) -> None:
+        """Plots the original data with the spline fit side to side
+        with the resulting smoothed data set where the spline fit has been subtracted.
+
+        Parameters
+        ----------
+        block: bool, default=True
+            if False, the image will be shut close after 1 sec
+            otherwise it will stay on the screen until manually closed
+        """
         assert hasattr(self, "spline")
         fig, axs = plt.subplots(nrows=1, ncols=2)
         ax1, ax2 = axs
@@ -252,6 +493,14 @@ Either lower constantPeakWidth or use a different background fitting method. Now
             plt.close("all")
 
     def plot_fit(self, block: bool=True) -> None:
+        """Plots the fit of the peak side by side with the original data.
+
+        Parameters
+        ----------
+        block: bool, default=True
+            if False, the image will be shut close after 1 sec
+            otherwise it will stay on the screen until manually closed
+        """
         assert hasattr(self, "p")
         wavelengthsPlotArray: np.ndarray = np.linspace(self.wavelengths[0], self.wavelengths[-1], 1000)
         outputPlotArray: np.ndarray = self(wavelengthsPlotArray, *self.p)
@@ -270,6 +519,16 @@ Either lower constantPeakWidth or use a different background fitting method. Now
             plt.close("all")
 
     def plot_fitRange_without_fit(self) -> None:
+        """Visualizes the fitRange side by side with the original data.
+        To show this only get_peak() and the background handling need to be performed but no fitting is necessary.
+        Because of that, this image can be shown even when the fitting did not work out.
+
+        Parameters
+        ----------
+        block: bool, default=True
+            if False, the image will be shut close after 1 sec
+            otherwise it will stay on the screen until manually closed
+        """
         assert hasattr(self, "peak")
         assert hasattr(self, "fwhmEstimate")
         fig, axs = plt.subplots(nrows=1, ncols=2)
@@ -289,6 +548,15 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         plt.show()
 
     def plot_fitRange_with_fit(self) -> None:
+        """Visualizes the fitRange side by side with the original data.
+        Here the fit is also shown.
+
+        Parameters
+        ----------
+        block: bool, default=True
+            if False, the image will be shut close after 1 sec
+            otherwise it will stay on the screen until manually closed
+        """
         assert hasattr(self, "peak")
         assert hasattr(self, "fwhmEstimate")
         assert hasattr(self, "p")
@@ -315,6 +583,16 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         plt.show()
 
     def plot_initRange_without_fit(self) -> None:
+        """Visualizes the initial range side by side with the original data.
+        To show this only get_peak() and the background handling need to be performed but no fitting is necessary.
+        Because of that, this image can be shown even when the fitting did not work out.
+
+        Parameters
+        ----------
+        block: bool, default=True
+            if False, the image will be shut close after 1 sec
+            otherwise it will stay on the screen until manually closed
+        """
         assert hasattr(self, "peak")
         if isinstance(self.initialRange, tuple):
             assert len(self.initialRange) == 2
@@ -340,6 +618,15 @@ Either lower constantPeakWidth or use a different background fitting method. Now
             plt.show()
 
     def plot_initRange_with_fit(self) -> None:
+        """Visualizes the initial range side by side with the original data.
+        Here the fit is also shown.
+
+        Parameters
+        ----------
+        block: bool, default=True
+            if False, the image will be shut close after 1 sec
+            otherwise it will stay on the screen until manually closed
+        """
         assert hasattr(self, "peak")
         assert hasattr(self, "p")
         wavelengthsPlotArray: np.ndarray = np.linspace(self.wavelengths[0], self.wavelengths[-1], 1000)
@@ -373,6 +660,9 @@ Either lower constantPeakWidth or use a different background fitting method. Now
             plt.show()
 
     def plot_fwhm(self) -> None:
+        """Plots the FWHM, which was calculated in the fitting process
+        and also the estimated FWHM from self.get_peak().
+        """
         assert hasattr(self, "peak")
         assert hasattr(self, "p")
         wavelengthsPlotArray: np.ndarray = np.linspace(self.wavelengths[0], self.wavelengths[-1], 1000)
@@ -406,6 +696,8 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         plt.show()
 
     def plot_fwhmEstimate(self) -> None:
+        """Plots only the FWHM estimate
+        """
         assert hasattr(self, "peak")
         fig, ax = plt.subplots(nrows=1, ncols=1)
         ax.plot(self.wavelengths, self.data)
@@ -418,6 +710,9 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         plt.show()
 
     def plot_exclusionRange(self) -> None:
+        """Visualizes the peak exclusion range used for the spline
+        background fitting.
+        """
         assert hasattr(self, "spline")
         fig, axs = plt.subplots(nrows=1, ncols=2)
         ax1, ax2 = axs
@@ -433,6 +728,9 @@ Either lower constantPeakWidth or use a different background fitting method. Now
 
     @classmethod
     def __init_subclass__(cls, *args, **kwargs) -> None:
+        """Makes sure that derived classes satisfy the model dependent required methods,
+        which cannot be defined in the abstract base class.
+        """
         super().__init_subclass__(*args, **kwargs) # type: ignore
         assert hasattr(cls, "set_p0")
         assert hasattr(cls, "set_fwhm")
@@ -450,8 +748,13 @@ Either lower constantPeakWidth or use a different background fitting method. Now
 
     @property
     def outputParameters(self):
+        """Results of the fitting process. Mode wavelength, FWHM and integrated intensity.
+        Are set to np.nan when fitting or peak finding did not work.
+        """
         return self.muFit, self.fwhmFit, self.integratedPeak
 
     @property
     def uncertaintyOutputParameters(self):
+        """Uncertainty of the fit parameters (outputParameters)
+        """
         return self.uncMuFit, self.uncFwhmFit, self.uncintegratedPeak
