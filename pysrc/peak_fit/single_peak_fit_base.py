@@ -1,4 +1,4 @@
-"""Contains the base class that performs the peak fitting.
+"""Contains the base class that performs the fitting of a single peak.
 """
 import numpy as np
 import matplotlib.pyplot as plt # type: ignore
@@ -24,13 +24,154 @@ number = typing.Union[int, float, np.number]
 
 class PeakFitSuper:
     """
-    | Abstract Base Class that finds a peak in a spectrum and fits the peak. Use derived classes to
-    | define the fit model. The class supports the use of an initial range, where the peak should lie.
-    | Moreover, the fitrange can be adapted aswell as the handling of the background.
-    | These parameters are explained in the __init__ method section.
-    |
-    | Also contains different plots to visualize the configuration and the examined spectrum.
-    | In the config/debugging.ini file it can be selected which plots should be shown as snapshots.
+    Abstract Base Class that finds a peak in a spectrum and fits the peak. Use derived classes to
+    define the fit model. The class supports the use of an initial range, where the peak should lie.
+    Moreover, the fitrange can be adapted aswell as the handling of the background.
+    These parameters are explained in the __init__ method section.
+
+    Also contains different plots to visualize the configuration and the examined spectrum.
+    In the config/debugging.ini file it can be selected which plots should be shown as snapshots.
+
+    The following attributes can be passed into the __init__ method:
+
+    mandatory: [wavelengths, intensity]
+
+    keyword args: [initRange, intCoverage, fitRangeScale, constantPeakWidth, backgroundFitMode]
+
+    For more information about these attributes look into their corresponding
+    section. The default values are used in the __init__ method.
+
+    Attributes
+    ----------
+    wavelengths: np.ndarray, set by __init__
+        Wavelengths of the spectrum (usually as energies in units of [eV])
+
+    intensity: np.ndarray, set by __init__
+        The intensity of each Wavlength (count rate of detector)
+
+    initRange: tuple/None, set by __init__, default=None
+        When set to None, no initial range is used
+        Otherwise the program looks only for peaks in between [min(initRange), max(initRange)]
+
+    intCoverage: int/float, set by __init__, default=1
+        The outputpower corresponds to the integrated peak. This parameter can change this integration range.
+        This parameter should lie in the range [0, 1]. The outputpower will always be 0, when set to 0.
+        When set to 1 the integration is performed over all wavelengths (-inf, inf), even for negative wavelengths.
+        However, the wavelengths near the peak contribute mostly to the integral as the peak models should vanish fast
+        as the wavelength goes to +/- inf.
+
+    fitRangeScale: int/float, set by __init__, default=1
+        Determines range of data points that are used for the fitting process. It scales the estimated FWHM of the peak.
+        Then the data near the estimated peak location is used for the fitting
+        .. math::
+            fitRange = round(fitRangeScale\cdot FWHMEstimate)
+        .. math::
+            fitData = data[peak - fitRange: peak + fitRange + 1]
+
+    constantPeakWidth: int, set by __init__, default=50
+        | Extra number of data points that should be added to the FWHMEstimate when estimating the peak width.
+        | This is used for some background extraction methods.
+        | Namely, smooth_spline and all local methods. For smooth_spline it is used to vary the peak exclusion range.
+        | The area [peak +/- (fwhmEstimate + constantPeakWidth)] around the peak that should not be smoothed.
+        | 
+        | For the local methods, it provides the peak exclusion range.
+        | Meaning that in the area [peak +/- (fwhmEstimate + constantPeakWidth)] no data points are used to calculate
+        | the local mean. Furthermore, the other boundary is calculated by scaling constantPeakWidth.
+        | The scaling parameter is currently set to 3.
+        | In the future this may be altered to gain better control of the local mean method.
+        | Therefore a different parameter may be introduced.
+        | 
+        | Moreover, this parameter defines the window length for prominence and width calculation of the peak.
+        | For more information on this look up the documentation for self.get_peak().
+
+    backgroundFitMode: str, set by __init__, default="local_left"
+        | Selects the way the background of the data is handled. My recommendation is to use one of the local methods.
+        | These seems to produce the most consistent results for the S-shapes.
+        | 
+        | When the background is lower on the left side of the peak than on the right side of the peak,
+        | then I tend to use local_left instead of local_all. This ended up producing better results for me.
+        | 
+        | Usually, I use local_left for everything, because if one of my data sets is skewed than the left side
+        | was pretty much always lower than the right side. If the data set is not skewed it also does not make
+        | visible (in the S-shape) difference whether local_all, local_right or local_left is used.
+        | 
+        local_all:
+            Subtracts the local mean from the data set and then performs the fitting.
+            In this particular method, the mean is calculated for both sides of the peak.
+            The area close to the peak is excluded in this calculation. The size of this area can be varied
+            by changing the constantPeakWidth parameter.
+            On the "right" side the area used for the mean calculation looks like this.
+            .. math::
+                localData = [peak + fwhmEstimate + constantPeakWidth :
+            .. math::
+                peak + fwhmEstimate + 3\cdot constantPeakWidth]
+            The left side looks similar (- instead of +). The scaling parameter 3 is currently hard coded into the routine
+            and cannot be varied in runtime.
+
+        local_left:
+            Same as local_all, but only the mean of the "right" side (+) is used.
+
+        local_right:
+            Same as local_all, but only the mean of the "left" side (-) is used.
+
+        spline:
+            | Uses spline interpolation to flatten the background, the area around the peak is excluded.
+            | The size of the area can be varied by changing constantPeakWidth.
+            | 
+            | This is the heaviest transformation (most expensive and biggest change on the data set).
+            | The form of the S-shape (especially the tails) is dependent on the peak exclusion range.
+
+        constant:
+            Subtracts the median of the complete data set (intensities) from the data set.
+
+        offset:
+            The background is not changed, but an offset is used in the fitting process (f(x, \*args) + b)
+
+        none/disable:
+            The background is not changed and no offset is used
+
+    minWavelength: float, set by __init__
+
+    maxWavelength: float, set by __init__
+
+    muFit: float, set by fit_peak()
+        mean wavelength obtained from the fit
+
+    fwhmFit: float, set by fit_peak()
+        fwhm of the examined peak, obtained from the fit
+
+    integratedPeak: float, set by fit_peak()
+        integration of peak intensity curve fit over all wavelengths, used as output power
+
+    uncintegratedPeak: float, set by fit_peak()
+        uncertainty of integrated peak, obtained from the fit
+
+    uncFwhmFit: float, set by fit_peak()
+        uncertainty of fwhmFit, obtained from the fit
+
+    uncMuFit: float, set by fit_peak()
+        uncertainty of muFit, obtained from the fit
+
+    peak: int, set by get_peak()
+        index of the estimated peak position (corresponding wavelength: wavelengths[peak])
+        used as initial guess for the fit
+
+    peakHeightEstimate: float, set by get_peak()
+        Estimate of the absolute peak height
+        used for the initial guess for the fit
+
+    fwhmEstimate: float, set by get_peak()
+        Estimate of the fwhm of the peak using scipy.signal.peak_widths()
+        used as initial guess for the fit
+
+    p: np.ndarray, set by fit_peak()
+        Return value of the fit parameters from scipy.optimize.curve_fit()
+
+    cov: np.ndarray, set by fit_peak()
+        Return value of the covariance of the fit parameters from scipy.optimize.curve_fit()
+
+    spline: scipy.interpolate.UnivariateSpline, set by remove_background_spline()
+        spline object, used to visualize the spline fit
     """
     smoothGauss: number = 7
     """float/int: default sigma for gaussian filter used in self.remove_background_smoothspline()
@@ -42,104 +183,6 @@ class PeakFitSuper:
     def __init__(self, wavelengths: np.ndarray, intensity: np.ndarray, initRange: tupleIntOrNone=None,
                 intCoverage: number=1, fitRangeScale: number=5, constantPeakWidth: int=50,
                 backgroundFitMode: str="local_left") -> None:
-        """
-        Upon initialization attributes are set.
-
-        Parameters
-        ----------
-        wavelengths: np.ndarray
-            Wavelengths of the spectrum (usually as energies in units of [eV])
-
-        intensity: np.ndarray
-            The intensity of each Wavlength (count rate of detector)
-
-        initRange: tuple/None, default=None
-            When set to None, no initial range is used
-            Otherwise the program looks only for peaks in between [min(initRange), max(initRange)]
-
-        intCoverage: int/float, default=1
-            The outputpower corresponds to the integrated peak. This parameter can change this integration range.
-            This parameter should lie in the range [0, 1]. The outputpower will always be 0, when set to 0.
-            When set to 1 the integration is performed over all wavelengths (-inf, inf), even for negative wavelengths.
-            However, the wavelengths near the peak contribute mostly to the integral as the peak models should vanish fast
-            as the wavelength goes to +/- inf.
-
-        fitRangeScale: int/float, default=1
-            Determines range of data points that are used for the fitting process. It scales the estimated FWHM of the peak.
-            Then the data near the estimated peak location is used for the fitting
-
-            .. math::
-                fitRange = round(fitRangeScale\cdot FWHMEstimate)
-
-            .. math::
-                fitData = data[peak - fitRange: peak + fitRange + 1]
-
-        constantPeakWidth: int, default=50
-            | Extra number of data points that should be added to the FWHMEstimate when estimating the peak width.
-            | This is used for some background extraction methods.
-            | Namely, smooth_spline and all local methods. For smooth_spline it is used to vary the peak exclusion range.
-            | The area [peak +/- (fwhmEstimate + constantPeakWidth)] around the peak that should not be smoothed.
-            | 
-            | For the local methods, it provides the peak exclusion range.
-            | Meaning that in the area [peak +/- (fwhmEstimate + constantPeakWidth)] no data points are used to calculate
-            | the local mean. Furthermore, the other boundary is calculated by scaling constantPeakWidth.
-            | The scaling parameter is currently set to 3.
-            | In the future this may be altered to gain better control of the local mean method.
-            | Therefore a different parameter may be introduced.
-            | 
-            | Moreover, this parameter defines the window length for prominence and width calculation of the peak.
-            | For more information on this look up the documentation for self.get_peak().
-
-        backgroundFitMode: str, default="local_left"
-            | Selects the way the background of the data is handled. My recommendation is to use one of the local methods.
-            | These seems to produce the most consistent results for the S-shapes.
-            | 
-            | When the background is lower on the left side of the peak than on the right side of the peak,
-            | then I tend to use local_left instead of local_all. This ended up producing better results for me.
-            | 
-            | Usually, I use local_left for everything, because if one of my data sets is skewed than the left side
-            | was pretty much always lower than the right side. If the data set is not skewed it also does not make
-            | visible (in the S-shape) difference whether local_all, local_right or local_left is used.
-            | 
-
-            local_all:
-                Subtracts the local mean from the data set and then performs the fitting.
-                In this particular method, the mean is calculated for both sides of the peak.
-                The area close to the peak is excluded in this calculation. The size of this area can be varied
-                by changing the constantPeakWidth parameter.
-                On the "right" side the area used for the mean calculation looks like this.
-
-                .. math::
-                    localData = [peak + fwhmEstimate + constantPeakWidth :
-
-                .. math::
-                    peak + fwhmEstimate + 3\cdot constantPeakWidth]
-
-                The left side looks similar (- instead of +). The scaling parameter 3 is currently hard coded into the routine
-                and cannot be varied in runtime.
-
-            local_left:
-                Same as local_all, but only the mean of the "right" side (+) is used.
-
-            local_right:
-                Same as local_all, but only the mean of the "left" side (-) is used.
-
-            spline:
-                | Uses spline interpolation to flatten the background, the area around the peak is excluded.
-                | The size of the area can be varied by changing constantPeakWidth.
-                | 
-                | This is the heaviest transformation (most expensive and biggest change on the data set).
-                | The form of the S-shape (especially the tails) is dependent on the peak exclusion range.
-
-            constant:
-                Subtracts the median of the complete data set (intensities) from the data set.
-
-            offset:
-                The background is not changed, but an offset is used in the fitting process (f(x, \*args) + b)
-
-            none/disable:
-                The background is not changed and no offset is used
-        """
         assert isinstance(wavelengths, np.ndarray)
         assert isinstance(intensity, np.ndarray)
         assert np.issubdtype(type(intCoverage), np.integer) or np.issubdtype(type(intCoverage), np.floating)
@@ -152,8 +195,8 @@ class PeakFitSuper:
         self.wavelengths: np.ndarray = wavelengths
         self.minWavelength: number = np.amin(self.wavelengths)
         self.maxWavelength: number = np.amax(self.wavelengths)
-        self.data: np.ndarray = intensity
-        self.originalData: np.ndarray = copy.deepcopy(self.data)
+        self.intensity: np.ndarray = intensity
+        self.originalIntensity: np.ndarray = copy.deepcopy(self.intensity)
         self.fitRangeScale: number = fitRangeScale
         self.intCoverage: number = intCoverage
         self.constantPeakWidth: int = constantPeakWidth
@@ -193,7 +236,7 @@ class PeakFitSuper:
             if self.backgroundFitMode == "spline":
                 self.remove_background_smoothspline(smoothSpline=self.smoothSpline, smoothGauss=self.smoothGauss, peakWidth=self.constantPeakWidth)
             elif self.backgroundFitMode == "constant":
-                self.data = self.originalData - np.median(self.originalData)
+                self.intensity = self.originalIntensity - np.median(self.originalIntensity)
             elif self.backgroundFitMode == "local_all":
                 self.remove_background_local_mean(peakWidth=self.constantPeakWidth, mode="all")
             elif self.backgroundFitMode == "local_left":
@@ -270,7 +313,7 @@ class PeakFitSuper:
         logger.debug("Calling PeakFitSuper.get_peak()")
         assert isinstance(initialRange, (tuple, type(None)))
         peaks: np.ndarray
-        peaks, _ = signal.find_peaks(self.data)
+        peaks, _ = signal.find_peaks(self.intensity)
         if isinstance(initialRange, tuple):
             assert len(initialRange) == 2
             assert np.issubdtype(type(initialRange[0]), np.integer)
@@ -284,14 +327,14 @@ class PeakFitSuper:
                     peakList.append(peak)
             peaks = np.array(peakList)
         # logger.debug(f"All found peaks: {peaks}")
-        prominences: np.ndarray = signal.peak_prominences(self.data, peaks, wlen=2*peakWidth)[0]
+        prominences: np.ndarray = signal.peak_prominences(self.intensity, peaks, wlen=2*peakWidth)[0]
         if len(prominences) == 0:
             raise RuntimeError("No peak could be found")
         self.peak: int = peaks[np.argmax(prominences)]
-        self.peakHeightEstimate: number = self.data[self.peak]
+        self.peakHeightEstimate: number = self.intensity[self.peak]
         if self.peakHeightEstimate <= 0:
             raise ValueError(f"The estimated height of peak ({self.peakHeightEstimate}) is below 0")
-        self.fwhmEstimate: number = signal.peak_widths(self.data, np.array([self.peak]), rel_height=0.5, wlen=2*peakWidth)[0][0]
+        self.fwhmEstimate: number = signal.peak_widths(self.intensity, np.array([self.peak]), rel_height=0.5, wlen=2*peakWidth)[0][0]
         logger.debug(f"Found peak at: {self.wavelengths[self.peak]} nm/eV, index: [{self.peak}]")
         logger.debug(f"Estimate of FWHM: {np.abs(self.wavelengths[1] - self.wavelengths[0])*self.fwhmEstimate} nm/eV, index length: [{self.fwhmEstimate}]")
         logger.debug(f"Estimate of the Height: {self.peakHeightEstimate} a.u.")
@@ -322,8 +365,9 @@ class PeakFitSuper:
         """
         logger.debug(f"Calling remove_background_smoothspline(); smoothspline: {smoothSpline}, smoothGauss: {smoothGauss}, peakWidth: {peakWidth}")
         try:
-            dataBeforePeak: np.ndarray = self.data[: self.peak - peakWidth - round(self.fwhmEstimate)] # type: ignore
-            dataAfterPeak: np.ndarray = self.data[self.peak + peakWidth + round(self.fwhmEstimate) + 1 :] # type: ignore
+            ## exclude peak area
+            dataBeforePeak: np.ndarray = self.intensity[: self.peak - peakWidth - round(self.fwhmEstimate)] # type: ignore
+            dataAfterPeak: np.ndarray = self.intensity[self.peak + peakWidth + round(self.fwhmEstimate) + 1 :] # type: ignore
         except IndexError:
             logger.error("""Data range for peak exclusion exceeded while trying to use spline background removal.
 Either lower constantPeakWidth or use a different background fitting method.""")
@@ -337,7 +381,7 @@ Either lower constantPeakWidth or use a different background fitting method.""")
             logger.debug(f"Exclusion range smooth spline: [{min(wavelengthsBeforePeak)}, {max(wavelengthsAfterPeak)}]")
             self.spline: interpolate.UnivariateSpline = interpolate.UnivariateSpline(wavelengthsWithoutPeak, dataWithoutPeak)
             self.spline.set_smoothing_factor(smoothSpline)
-            self.data = self.data - self.spline(self.wavelengths)
+            self.intensity = self.intensity - self.spline(self.wavelengths)
 
     def remove_background_local_mean(self, peakWidth: int=50, peakWidthScale: number=3, mode: str="all") -> None:
         """Removes the background by subtracting the local mean from the data set.
@@ -381,8 +425,8 @@ Either lower constantPeakWidth or use a different background fitting method.""")
         logger.debug(f"Calling remove_background_local_mean(); peakWidth: {peakWidth}, peakWidthScale: {peakWidthScale}")
         assert mode in ["left", "right", "all"]
         try:
-            dataBeforePeak: np.ndarray = self.data[self.peak - peakWidthScale*peakWidth - round(self.fwhmEstimate) : self.peak - peakWidth - round(self.fwhmEstimate) + 1]  # type: ignore
-            dataAfterPeak: np.ndarray = self.data[self.peak + peakWidth + round(self.fwhmEstimate) : self.peak + peakWidthScale*peakWidth + round(self.fwhmEstimate) + 1]  # type: ignore
+            dataBeforePeak: np.ndarray = self.intensity[self.peak - peakWidthScale*peakWidth - round(self.fwhmEstimate) : self.peak - peakWidth - round(self.fwhmEstimate) + 1]  # type: ignore
+            dataAfterPeak: np.ndarray = self.intensity[self.peak + peakWidth + round(self.fwhmEstimate) : self.peak + peakWidthScale*peakWidth + round(self.fwhmEstimate) + 1]  # type: ignore
             logger.debug(f"indices before peak: [{self.peak - peakWidthScale*peakWidth - round(self.fwhmEstimate)}, {self.peak - peakWidth - round(self.fwhmEstimate)}]")  # type: ignore
             logger.debug(f"wavelength before peak: [{self.wavelengths[self.peak - peakWidthScale*peakWidth - round(self.fwhmEstimate)]}, {self.wavelengths[self.peak - peakWidth - round(self.fwhmEstimate)]}]")  # type: ignore
             logger.debug(f"wavelength after peak: [{self.wavelengths[self.peak + peakWidth + round(self.fwhmEstimate)]}, {self.wavelengths[self.peak + peakWidthScale*peakWidth + round(self.fwhmEstimate)]}]")  # type: ignore
@@ -392,11 +436,11 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         else:
             dataAroundPeak: np.ndarray = np.concatenate((dataBeforePeak, dataAfterPeak))
             if mode == "all":
-                self.data = self.originalData - np.median(dataAroundPeak)
+                self.intensity = self.originalIntensity - np.median(dataAroundPeak)
             elif mode == "left":
-                self.data = self.originalData - np.median(dataBeforePeak)
+                self.intensity = self.originalIntensity - np.median(dataBeforePeak)
             elif mode == "right":
-                self.data = self.originalData - np.median(dataAfterPeak)
+                self.intensity = self.originalIntensity - np.median(dataAfterPeak)
 
     def fit_peak(self, intCoverage: number=1, fitRangeScale: number=1) -> None:
         """
@@ -442,12 +486,12 @@ Either lower constantPeakWidth or use a different background fitting method. Now
             if len(fitWavelengths) <= 3:
                 logger.warning(f"Less than 3 points are used for the fitting. Aborting fitting proccss.")
                 raise RuntimeError("Not enough points for fitting.")
-            fitData: np.ndarray = self.data[self.peak - fitRange : self.peak + fitRange + 1]
+            fitData: np.ndarray = self.intensity[self.peak - fitRange : self.peak + fitRange + 1]
             self.set_p0() # type: ignore
             self.p: np.ndarray
             self.cov: np.ndarray
             if self.backgroundFitMode == "offset":
-                self.p0.append(np.median(self.data))  # type: ignore
+                self.p0.append(np.median(self.intensity))  # type: ignore
                 lowerBounds: list
                 higherBounds: list
                 lowerBounds, higherBounds = self.paramBounds  # type: ignore
@@ -475,7 +519,7 @@ Either lower constantPeakWidth or use a different background fitting method. Now
             if False, the image will be shut close after 1 sec
             otherwise it will stay on the screen until manually closed
         """
-        plt.plot(self.wavelengths, self.originalData)
+        plt.plot(self.wavelengths, self.originalIntensity)
         plt.xlabel("Energy [eV]")
         plt.ylabel("Intensity [a. u.]")
         plt.tight_layout()
@@ -499,9 +543,9 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         assert hasattr(self, "spline")
         fig, axs = plt.subplots(nrows=1, ncols=2)
         ax1, ax2 = axs
-        ax1.plot(self.wavelengths, self.originalData)
+        ax1.plot(self.wavelengths, self.originalIntensity)
         ax1.plot(self.wavelengths, self.spline(self.wavelengths))
-        ax2.plot(self.wavelengths, self.data)
+        ax2.plot(self.wavelengths, self.intensity)
         if block:
             plt.show()
         else:
@@ -523,10 +567,10 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         outputPlotArray: np.ndarray = self(wavelengthsPlotArray, *self.p) # type: ignore
         fig, axs = plt.subplots(nrows=1, ncols=2)
         ax1, ax2 = axs
-        ax1.plot(self.wavelengths, self.originalData)
+        ax1.plot(self.wavelengths, self.originalIntensity)
         if hasattr(self, "spline"):
             ax1.plot(self.wavelengths, self.spline(self.wavelengths))
-        ax2.plot(self.wavelengths, self.data)
+        ax2.plot(self.wavelengths, self.intensity)
         ax2.plot(wavelengthsPlotArray, outputPlotArray)
         if block:
             plt.show()
@@ -550,10 +594,10 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         assert hasattr(self, "fwhmEstimate")
         fig, axs = plt.subplots(nrows=1, ncols=2)
         ax1, ax2 = axs
-        ax1.plot(self.wavelengths, self.originalData)
+        ax1.plot(self.wavelengths, self.originalIntensity)
         if hasattr(self, "spline"):
             ax1.plot(self.wavelengths, self.spline(self.wavelengths))
-        ax2.plot(self.wavelengths, self.data)
+        ax2.plot(self.wavelengths, self.intensity)
         fitRange: int = round(self.fitRangeScale * self.fwhmEstimate) # type: ignore
         leftBoundary: number = self.wavelengths[self.peak - fitRange]
         rightBoundary: number = self.wavelengths[self.peak + fitRange]
@@ -561,7 +605,7 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         ax2.axvline(x=rightBoundary, color="black")
         ax1.set_title("Original data")
         ax2.set_title("Fitting range")
-        ax2.plot(self.wavelengths[self.peak], self.data[self.peak], "+", color="black")
+        ax2.plot(self.wavelengths[self.peak], self.intensity[self.peak], "+", color="black")
         plt.show()
 
     def plot_fitRange_with_fit(self) -> None:
@@ -581,10 +625,10 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         outputPlotArray: np.ndarray = self(wavelengthsPlotArray, *self.p) # type: ignore
         fig, axs = plt.subplots(nrows=1, ncols=2)
         ax1, ax2 = axs
-        ax1.plot(self.wavelengths, self.originalData)
+        ax1.plot(self.wavelengths, self.originalIntensity)
         if hasattr(self, "spline"):
             ax1.plot(self.wavelengths, self.spline(self.wavelengths))
-        ax2.plot(self.wavelengths, self.data)
+        ax2.plot(self.wavelengths, self.intensity)
         fitRange: int = round(self.fitRangeScale * self.fwhmEstimate) # type: ignore
         leftBoundary: number = self.wavelengths[self.peak - fitRange]
         rightBoundary: number = self.wavelengths[self.peak + fitRange]
@@ -595,7 +639,7 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         ax1.set_title("Fitting range + original data")
         ax2.set_title("Fitting range + fitted data")
         ax2.plot(wavelengthsPlotArray, outputPlotArray)
-        ax1.plot(self.wavelengths[self.peak], self.originalData[self.peak], "+", color="black")
+        ax1.plot(self.wavelengths[self.peak], self.originalIntensity[self.peak], "+", color="black")
         ax2.plot(self.muFit, self(self.muFit, *self.p), "x", color="black") # type: ignore
         plt.show()
 
@@ -620,17 +664,17 @@ Either lower constantPeakWidth or use a different background fitting method. Now
             boundary2: number = self.wavelengths[idx2]
             fig, axs = plt.subplots(nrows=1, ncols=2)
             ax1, ax2 = axs
-            ax1.plot(self.wavelengths, self.originalData)
-            ax2.plot(self.wavelengths, self.originalData)
+            ax1.plot(self.wavelengths, self.originalIntensity)
+            ax2.plot(self.wavelengths, self.originalIntensity)
             ax2.axvline(x=boundary1, color="black")
             ax2.axvline(x=boundary2, color="black")
-            ax2.plot(self.wavelengths[self.peak], self.originalData[self.peak], "+", color="black")
+            ax2.plot(self.wavelengths[self.peak], self.originalIntensity[self.peak], "+", color="black")
             fig.suptitle("initial range and peak visualized")
             plt.show()
         else:
             fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.plot(self.wavelengths, self.originalData)
-            ax.plot(self.wavelengths[self.peak], self.originalData[self.peak], "+", color="black")
+            ax.plot(self.wavelengths, self.originalIntensity)
+            ax.plot(self.wavelengths[self.peak], self.originalIntensity[self.peak], "+", color="black")
             fig.suptitle("No initial Range selected")
             plt.show()
 
@@ -657,22 +701,22 @@ Either lower constantPeakWidth or use a different background fitting method. Now
             boundary2: number = self.wavelengths[idx2]
             fig, axs = plt.subplots(nrows=1, ncols=2)
             ax1, ax2 = axs
-            ax1.plot(self.wavelengths, self.originalData)
-            ax2.plot(self.wavelengths, self.originalData)
+            ax1.plot(self.wavelengths, self.originalIntensity)
+            ax2.plot(self.wavelengths, self.originalIntensity)
             ax1.axvline(x=boundary1, color="black")
             ax1.axvline(x=boundary2, color="black")
             ax2.axvline(x=boundary1, color="black")
             ax2.axvline(x=boundary2, color="black")
             ax2.plot(wavelengthsPlotArray, outputPlotArray)
-            ax1.plot(self.wavelengths[self.peak], self.originalData[self.peak], "+", color="black")
+            ax1.plot(self.wavelengths[self.peak], self.originalIntensity[self.peak], "+", color="black")
             ax2.plot(self.muFit, self(self.muFit, *self.p), "x", color="black") # type: ignore
             fig.suptitle("initial range and peak visualized")
             plt.show()
         else:
             fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.plot(self.wavelengths, self.originalData)
+            ax.plot(self.wavelengths, self.originalIntensity)
             ax.plot(wavelengthsPlotArray, outputPlotArray)
-            ax.plot(self.wavelengths[self.peak], self.originalData[self.peak], "+", color="black")
+            ax.plot(self.wavelengths[self.peak], self.originalIntensity[self.peak], "+", color="black")
             fig.suptitle("No initial Range selected")
             plt.show()
 
@@ -686,8 +730,8 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         outputPlotArray: np.ndarray = self(wavelengthsPlotArray, *self.p) # type: ignore
         fig, axs = plt.subplots(nrows=1, ncols=3)
         ax1, ax2, ax3 = axs
-        ax1.plot(self.wavelengths, self.data)
-        ax2.plot(self.wavelengths, self.data)
+        ax1.plot(self.wavelengths, self.intensity)
+        ax2.plot(self.wavelengths, self.intensity)
         fwhmEstimate1: number = self.wavelengths[self.peak - round(self.fwhmEstimate/2)] # type: ignore
         fwhmEstimate2: number = self.wavelengths[self.peak + round(self.fwhmEstimate/2)] # type: ignore
         ax1.axvline(x=fwhmEstimate1, color="black", linestyle="--")
@@ -698,17 +742,17 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         ax2.axvline(x=fwhm2, color="black")
         ax1.plot(wavelengthsPlotArray, outputPlotArray)
         ax2.plot(wavelengthsPlotArray, outputPlotArray)
-        ax1.plot(self.wavelengths[self.peak], self.data[self.peak], "+", color="black")
+        ax1.plot(self.wavelengths[self.peak], self.intensity[self.peak], "+", color="black")
         ax2.plot(self.muFit, self(self.muFit, *self.p), "x", color="black") # type: ignore
         ax1.set_title("fwhm estimate")
         ax2.set_title("fwhm fit")
-        ax3.plot(self.wavelengths, self.data)
+        ax3.plot(self.wavelengths, self.intensity)
         ax3.axvline(x=fwhmEstimate1, color="black", linestyle="--", label="Estimate")
         ax3.axvline(x=fwhmEstimate2, color="black", linestyle="--")
         ax3.axvline(x=fwhm1, color="black")
         ax3.axvline(x=fwhm2, color="black")
         ax3.plot(wavelengthsPlotArray, outputPlotArray)
-        ax3.plot(self.wavelengths[self.peak], self.data[self.peak], "+", color="black")
+        ax3.plot(self.wavelengths[self.peak], self.intensity[self.peak], "+", color="black")
         ax3.plot(self.muFit, self(self.muFit, *self.p), "x", color="black") # type: ignore
         plt.show()
 
@@ -717,12 +761,12 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         """
         assert hasattr(self, "peak")
         fig, ax = plt.subplots(nrows=1, ncols=1)
-        ax.plot(self.wavelengths, self.data)
+        ax.plot(self.wavelengths, self.intensity)
         fwhmEstimate1: number = self.wavelengths[self.peak - round(self.fwhmEstimate/2)] # type: ignore
         fwhmEstimate2: number = self.wavelengths[self.peak + round(self.fwhmEstimate/2)] # type: ignore
         ax.axvline(x=fwhmEstimate1, color="black")
         ax.axvline(x=fwhmEstimate2, color="black")
-        ax.plot(self.wavelengths[self.peak], self.data[self.peak], "+", color="black")
+        ax.plot(self.wavelengths[self.peak], self.intensity[self.peak], "+", color="black")
         ax.set_title("fwhm estimate")
         plt.show()
 
@@ -733,9 +777,9 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         assert hasattr(self, "spline")
         fig, axs = plt.subplots(nrows=1, ncols=2)
         ax1, ax2 = axs
-        ax1.plot(self.wavelengths, self.originalData)
+        ax1.plot(self.wavelengths, self.originalIntensity)
         ax1.plot(self.wavelengths, self.spline(self.wavelengths))
-        ax2.plot(self.wavelengths, self.data)
+        ax2.plot(self.wavelengths, self.intensity)
         leftBoundary: number = self.wavelengths[self.peak - self.constantPeakWidth - round(self.fwhmEstimate)] # type: ignore
         rightBoundary: number = self.wavelengths[self.peak + self.constantPeakWidth + round(self.fwhmEstimate)] # type: ignore
         ax1.axvline(x=leftBoundary, color="black")
