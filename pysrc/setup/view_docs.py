@@ -2,6 +2,11 @@
 The files in head/docs/build/html hosted (contains the documentation of the project).
 The default webbrowser is opened to view the html files.
 To shutdown the server, this script accepts user input in the console where this script has been executed.
+
+Attributes
+----------
+docsBuildDirPath: pathlib.Path
+    path to the html files of the documentation
 """
 import webbrowser
 import socketserver
@@ -12,8 +17,6 @@ from typing import Any
 
 headDirPath: Path = Path(__file__).parents[2]
 docsBuildDirPath: Path = (headDirPath / "docs" / "build" / "html").resolve()
-"""pathlib.Path: Path to the html files of the documentation
-"""
 
 HOST: str = "localhost"
 PORT: int = 0

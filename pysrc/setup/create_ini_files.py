@@ -1,6 +1,20 @@
 """Creates default .ini files in the config directory.
 (debugging.ini, logging.ini, powerseries.ini).
 Executed during build process.
+
+Attributes
+----------
+configDir: pathlib.Path
+    path to the config directory
+
+debuggingFilePath: pathlib.Path
+    path to the debugging.ini file
+
+loggingFilePath: pathlib.Path
+    path to the logging.ini file
+
+powerSeriesFilePath: pathlib.Path
+    path to the powerseries.ini file
 """
 if __name__ == "__main__":
     from configparser import ConfigParser

@@ -1,6 +1,23 @@
 """Creates docs/source/conf.py and docs/source/index.rst.
 These are the configuration files for the documentation.
 Executed during build process.
+
+Attributes
+----------
+docsSourcePath: pathlib.Path
+    path to the .rst files of the documentation
+
+confpyFile: str
+    conf.py file for the docs setup
+
+confpyPath: pathlib.Path
+    path to the conf.py file from the docs setup
+
+indexrstFile: str
+    index.rst file for the docs setup
+
+indexrstPath: pathlib.Path
+    path to the index.rst file from the docs setup
 """
 if __name__ == "__main__":
     from pathlib import Path
