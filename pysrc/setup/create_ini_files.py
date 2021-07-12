@@ -33,7 +33,9 @@ if __name__ == "__main__":
     configLogging.set("logging configuration", "; enable console logging (options: true/false)", None)
     configLogging.set("logging configuration", "enable console logging", "true\n")
     configLogging.set("logging configuration", "; enabled files for logging (options: all available logging levels)", None)
-    configLogging.set("logging configuration", "enabled file list", "debug, info, warning")
+    configLogging.set("logging configuration", "enabled file list", "debug, info, warning\n")
+    configLogging.set("logging configuration", "; enable file logging (options: true/false)", None)
+    configLogging.set("logging configuration", "enable file logging", "true")
 
     with open(str(loggingFilePath), "w") as configFile:
         configLogging.write(configFile)
