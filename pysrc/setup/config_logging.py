@@ -12,152 +12,158 @@ import typing
 listOrNone = typing.Union[list, None] # used for type hint
 
 class LoggingConfig:
-    """Contains the methods to provide the logging and debugging setup.
+    """
+    Contains the methods to provide the logging and debugging setup.
 
     This class can be used to read the config/logging.ini file and create a setup/config_logging.json file.
     Moreover, the config/debugging.ini is read.
     Finally, a logger object can be created which should be used to create logging messages.
-    """
-    headDirPath: Path = Path(__file__).parents[2].resolve()
 
-    configLogJsonPath: Path = (headDirPath / "pysrc" / "setup" / "config_logging.json").resolve()
-    """default path to the config_logging.json file
-    """
+    Upon initialization self.read_debugging_ini_file() is called and the following attributes are set.
+    (headDirPath, configLogJsonPath, logsDirPath)
 
-    logsDirPath: Path = (headDirPath / "logs").resolve()
-    """default path to the logs directory
-    """
+    Attributes
+    ----------
+    headDirPath: Path, class variable
+        Path to the head directory containing the pysrc and scripts directory.
 
-    loggingLevelList: list[str] = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-    """list: list of available logging levels. This used to check whether invalid options are provided in the config file.
-    """
+    configLogJsonPath: Path, class variable
+        Path to the config_logging.json file. This file contains the logging setup in a format
+        that can easily be read by the logging library.
 
-    configFileBase: dict = {
-        "version": 1,
-        "disable_existing_loggers": 0,
-        "formatters": {
-            "simple": {
-                "format": "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
-            }
-        },
+    logsDirPath: Path, class variable
+        Path to the logs directory (log files are stored there)
 
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-                "level": "DEBUG",
-                "formatter": "simple"
-            },
+    loggingLevelList: list[str], class variable
+        list of available logging levels. This used to check whether invalid options are provided in the config file.
 
-            "debug_file": {
-                "class": "logging.handlers.RotatingFileHandler",
-                "level": "DEBUG",
-                "formatter": "simple",
-                "filename": str((logsDirPath / "debug.log").resolve()),
-                "maxBytes": 1048576,
-                "backupCount": 0,
-                "encoding": "utf8"
-            },
+    configFileBase: dict, class variable
+        Contains the logging configuration in a format that can easily transformed into a json file using the json library.
 
-            "info_file": {
-                "class": "logging.handlers.RotatingFileHandler",
-                "level": "INFO",
-                "formatter": "simple",
-                "filename": str((logsDirPath / "info.log").resolve()),
-                "maxBytes": 1048576,
-                "backupCount": 0,
-                "encoding": "utf8"
-            },
+    consoleLevel: str, set by read_logging_ini_file
+            logging level of the console
 
-            "error_file": {
-                "class": "logging.handlers.RotatingFileHandler",
-                "level": "ERROR",
-                "formatter": "simple",
-                "filename": str((logsDirPath / "error.log").resolve()),
-                "maxBytes": 1048576,
-                "backupCount": 0,
-                "encoding": "utf8"
-            },
+    enableConsoleLogging: bool, set by read_logging_ini_file
+        if False then no logging messages will be printed in the console independent of the console level
 
-            "warning_file": {
-                "class": "logging.handlers.RotatingFileHandler",
-                "level": "WARNING",
-                "formatter": "simple",
-                "filename": str((logsDirPath / "warnings.log").resolve()),
-                "maxBytes": 1048576,
-                "backupCount": 0,
-                "encoding": "utf8"
-            },
+    enabledFileList: list, set by read_logging_ini_file
+        list of logging files that should be created.
+        When None then no debug files are created
+        example: [debug, info, error, warnings, critical] or subsample of this list
 
-            "critical_file": {
-                "class": "logging.handlers.RotatingFileHandler",
-                "level": "CRITICAL",
-                "formatter": "simple",
-                "filename": str((logsDirPath / "critical.log").resolve()),
-                "maxBytes": 1048576,
-                "backupCount": 0,
-                "encoding": "utf8"
-            }
-        },
+    enableFileLogging: bool, set by read_logging_ini_file
+        if False, then no log files are created independent of enabledFileList
 
-        ## I don't know what this does
-        # "loggers": {
-        #     "test": {
-        #         "level": "INFO",
-        #         "handlers": ["console"],
-        #         "propagate": 0
-        #     }
-        # },
+    enableDebugging: bool, set by read_debugging_ini_file
+        if False then no debugging plots will be shown independent of all other options
 
-        "root": {
-            "level": "DEBUG",
-            "handlers": ["console", "debug_file", "info_file", "warning_file", "error_file", "critical_file"]
-        }
-    }
-    """dict: Contains the logging configuration in a format that can easily transformed into a json file.
+    debugFitRange: bool, set by read_debugging_ini_file
+        if True then the fitting range of the peak will be visualized in the snapshots
+
+    debuginitialRange: bool, set by read_debugging_ini_file
+        if True then the initial range, where the program looks for a peak will be visualized in the snapshots
+
+    debugFWHM: bool, set by read_debugging_ini_file
+        if True then the estimated and the fitted FWHM will be shown in the snapshots
     """
 
     def __init__(self) -> None:
-        """Upon initialization the debugging file is read.
-        """
+        self.headDirPath: Path = Path(__file__).parents[2].resolve()
+        self.configLogJsonPath: Path = (self.headDirPath / "pysrc" / "setup" / "config_logging.json").resolve()
+        self.logsDirPath: Path = (self.headDirPath / "logs").resolve()
+        self.loggingLevelList: list[str] = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        self.configFileBase: dict = {
+            "version": 1,
+            "disable_existing_loggers": 0,
+            "formatters": {
+                "simple": {
+                    "format": "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
+                }
+            },
+
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "level": "DEBUG",
+                    "formatter": "simple"
+                },
+
+                "debug_file": {
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "level": "DEBUG",
+                    "formatter": "simple",
+                    "filename": str((self.logsDirPath / "debug.log").resolve()),
+                    "maxBytes": 1048576,
+                    "backupCount": 0,
+                    "encoding": "utf8"
+                },
+
+                "info_file": {
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "level": "INFO",
+                    "formatter": "simple",
+                    "filename": str((self.logsDirPath / "info.log").resolve()),
+                    "maxBytes": 1048576,
+                    "backupCount": 0,
+                    "encoding": "utf8"
+                },
+
+                "error_file": {
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "level": "ERROR",
+                    "formatter": "simple",
+                    "filename": str((self.logsDirPath / "error.log").resolve()),
+                    "maxBytes": 1048576,
+                    "backupCount": 0,
+                    "encoding": "utf8"
+                },
+
+                "warning_file": {
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "level": "WARNING",
+                    "formatter": "simple",
+                    "filename": str((self.logsDirPath / "warnings.log").resolve()),
+                    "maxBytes": 1048576,
+                    "backupCount": 0,
+                    "encoding": "utf8"
+                },
+
+                "critical_file": {
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "level": "CRITICAL",
+                    "formatter": "simple",
+                    "filename": str((self.logsDirPath / "critical.log").resolve()),
+                    "maxBytes": 1048576,
+                    "backupCount": 0,
+                    "encoding": "utf8"
+                }
+            },
+
+            ## I don't know what this does
+            # "loggers": {
+            #     "test": {
+            #         "level": "INFO",
+            #         "handlers": ["console"],
+            #         "propagate": 0
+            #     }
+            # },
+
+            "root": {
+                "level": "DEBUG",
+                "handlers": ["console", "debug_file", "info_file", "warning_file", "error_file", "critical_file"]
+            }
+        }
+
         self.read_debugging_ini_file()
 
-    def write_logging_json_file(self, consoleLevel: str="DEBUG", enableConsoleLogging: bool=True,
-                                enabledFileList: listOrNone=None) -> None:
-        """Writes the information saved in the attributes (from read_logging_ini_file) to a json file.
+    def write_logging_json_file(self) -> None:
+        """Writes the information saved in the attributes (set by read_logging_ini_file) to a json file.
 
         The json file can be found in setup/config_logging.json.
-
-        Parameters
-        ----------
-        consoleLevel: str, default="DEBUG"
-            logging level of the console
-
-        enableConsoleLogging: bool, default=True
-            if False then no logging messages will be printed in the console independent of the console level
-
-        enabledFileList: list, default=None
-            list of logging files that should be created.
-            When None then no debug files are created
-            example: [debug, info, error, warnings, critical] or subsample of this list
-
-        Raises
-        ------
-        AssertionError:
-            when consoleLevel, enableConsoleLogging or enabledFileList are invalid datatypes
         """
-        assert isinstance(consoleLevel, str)
-        assert consoleLevel.upper() in self.loggingLevelList
-        assert isinstance(enableConsoleLogging, bool)
-        enabledFileListTmp: list
-        if enabledFileList is None:
-            enabledFileListTmp = []
-        else:
-            enabledFileListTmp = enabledFileList
         disabledFileList: list = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         handlersList: list = ["console", "debug_file", "info_file", "warning_file", "error_file", "critical_file"]
-        for i in enabledFileListTmp:
-            assert isinstance(i, str)
-            assert i.upper() in self.loggingLevelList
+        for i in self.enabledFileList:
             disabledFileList.remove(i.upper())
 
         for i in disabledFileList:
@@ -165,8 +171,8 @@ class LoggingConfig:
             del self.configFileBase["handlers"][dictKey]
             handlersList.remove(dictKey)
 
-        self.configFileBase["handlers"]["console"]["level"] = consoleLevel.upper()
-        if not enableConsoleLogging:
+        self.configFileBase["handlers"]["console"]["level"] = self.consoleLevel.upper()
+        if not self.enableConsoleLogging:
             del self.configFileBase["handlers"]["console"]
             handlersList.remove("console")
 
@@ -177,38 +183,45 @@ class LoggingConfig:
 
     def read_logging_ini_file(self) -> None:
         """Reads the config/logging.ini file and saves the configurations as attributes.
+        (consoleLevel, enableConsoleLogging, enabledFileList, enableFileLogging).
 
-        These attributes correspond to the parameters of write_logging_json_file.
+        Raises
+        ------
+        AssertionError:
+            when consoleLevel, enableConsoleLogging or enabledFileList are invalid datatypes
         """
         configIniPath = (self.headDirPath / "config" / "logging.ini").resolve()
         config = ConfigParser()
         config.read(str(configIniPath))
+
         self.consoleLevel = config["logging configuration"]["console level"].replace(" ", "")
         self.enableConsoleLogging = self.check_true_false(config["logging configuration"]["enable console logging"].replace(" ", ""))
         self.enabledFileList = config["logging configuration"]["enabled file list"].replace(" ", "").split(",")
+        self.enableFileLogging = self.check_true_false(config["logging configuration"]["enable file logging"].replace(" ", ""))
+
+        assert isinstance(self.consoleLevel, str)
+        assert self.consoleLevel.upper() in self.loggingLevelList
+        if self.enableFileLogging:
+            if self.enabledFileList == [""]:
+                self.enabledFileList = []
+            for i in self.enabledFileList:
+                assert i.upper() in self.loggingLevelList
+        else:
+            self.enabledFileList = []
 
     def read_debugging_ini_file(self) -> None:
         """Reads the config/debugging.ini file and saves the configurations as attributes.
+        (enableDebugging, debugFitRange, debuginitialRange, debugFWHM)
 
-        The following attributes are set by this method:
-
-        Attributes
-        ----------
-        enableDebugging: bool
-            if False then no debugging plots will be shown independent of all other options
-
-        debugFitRange: bool
-            if True then the fitting range of the peak will be visualized in the snapshots
-
-        debuginitialRange: bool
-            if True then the initial range, where the program looks for a peak will be visualized in the snapshots
-
-        debugFWHM: bool
-            if True then the estimated and the fitted FWHM will be shown in the snapshots
+        Raises
+        ------
+        ValueError:
+            when any of the read attributes cannot be transformed to bools using self.check_true_false()
         """
         configIniPath: Path = (self.headDirPath / "config" / "debugging.ini").resolve()
         config: ConfigParser = ConfigParser()
         config.read(str(configIniPath))
+
         self.enableDebugging: bool = self.check_true_false(config["debugging configuration"]["enable debugging"].replace(" ", ""))
         self.debugFitRange: bool
         self.debuginitialRange: bool
@@ -255,9 +268,7 @@ class LoggingConfig:
         This is done by calling self.read_logging_ini_file() and self.write_logging_json_file().
         """
         self.read_logging_ini_file()
-        self.write_logging_json_file(consoleLevel=self.consoleLevel,
-            enableConsoleLogging=self.enableConsoleLogging,
-            enabledFileList=self.enabledFileList)
+        self.write_logging_json_file()
 
 ## instantiating a logger for files
     def init_logger(self, name: str) -> logging.Logger:
