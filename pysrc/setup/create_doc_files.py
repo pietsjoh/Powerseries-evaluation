@@ -65,8 +65,22 @@ html_static_path = ['_static']
 # favicon (image in the tab or bookmarks)
 html_favicon = str((headDirPath / "res" / 'jp_self.png').resolve())
 
+# -- member selection --------------------------------------------------------
+
 # include dunder methods in documentation
 napoleon_include_special_with_doc = True
+
+# exclude undocumented members
+# def skip_undoc(app, what, name, obj, skip, options):
+#     # if undoc-members is set, show only undocumented members
+#     if obj.__doc__ is None:
+#         # skip member that have not a __doc__
+#         return True
+#     else:
+#         return None
+
+# def setup(app):
+#     app.connect('autodoc-skip-member', skip_undoc)
 
 # include __init__ methods in documentation
 # def skip(app, what, name, obj, would_skip, options):
