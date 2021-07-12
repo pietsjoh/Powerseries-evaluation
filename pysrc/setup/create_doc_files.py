@@ -63,7 +63,7 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 # favicon (image in the tab or bookmarks)
-html_favicon = str((headDirPath / "res" / 'jp_logo_schnitt.jpg').resolve())
+html_favicon = str((headDirPath / "res" / 'jp_self.png').resolve())
 
 # include dunder methods in documentation
 napoleon_include_special_with_doc = True
