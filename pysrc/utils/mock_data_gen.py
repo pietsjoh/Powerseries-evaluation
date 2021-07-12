@@ -1,3 +1,6 @@
+"""File contains the base setup to create mock data for unit tests.
+Currently, set up to test peak_fit.single_peak_fit_models.
+"""
 import matplotlib.pyplot as plt # type: ignore
 import numpy as np
 import typing

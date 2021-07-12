@@ -1,3 +1,5 @@
+"""Will be deprecated.
+"""
 import os
 
 def cd(dirPath):

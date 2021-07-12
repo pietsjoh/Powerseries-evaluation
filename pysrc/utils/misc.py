@@ -1,3 +1,10 @@
+"""Contains miscellaneous functions. Statistics and str to number converter.
+
+Attributes
+----------
+diameterList: list
+    List of available diameters, used to check if diameter input is valid.
+"""
 import numpy as np
 import scipy.stats as stats # type: ignore
 import typing
@@ -18,8 +25,6 @@ floatOrNone = typing.Union[float, None]
 numberOrNone = typing.Union[number, None]
 
 diameterList: listOfNums = sorted(list(range(1, 21, 1)) + list(np.arange(1.5, 8.5, 1)))
-"""list: List of available diameters
-"""
 
 def unc_mean(values: listOrArray, intv: str="1sigma") -> number:
     """

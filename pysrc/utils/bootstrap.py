@@ -26,55 +26,90 @@ arrayLikeOrNone = typing.Union[np.ndarray, list, tuple, None]
 intOrNone = typing.Union[int, None]
 
 class Bootstrap:
-    def __init__(self, inputData: np.ndarray, outputData: np.ndarray, fitFunc: typing.Callable, parameter: int=0,
+    """Can calculate the uncertainty for 1 fit parameter using the bootstrap method.
+
+    expected setup: outputData = fitFunc(inputData, \*args, \*\*kwargs)
+
+    The parameters (pGuess, paramBounds and weights) are (when not None) directly passed
+    into scipy.optimize.curve_fit as (p0, paramBounds and sigma).
+
+    The following attributes can be passed into the __init__ method:
+
+    mandatory: [inputData, outputData, func]
+
+    keyword args: [parameter, pGuess, paramBounds, weights, iterGuess, seed]
+
+    For more information about these attributes look into their corresponding
+    section. The default values are used in the __init__ method.
+
+    It follows a short description of all attributes.
+
+    Attributes
+    ----------
+    seed: int/None, set in __init__, default=None
+        seed for the random number generator (gen)
+        If the seed is None a random seed will be used.
+
+    gen: utils.random_number_gen.RNGenerator, set in __init__
+        seeded pseudo-random-number-generator, seed can be passed into __init__
+        The random numbers are used to draw the bootstrap samples from the original data.
+
+    outputData: np.ndarray, set in __init__
+
+    inputData: np.ndarray, set in __init__
+
+    _N: int, set in __init__
+        length of the data set
+
+    func: Callable, set in __init__
+        Function that shall be used for the fitting, the uncertainty of 1 parameter
+        of this function can be estimated by this class.
+
+    parameter: int, set in __init__, default=0
+        index of the parameter of the function for which the bootstrap method should be applied
+        as the first argument of the function needs to correspond to the inputData
+        (scipy.optimize.curve_fit requirement), 0 means the argument at position 1
+        Example: f(x, a, b); parameter=0 -> bootstrap for a will be performed
+
+    pGuess: tuple/list/np.ndarray/None, set in __init__, default=None
+        Initial parameter guesses for the fit
+
+    paramBounds: tuple/None, set in __init__, default=None
+        Bounds for the fit parameters, used for every fit
+
+    weights: np.ndarray/None, set in __init__, default=None
+        weights for the fitting process
+
+    iterGuess: bool, set in __init__, default=False
+        if True, then the results of the initial fit are used as initial guesses for the rest of the bootstrap method
+        otherwise, the parameter pGuess is used for all fits
+
+    numSamples: int, set by gen_bootstrap_samples
+        number of to be generated bootstrap samples
+
+    lenSamples: int, set by gen_bootstrap_samples
+        length of the individual bootstrap samples
+
+    _inSamples: np.ndarray, set by gen_bootstrap_samples
+        concatenated array of all bootstrap samples of the input data
+
+    _outSamples: np.ndarray, set by gen_bootstrap_samples
+        concatenated array of all bootstrap samples of the output data
+    """
+    def __init__(self, inputData: np.ndarray, outputData: np.ndarray, func: typing.Callable, parameter: int=0,
                 pGuess: arrayLikeOrNone=None, paramBounds: tupleOrNone=None, weights: arrayOrNone=None,
                 iterGuess: bool=False, seed: intOrNone=None) -> None:
-        """Can calculate the uncertainty for 1 fit parameter using the bootstrap method.
 
-        expected setup: outputData = fitFunc(inputData, \*args, \*\*kwargs)
-        The parameters (pGuess, paramBounds and weights) are (when not None) directly passed
-        into scipy.optimize.curve_fit as (p0, paramBounds and sigma).
-
-        Parameters
-        ----------
-        inputData: np.ndarray
-
-        outputData: np.ndarray
-
-        fitFunc: Callable
-
-        parameter: int, default=0
-            index of the parameter of the function for which the bootstrap method should be applied
-            as the first argument of the function needs to correspond to the inputData
-            (scipy.optimize.curve_fit requirement), 0 means the argument at position 1
-            Example: f(x, a, b); parameter=0 -> bootstrap for a will be performed
-
-        pGuess: tuple/list/np.ndarray/None, default=None
-            Initial parameter guesses for the fit
-
-        paramBounds: tuple/None, default=None
-            Bounds for the fit parameters, used for every fit
-
-        weights: np.ndarray/None, default=None
-            weights for the fitting process
-
-        iterGuess: bool, default=False
-            if True, then the results of the initial fit are used as initial guesses for the rest of the bootstrap method
-            otherwise, the parameter pGuess is used for all fits
-
-        seed: int/None, default=None
-            seed of the random-number-generator
-            Provide a seed to achieve reproducible results for the bootstrap process.
-        """
         assert isinstance(inputData, np.ndarray)
         assert isinstance(outputData, np.ndarray)
         assert outputData.size == inputData.size
 
+        self.seed: intOrNone = seed
         self.gen: RNGenerator = RNGenerator(seed)
         self.outputData: np.ndarray = outputData
         self.inputData: np.ndarray = inputData
-        self.N: int = inputData.size
-        self.func: typing.Callable = fitFunc
+        self._N: int = inputData.size
+        self.func: typing.Callable = func
         self.parameter: int = parameter
         self.pGuess: arrayLikeOrNone = pGuess
         self.weights: arrayOrNone = weights
@@ -103,15 +138,15 @@ class Bootstrap:
         lenSamples: int
             number of data points which shall be used for each sample
         """
-        if lenSamples > self.N:
-            lenSamples = self.N
-            logger.warning(f"length of bootstrap samples ({lenSamples}) is larger then the length of the data ({self.N}). Setting the length to the data size.")
+        if lenSamples > self._N:
+            lenSamples = self._N
+            logger.warning(f"length of bootstrap samples ({lenSamples}) is larger then the length of the data ({self._N}). Setting the length to the data size.")
         self.numSamples: int = numSamples
         self.lenSamples: int = lenSamples
         N: int = self.numSamples * self.lenSamples
-        indices: np.ndarray = self.gen.integers(low=0, high=self.N, size=N)
-        self.inSamples: np.ndarray = self.inputData[indices]
-        self.outSamples: np.ndarray = self.outputData[indices]
+        indices: np.ndarray = self.gen.integers(low=0, high=self._N, size=N)
+        self._inSamples: np.ndarray = self.inputData[indices]
+        self._outSamples: np.ndarray = self.outputData[indices]
 
     def statistical_error(self) -> bool:
         """Performs the fitting of the bootstrap procedure.
@@ -127,30 +162,30 @@ class Bootstrap:
             False, when the fit of the original data did not work
             True, otherwise
         """
-        self.p: np.ndarray
+        p: np.ndarray
         try:
-            self.p, _ = optimize.curve_fit(self.func, self.inputData, self.outputData, p0=self.pGuess, bounds=self.paramBounds, sigma=self.weights)
+            p, _ = optimize.curve_fit(self.func, self.inputData, self.outputData, p0=self.pGuess, bounds=self.paramBounds, sigma=self.weights)
         except RuntimeError:
             logger.error("Initial fitting did not work in bootstrap. Aborting.")
             return False
         else:
-            self.parameterArr: np.ndarray = np.empty(self.numSamples + 1)
-            self.parameterArr[0] = self.p[self.parameter]
+            parameterArr: np.ndarray = np.empty(self.numSamples + 1)
+            parameterArr[0] = p[self.parameter]
             if self.iterGuess:
-                self.pGuess = self.p
+                self.pGuess = p
             for i in range(self.numSamples):
                 p: np.ndarray
                 try:
-                    p, _ = optimize.curve_fit(self.func, self.inSamples[i : i + self.lenSamples], self.outSamples[i : i + self.lenSamples], p0=self.pGuess, bounds=self.paramBounds, sigma=self.weights)
+                    p, _ = optimize.curve_fit(self.func, self._inSamples[i : i + self.lenSamples], self._outSamples[i : i + self.lenSamples], p0=self.pGuess, bounds=self.paramBounds, sigma=self.weights)
                 except RuntimeError:
                     continue
                 else:
-                    self.parameterArr[i + 1] = p[self.parameter]
-            self.parameterArr = self.parameterArr[~np.isnan(self.parameterArr)]
-            self.parameterOriginal = self.parameterArr[0]
-            self.parameterMean = np.mean(self.parameterArr)
-            self.parameterErrorMean = np.std(self.parameterArr, ddof=1)
-            self.parameterErrorMeanBiasCorr = np.std(self.parameterArr[1:], ddof=0) + abs(np.mean(self.parameterArr[1:]) - self.parameterArr[0])
+                    parameterArr[i + 1] = p[self.parameter]
+            parameterArr = parameterArr[~np.isnan(parameterArr)]
+            self.parameterOriginal = parameterArr[0]
+            self.parameterMean = np.mean(parameterArr)
+            self.parameterErrorMean = np.std(parameterArr, ddof=1)
+            self.parameterErrorMeanBiasCorr = np.std(parameterArr[1:], ddof=0) + abs(np.mean(parameterArr[1:]) - parameterArr[0])
             return True
 
     def plot_histo(self) -> None:
@@ -191,8 +226,10 @@ class Bootstrap:
             if plotHisto:
                 self.plot_histo()
         else:
-            self.parameterEstimate = np.nan
-            self.parameterError = np.nan
+            self.parameterOriginal = np.nan
+            self.parameterErrorMeanBiasCorr = np.nan
+            self.parameterMean = np.nan
+            self.parameterErrorMean = np.nan
 
     @property
     def results(self):

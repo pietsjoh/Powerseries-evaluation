@@ -1,5 +1,13 @@
 """This file contains a pseudo-random number generator.
 Can create integers, uniform distributed and normal distributed floats.
+
+Attributes
+----------
+maxInt32: int
+    largest signed 32-bit representible integer
+
+eps: float
+    precision of floats
 """
 import numpy.random as random
 import numpy as np
@@ -9,12 +17,8 @@ intOrNone = typing.Union[int, None]
 number = typing.Union[float, int, np.number]
 
 maxInt32: int = 2**31 - 1
-"""int: largest signed 32-bit representible integer
-"""
 
 eps: float = np.finfo(float).eps
-"""float: precision of float
-"""
 
 class RNGenerator:
     def __init__(self, seed: intOrNone=None, printSeed: bool=True) -> None:
