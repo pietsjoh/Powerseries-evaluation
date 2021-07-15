@@ -95,6 +95,9 @@ class Bootstrap:
 
     _outSamples: np.ndarray, set by gen_bootstrap_samples
         concatenated array of all bootstrap samples of the output data
+
+    _parameterArr: np.ndarray, set by statistical_error
+        array of all the results for the fit parameter from the different bootstrap samples
     """
     def __init__(self, inputData: np.ndarray, outputData: np.ndarray, func: typing.Callable, parameter: int=0,
                 pGuess: arrayLikeOrNone=None, paramBounds: tupleOrNone=None, weights: arrayOrNone=None,
@@ -169,37 +172,36 @@ class Bootstrap:
             logger.error("Initial fitting did not work in bootstrap. Aborting.")
             return False
         else:
-            parameterArr: np.ndarray = np.empty(self.numSamples + 1)
-            parameterArr[0] = p[self.parameter]
+            self._parameterArr: np.ndarray = np.empty(self.numSamples + 1)
+            self._parameterArr[0] = p[self.parameter]
             if self.iterGuess:
                 self.pGuess = p
             for i in range(self.numSamples):
-                p: np.ndarray
                 try:
                     p, _ = optimize.curve_fit(self.func, self._inSamples[i : i + self.lenSamples], self._outSamples[i : i + self.lenSamples], p0=self.pGuess, bounds=self.paramBounds, sigma=self.weights)
                 except RuntimeError:
                     continue
                 else:
-                    parameterArr[i + 1] = p[self.parameter]
-            parameterArr = parameterArr[~np.isnan(parameterArr)]
-            self.parameterOriginal = parameterArr[0]
-            self.parameterMean = np.mean(parameterArr)
-            self.parameterErrorMean = np.std(parameterArr, ddof=1)
-            self.parameterErrorMeanBiasCorr = np.std(parameterArr[1:], ddof=0) + abs(np.mean(parameterArr[1:]) - parameterArr[0])
+                    self._parameterArr[i + 1] = p[self.parameter]
+            self._parameterArr = self._parameterArr[~np.isnan(self._parameterArr)]
+            self.parameterOriginal = self._parameterArr[0]
+            self.parameterMean = np.mean(self._parameterArr)
+            self.parameterErrorMean = np.std(self._parameterArr, ddof=1)
+            self.parameterErrorMeanBiasCorr = np.std(self._parameterArr[1:], ddof=0) + abs(np.mean(self._parameterArr[1:]) - self._parameterArr[0])
             return True
 
     def plot_histo(self) -> None:
         """Plots a histogram of the bootstrap distribution.
         Passes when there is only 1 distinct value in the bootstrap result array.
         """
-        maxP: number = np.amax(self.parameterArr)
-        minP: number = np.amin(self.parameterArr)
+        maxP: number = np.amax(self._parameterArr)
+        minP: number = np.amin(self._parameterArr)
         if maxP == minP:
             logger.error("Fitting did not work. All parameters are identical.")
             pass
         else:
-            numberOfBins: int = misc.histo_number_of_bins(self.parameterArr)
-            plt.hist(self.parameterArr, numberOfBins)
+            numberOfBins: int = misc.histo_number_of_bins(self._parameterArr)
+            plt.hist(self._parameterArr, numberOfBins)
             plt.show()
 
     def run(self, numSamples: int, lenSamples: int, plotHisto: bool=True) -> None:
