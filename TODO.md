@@ -90,6 +90,7 @@
 
 > single_peak_fit_base.py
 
+- think about the use of paramBounds, maybe do not use it
 - rework local background extraction, better control of the range
 - peak exclusion may return error (remove_background_local/spline) [x]
   - when exclusion range exceeds data set [x]
