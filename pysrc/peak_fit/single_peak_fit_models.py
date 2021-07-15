@@ -18,7 +18,11 @@ arrayOrNumber = typing.Union[np.ndarray, number]
 ##############################################################################################################################################################
 
 class GaussianPeakFit(PeakFitSuper):
-    name = "Gauss"
+    """
+    Gaussian fitmodel, for more information about the fitting process and the attributes/methods of this class
+    take a look at the base class peak_fit.single_peak_fit_base.PeakFitSuper.
+    """
+    name: str = "Gauss"
 
     def __init__(self, wavelengths: np.ndarray, spec: np.ndarray, initRange: tupleIntOrNone=None, intCoverage: number=1,
     fitRangeScale: number=1, constantPeakWidth: int=50, backgroundFitMode: str="constant") -> None:
@@ -28,15 +32,40 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
 
     @staticmethod
     def __call__(x: arrayOrNumber, A: number, mu: number, sigma: number, offset: number) -> arrayOrNumber:
+        """Returns the result of the following functional form:
+
+        .. math::
+            f(x; A, \mu, \sigma, B) = \dfrac{A}{\sqrt{2\pi\sigma^2}}\cdot e^{-\dfrac{(x - \mu)^2}{2\sigma^2}} + B
+
+        For the fitting process the offset is only used when background fit mode is set to "offset" in the
+        config/powerseries.ini file.
+        """
         return A*np.exp(-(x - mu)**2 / 2 / sigma**2) / np.sqrt(2*np.pi) / sigma + offset
 
     def set_p0(self) -> None:
+        """Sets the initial guesses for the fit parameters based on the results of get_peak().
+
+        mu:
+            wavelength at the estimated peak position
+
+        sigma:
+            :math:`\dfrac{fwhmEstimate}{2\sqrt{2\cdot\log(2)}}`
+
+        A:
+            :math:`peakHeightEstimate\cdot\sqrt{2\pi\sigma^2}`
+        """
         muEstimate: number = self.wavelengths[self.peak]
         sigmaEstimate: number = self.fwhmEstimate / 2 / np.sqrt(2*np.log(2)) * np.abs(self.wavelengths[1] - self.wavelengths[0])
         AEstimate: number = self.peakHeightEstimate*np.sqrt(2*np.pi)*sigmaEstimate
         self.p0: list[number] = [AEstimate, muEstimate, sigmaEstimate]
 
     def set_fwhm(self) -> None:
+        """Calculates the FWHM based on the fit results. Here the FWHM is calculated from the sigma parameter.
+        Moreover, the uncertainty of the FWHM is calculated.
+
+        .. math::
+            FWHM = 2\cdot\sigma\cdot\sqrt{2\cdot\log(2)}
+        """
         assert hasattr(self, "p")
         assert hasattr(self, "cov")
         sigmaFit: number = np.abs(self.p[2])
@@ -45,6 +74,9 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
 
     @property
     def paramBounds(self) -> tuple[list[number], list[number]]:
+        """Sets bounds for the fit parameters. A and sigma are bound by (0, :math:`\infty`).
+        mu is bound the (min, max) of the provided wavelengths.
+        """
         lowerBounds: list[number] = [0, self.minWavelength, 0]
         upperBounds: list[number] = [np.inf, self.maxWavelength, np.inf]
         return (lowerBounds, upperBounds)
@@ -52,7 +84,7 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
 ##############################################################################################################################################################
 
 class LorentzPeakFit(PeakFitSuper):
-    name = "Lorentz"
+    name: str = "Lorentz"
 
     def __init__(self, wavelengths: np.ndarray, spec: np.ndarray, initRange: tupleIntOrNone=None, intCoverage: number=1,
     fitRangeScale: number=1, constantPeakWidth: int=50, backgroundFitMode: str="constant") -> None:
@@ -85,7 +117,7 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
 ##############################################################################################################################################################
 
 class VoigtPeakFit(PeakFitSuper):
-    name = "Voigt"
+    name: str = "Voigt"
 
     def __init__(self, wavelengths: np.ndarray, spec: np.ndarray, initRange: tupleIntOrNone=None, intCoverage: number=1,
     fitRangeScale: number=1, constantPeakWidth: int=50, backgroundFitMode: str="constant") -> None:
@@ -128,7 +160,7 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
 ##############################################################################################################################################################
 
 class PseudoVoigtPeakFit(PeakFitSuper):
-    name = "Pseudo Voigt"
+    name: str = "Pseudo Voigt"
 
     def __init__(self, wavelengths: np.ndarray, spec: np.ndarray, initRange: tupleIntOrNone=None, intCoverage: number=1,
     fitRangeScale: number=1, constantPeakWidth: int=50, backgroundFitMode: str="constant") -> None:
