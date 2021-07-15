@@ -35,7 +35,7 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
         """Returns the result of the following functional form:
 
         .. math::
-            f(x; A, \mu, \sigma, B) = \dfrac{A}{\sqrt{2\pi\sigma^2}}\cdot e^{-\dfrac{(x - \mu)^2}{2\sigma^2}} + B
+            f(x; A, \mu, \sigma, B) = A\cdot\dfrac{1}{\sqrt{2\pi\sigma^2}}\cdot e^{-\dfrac{(x - \mu)^2}{2\sigma^2}} + B
 
         For the fitting process the offset is only used when background fit mode is set to "offset" in the
         config/powerseries.ini file.
@@ -45,10 +45,10 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
     def set_p0(self) -> None:
         """Sets the initial guesses for the fit parameters based on the results of get_peak().
 
-        mu:
+        \mu:
             wavelength at the estimated peak position
 
-        sigma:
+        \sigma:
             :math:`\dfrac{fwhmEstimate}{2\sqrt{2\cdot\log(2)}}`
 
         A:
@@ -84,6 +84,10 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
 ##############################################################################################################################################################
 
 class LorentzPeakFit(PeakFitSuper):
+    """
+    Lorentzian fitmodel, for more information about the fitting process and the attributes/methods of this class
+    take a look at the base class peak_fit.single_peak_fit_base.PeakFitSuper.
+    """
     name: str = "Lorentz"
 
     def __init__(self, wavelengths: np.ndarray, spec: np.ndarray, initRange: tupleIntOrNone=None, intCoverage: number=1,
@@ -94,16 +98,41 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
 
     @staticmethod
     def __call__(w: arrayOrNumber, A: number, w0: number, gamma: number, offset: number) -> arrayOrNumber:
+        """Returns the result of the following functional form:
+
+        .. math::
+            f(\omega; A, \omega_0, \gamma, B) = A\cdot\dfrac{\gamma}{\pi}\cdot\dfrac{1}{(\omega - \omega_0)^2 + \gamma^2} + B
+
+        For the fitting process the offset (B) is only used when background fit mode is set to "offset" in the
+        config/powerseries.ini file.
+        """
         return A * gamma / np.pi / ((w - w0)**2 + (gamma)**2) + offset
 
     def set_p0(self) -> None:
+        """Sets the initial guesses for the fit parameters based on the results of get_peak().
+
+        \mu:
+            wavelength at the estimated peak position
+
+        \gamma:
+            :math:`\dfrac{fwhmEstimate}{2}`
+
+        A:
+            :math:`peakHeightEstimate\cdot\pi\cdot\gamma`
+        """
         muEstimate: number = self.wavelengths[self.peak]
-        sigmaEstimate: number = self.fwhmEstimate * np.abs(self.wavelengths[1] - self.wavelengths[0]) / 2
-        AEstimate: number = self.peakHeightEstimate * np.pi * sigmaEstimate
+        gammaEstimate: number = self.fwhmEstimate * np.abs(self.wavelengths[1] - self.wavelengths[0]) / 2
+        AEstimate: number = self.peakHeightEstimate * np.pi * gammaEstimate
 # gammaEstimate = fwhm*np.sqrt(1 - (fwhm / 2 / w0Estimate)**2)
-        self.p0: list[number] = [AEstimate, muEstimate, sigmaEstimate]
+        self.p0: list[number] = [AEstimate, muEstimate, gammaEstimate]
 
     def set_fwhm(self) -> None:
+        """Calculates the FWHM based on the fit results. Here the FWHM is calculated from the sigma parameter.
+        Moreover, the uncertainty of the FWHM is calculated.
+
+        .. math::
+            FWHM = 2\cdot\gamma}
+        """
         assert hasattr(self, "p")
         assert hasattr(self, "cov")
         self.fwhmFit: number = 2*np.abs(self.p[2])
@@ -111,12 +140,19 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
 
     @property
     def paramBounds(self) -> tuple[list[number], list[number]]:
+        """Sets bounds for the fit parameters. A and \gamma are bound by (0, :math:`\infty`).
+        \mu is bound the (min, max) of the provided wavelengths.
+        """
         lowerBounds: list[number] = [0, self.minWavelength, 0]
         higherBounds: list[number] = [np.inf, self.maxWavelength, np.inf]
         return (lowerBounds, higherBounds)
 ##############################################################################################################################################################
 
 class VoigtPeakFit(PeakFitSuper):
+    """
+    Voigt fitmodel, for more information about the fitting process and the attributes/methods of this class
+    take a look at the base class peak_fit.single_peak_fit_base.PeakFitSuper.
+    """
     name: str = "Voigt"
 
     def __init__(self, wavelengths: np.ndarray, spec: np.ndarray, initRange: tupleIntOrNone=None, intCoverage: number=1,
@@ -127,10 +163,37 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
 
     @staticmethod
     def __call__(x: arrayOrNumber, A: number, mu: number, sigma: number, gamma: number, offset: number) -> arrayOrNumber:
+        """Returns the result of the following functional form:
+
+        .. math::
+            z = \dfrac{x + i\gamma - \mu}{\sigma\sqrt{2}}
+
+        .. math::
+            f(x; A, \mu, \sigma, \gamma, B) = A\cdot \dfrac{\operatorname{Re}[w(z)]}{\sigma\sqrt{2\pi}} + B
+
+        Here :math:`w(z)` is the Faddeeva function.
+
+        For the fitting process the offset (B) is only used when background fit mode is set to "offset" in the
+        config/powerseries.ini file.
+        """
         z = (x + 1j*gamma - mu) / sigma / np.sqrt(2)
         return A*special.wofz(z).real / sigma / np.sqrt(2*np.pi) + offset
 
     def set_p0(self) -> None:
+        r"""Sets the initial guesses for the fit parameters based on the results of get_peak().
+
+        \mu:
+            wavelength at the estimated peak position
+
+        \gamma:
+            :math:`\dfrac{fwhmEstimate}{2}`
+
+        \sigma:
+            :math:`\dfrac{fwhmEstimate}{2\sqrt{2\cdot\log(2)}}`
+
+        A:
+            :math:`peakHeightEstimate\cdot \dfrac{\sqrt{2\pi\sigma^2}}{erfc\biggl( \dfrac{\gamma}{\sigma\sqrt{2}}\biggr) \cdot e^{\dfrac{\gamma^2}{2\sigma^2}}}`
+        """
         muEstimate: number = self.wavelengths[self.peak]
         fwhm: number = self.fwhmEstimate * np.abs(self.wavelengths[1] - self.wavelengths[0])
         sigmaEstimate: number = fwhm / 2 / np.sqrt(2*np.log(2))
@@ -142,6 +205,21 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
 
     def set_fwhm(self) -> None:
 ## uncGauss, uncLorentz are correlated -> use covariance matrix
+        """Calculates the FWHM based on the fit results. Here the FWHM is calculated from the sigma and the gamma parameter.
+        Moreover, the uncertainty of the FWHM is calculated. However, the covariance of the uncertainties is taken into account.
+        The formula is taken from wikipedia (`voigt wiki <https://en.wikipedia.org/wiki/Voigt_profile>`_)
+
+        .. math::
+            FWHM = 0.5346\cdot fwhm_{L} + \sqrt{0.2166\cdot fwhm_{L}^2 + fwhm_{G}^2}
+
+        Here the following definitions are used.
+
+        .. math::
+            fwhm_{L} = 2\gamma
+
+        .. math::
+            fwhm_{G} = 2\sigma\sqrt{2\cdot\log(2)}
+        """
         assert hasattr(self, "p")
         fwhmGauss: number = 2*np.abs(self.p[2])*np.sqrt(2*np.log(2))
         uncFwhmGauss: number = 2*np.sqrt(2*np.log(2))*np.sqrt(self.cov[2, 2])
@@ -153,6 +231,9 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
 
     @property
     def paramBounds(self) -> tuple[list[number], list[number]]:
+        """Sets bounds for the fit parameters. A, \sigma and \gamma are bound by (0, :math:`\infty`).
+        \mu is bound the (min, max) of the provided wavelengths.
+        """
         lowerBounds: list[number] = [0, self.minWavelength, 0, 0]
         upperBounds: list[number] = [np.inf, self.maxWavelength, np.inf, np.inf]
         return (lowerBounds, upperBounds)
@@ -160,6 +241,15 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
 ##############################################################################################################################################################
 
 class PseudoVoigtPeakFit(PeakFitSuper):
+    """
+    --Deprecated--
+
+    Pseudo-Voigt fitmodel, for more information about the fitting process and the attributes/methods of this class
+    take a look at the base class peak_fit.single_peak_fit_base.PeakFitSuper.
+
+    As the uncertainty of the fwhm is not calculated currently, this model cannot be used in combination with
+    powerseries.eval_ps.EvalPowerSeries. Hence, it has been deprecated.
+    """
     name: str = "Pseudo Voigt"
 
     def __init__(self, wavelengths: np.ndarray, spec: np.ndarray, initRange: tupleIntOrNone=None, intCoverage: number=1,
