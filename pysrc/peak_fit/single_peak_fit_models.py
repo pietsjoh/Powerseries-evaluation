@@ -35,6 +35,12 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
         self.fwhmFit = 2*sigmaFit*np.sqrt(2*np.log(2))
         self.uncFwhmFit = 2*np.sqrt(2*np.log(2))*np.sqrt(self.cov[2, 2])
 
+    @property
+    def paramBounds(self):
+        lowerBounds = [0, 0, 0]
+        upperBounds = [np.inf, np.inf, np.inf]
+        return (lowerBounds, upperBounds)
+
 ##############################################################################################################################################################
 
 class LorentzPeakFit(PeakFitSuper):
@@ -105,6 +111,12 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
         self.uncFwhmFit = np.sqrt(((0.5346 + 0.2166*fwhmLorentz / np.sqrt(0.2166*fwhmLorentz**2 + fwhmGauss**2)) * uncFwhmLorentz)**2
         + (fwhmGauss*uncFwhmGauss / np.sqrt(0.2166*fwhmLorentz**2 + fwhmGauss**2))**2)
 
+    @property
+    def paramBounds(self):
+        lowerBounds = [0, 0, 0, 0]
+        upperBounds = [np.inf, np.inf, np.inf, np.inf]
+        return (lowerBounds, upperBounds)
+
 ##############################################################################################################################################################
 
 class PseudoVoigtPeakFit(PeakFitSuper):
@@ -139,6 +151,12 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
         fwhmGauss = fwhmLorentz / np.sqrt(2*np.log(2))
         self.fwhmFit = (fwhmGauss**5 + 2.69269*fwhmGauss**4*fwhmLorentz + 2.42843*fwhmGauss**3*fwhmLorentz**2
                        + 4.47163*fwhmGauss**2*fwhmLorentz**3 + 0.07842*fwhmGauss*fwhmLorentz**4 + fwhmLorentz**5)**(1/5)
+
+    @property
+    def paramBounds(self):
+        lowerBounds = [0, 0, 0, 0]
+        upperBounds = [np.inf, np.inf, np.inf, 1]
+        return (lowerBounds, upperBounds)
 
 
 
