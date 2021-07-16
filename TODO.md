@@ -7,6 +7,7 @@
 - docs
   - move __init__ doc to base def
   - add all attributes description to base class
+  - do not forget Raises sections
 - config file:
   - list of fitmodels, list of data formats
   - selected data format
@@ -90,6 +91,7 @@
 
 > single_peak_fit_base.py
 
+- add Raises section for docstrings
 - think about the use of paramBounds, maybe do not use it
 - rework local background extraction, better control of the range
 - peak exclusion may return error (remove_background_local/spline) [x]
