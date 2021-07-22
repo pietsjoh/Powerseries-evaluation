@@ -17,8 +17,8 @@ loggerObj = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
 
 class EvalPowerSeries:
-    fitModelList = {"LORENTZ": LorentzPeakFit, "GAUSS": GaussianPeakFit, "VOIGT": VoigtPeakFit, "PSEUDOVOIGT": PseudoVoigtPeakFit}
-    dataModelList = {"QLAB2" : DataQlab2}
+    _fitModelList = {"LORENTZ": LorentzPeakFit, "GAUSS": GaussianPeakFit, "VOIGT": VoigtPeakFit, "PSEUDOVOIGT": PseudoVoigtPeakFit}
+    _dataModelList = {"QLAB2" : DataQlab2}
     _snapshots = 10
     _initRange = None
     _maxInitRange = 0
@@ -64,11 +64,11 @@ class EvalPowerSeries:
     @dataModel.setter
     def dataModel(self, value):
         logger.debug(f"Setting dataModel to {value}.")
-        if not value.upper() in self.dataModelList.keys():
+        if not value.upper() in self._dataModelList.keys():
             logger.error(f"{value} is not a valid data model (subclass of DataSuper). Aborting.")
             raise AssertionError("Invalid data model.")
         else:
-            self._dataModel = self.dataModelList[value.upper()]
+            self._dataModel = self._dataModelList[value.upper()]
 
     @staticmethod
     def check_DataObj_attributes(DataObj) -> None:
@@ -306,8 +306,8 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
 
     def check_input_fitmodel(self, value):
         logger.debug("Calling check_input_fitmodel()")
-        if value.upper() in self.fitModelList.keys():
-            self.fitModel = self.fitModelList[value.upper()]
+        if value.upper() in self._fitModelList.keys():
+            self.fitModel = self._fitModelList[value.upper()]
         else:
             logger.error(f"ValueError: {value} is not a valid model (gauss, lorentz, voigt and pseudovoigt are implemented). Using Lorentz now.")
             self.fitModel = LorentzPeakFit
