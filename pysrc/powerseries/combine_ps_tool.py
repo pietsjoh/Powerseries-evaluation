@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 import matplotlib.pyplot as plt
 from configparser import ConfigParser
+import typing
 
 headDir = Path(__file__).resolve().parents[2]
 srcDirPath = (headDir / "pysrc").resolve()
@@ -33,7 +34,9 @@ class CombinePowerSeriesTool:
         self.addFileMode: str = config["data format"]["add file mode"].replace(" ", "")
         self.attrName: str = config["data format"]["attribute name"].replace(" ", "")
         self._sorted_data_dir_name: str = config["data format"]["sorted data dir name"].replace(" ", "") + f"_{self.attrName}"
-        self._possibleAttrList: list[str] = config["data format"]["attribute possibilities"].replace(" ", "").split(",")
+        self._possibleAttrList: typing.Union[list[str], None] = config["data format"]["attribute possibilities"].replace(" ", "").split(",")
+        if len(self._possibleAttrList) == 1 and self._possibleAttrList[0].upper() == "NONE":
+            self._possibleAttrList = None
         self.distinguishFullFineSpectra = LoggingConfig.check_true_false(
             config["data format"]["distinguish full fine spectra"].replace(" ", ""))
         self.defaultAttribute: str = config["data format"]["default attribute"].replace(" ", "")
@@ -53,7 +56,8 @@ class CombinePowerSeriesTool:
         if self.addFileMode == "data":
             pass
         else:
-            assert value in self._possibleAttrList
+            if self._possibleAttrList is not None:
+                assert value in self._possibleAttrList
             self._attribute: str = value
             if self.distinguishFullFineSpectra:
                 self._attrDataDirPath: Path = (headDir / self._sorted_data_dir_name / self.attribute / "fine_spectra").resolve()
