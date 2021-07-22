@@ -13,9 +13,13 @@ debuggingFilePath: pathlib.Path
 loggingFilePath: pathlib.Path
     path to the logging.ini file
 
-powerSeriesFilePath: pathlib.Path
+powerseriesFilePath: pathlib.Path
     path to the powerseries.ini file
+
+dataFormatFilePath: pathlib.Path
+    path to the data_format.ini file
 """
+
 if __name__ == "__main__":
     from configparser import ConfigParser
     from pathlib import Path
@@ -57,17 +61,8 @@ if __name__ == "__main__":
     ## create powerseries.ini file
     powerseriesFilePath: Path = (configDir / "powerseries.ini").resolve()
     configPowerseries: ConfigParser = ConfigParser(allow_no_value=True)
-    configPowerseries.add_section("combine_ps_tool.py")
     configPowerseries.add_section("eval_ps.py")
     configPowerseries.add_section("plot_ps.py")
-    configPowerseries.set("combine_ps_tool.py", "; add file mode (data or diameter)", None)
-    configPowerseries.set("combine_ps_tool.py", "add file mode", "data\n")
-    configPowerseries.set("combine_ps_tool.py", "; default diameter", None)
-    configPowerseries.set("combine_ps_tool.py", "diameter", "4\n")
-    configPowerseries.set("combine_ps_tool.py", "; default path to the data directory", None)
-    configPowerseries.set("combine_ps_tool.py", "sorted data dir name", "sorted_data\n")
-    configPowerseries.set("combine_ps_tool.py", "; data directory 'fine'-indicator", None)
-    configPowerseries.set("combine_ps_tool.py", "fine spectra dir name", "fine_spectra")
     configPowerseries.set("eval_ps.py", "; the data model that is used (available: Qlab2)", None)
     configPowerseries.set("eval_ps.py", "data model", "Qlab2\n")
     configPowerseries.set("eval_ps.py", "; distance between snapshots", None)
@@ -115,3 +110,38 @@ if __name__ == "__main__":
 
     with open(str(powerseriesFilePath), "w") as configFile:
         configPowerseries.write(configFile)
+
+    ## create data_format.ini file
+    dataFormatFilePath: Path = (configDir / "data_format.ini").resolve()
+    configDataFormat: ConfigParser = ConfigParser(allow_no_value=True)
+    configDataFormat.add_section("data format")
+    configDataFormat.set("data format", "; add file mode (data or attribute)", None)
+    configDataFormat.set("data format", "add file mode", "data\n")
+    configDataFormat.set("data format", "; default attribute (of attribute name), ignored when add file mode is set to data", None)
+    configDataFormat.set("data format", "default attribute", "4\n")
+    configDataFormat.set("data format", "; the data model that shall be used (available: qlab2)", None)
+    configDataFormat.set("data format", "data model", "Qlab2\n")
+    configDataFormat.set("data format", "; special sequence name from filename (for example: diameter or temperature)", None)
+    configDataFormat.set("data format", "; this will be used to sort the data", None)
+    configDataFormat.set("data format", "attribute name", "diameter\n")
+    configDataFormat.set("data format", "; this will be used to sort the data", None)
+    configDataFormat.set("data format", "attribute name", "diameter\n")
+    configDataFormat.set("data format", "; list of available values for the attribute", None)
+    configDataFormat.set("data format", "; when provided, used to check whether the value extracted from the filename does make sense", None)
+    configDataFormat.set("data format", "; set to None if any value should be allowed", None)
+    configDataFormat.set("data format", "attribute possibilities",
+        "1, 1-5, 2, 2-5, 3, 3-5, 4, 4-5, 5, 5-5, 6, 6-5, 7, 7-5, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20\n")
+    configDataFormat.set("data format", "; indicator to find the special sequence (start or end, must not be a part of the desired sequence). The first occurence is taken.", None)
+    configDataFormat.set("data format", "indicator", "µm\n")
+    configDataFormat.set("data format", "; other end of the special sequence, the first occurence on the other side of the indicator is taken", None)
+    configDataFormat.set("data format", "splitter", "_\n")
+    configDataFormat.set("data format", ", whether the indicator marks the start or the end of the special sequence", None)
+    configDataFormat.set("data format", "indicator at start", "false\n")
+    configDataFormat.set("data format", "; whether to distinguish between full spectra and fine spectra", None)
+    configDataFormat.set("data format", "; used for data sorting", None)
+    configDataFormat.set("data format", "distinguish full fine spectra", "true\n")
+    configDataFormat.set("data format", "; directory name of the sorted data", None)
+    configDataFormat.set("data format", "sorted data dir name", "sorted_data")
+
+    with open(str(dataFormatFilePath), "w") as configFile:
+        configDataFormat.write(configFile, )
