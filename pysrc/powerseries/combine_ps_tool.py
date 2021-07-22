@@ -12,26 +12,54 @@ from powerseries.plot_ps import PlotPowerSeries
 from setup.config_logging import LoggingConfig
 import utils.misc as misc
 
-loggerObj = LoggingConfig()
+loggerObj: LoggingConfig = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
 
 class CombinePowerSeriesTool:
-    fileDict = {}
+    fileDict: dict = {}
+    _addFileModeList: list[str] = ["data", "attribute"]
+    _dataDirPath: Path = (headDir / "data").resolve()
 
     def __init__(self):
         self.ps = None
         logger.debug("CombinePowerSeriesTool object initialized.")
-        self.read_powerseries_ini_file()
+        self.read_data_format_ini_file()
 
-    def read_powerseries_ini_file(self):
+    def read_data_format_ini_file(self):
         logger.debug("Calling read_powerseries_ini_file()")
-        configIniPath = (headDir / "config" / "powerseries.ini").resolve()
-        config = ConfigParser()
+        configIniPath: Path = (headDir / "config" / "data_format.ini").resolve()
+        config: ConfigParser = ConfigParser()
         config.read(str(configIniPath))
-        self.diameter = misc.diameter_decode(config["combine_ps_tool.py"]["diameter"].replace(" ", ""), returnStr=True)
-        self.fineSpectraDirName = config["combine_ps_tool.py"]["fine spectra dir name"].replace(" ", "")
-        self.sortedDataDirName = config["combine_ps_tool.py"]["sorted data dir name"].replace(" ", "")
-        self.addFileMode = config["combine_ps_tool.py"]["add file mode"].replace(" ", "")
+        self.addFileMode: str = config["data format"]["add file mode"].replace(" ", "")
+        self.attrName: str = config["data format"]["attribute name"].replace(" ", "")
+        self._sorted_data_dir_name: str = config["data format"]["sorted data dir name"].replace(" ", "") + f"_{self.attrName}"
+        self._possibleAttrList: list[str] = config["data format"]["attribute possibilities"].replace(" ", "").split(",")
+        self.distinguishFullFineSpectra = LoggingConfig.check_true_false(
+            config["data format"]["distinguish full fine spectra"].replace(" ", ""))
+        self.defaultAttribute: str = config["data format"]["default attribute"].replace(" ", "")
+        try:
+            self.attribute: str = self.defaultAttribute
+        except AssertionError:
+            logger.critical("The initial value read from the data_format.ini file is invalid. Aborting.")
+            exit()
+
+    @property
+    def attribute(self) -> str:
+        return self._attribute
+
+    @attribute.setter
+    def attribute(self, value):
+        logger.debug(f"Setting attribute to {value}.")
+        if self.addFileMode == "data":
+            pass
+        else:
+            assert value in self._possibleAttrList
+            self._attribute: str = value
+            if self.distinguishFullFineSpectra:
+                self._attrDataDirPath: Path = (headDir / self._sorted_data_dir_name / self.attribute / "fine_spectra").resolve()
+            else:
+                self._attrDataDirPath: Path = (headDir / self._sorted_data_dir_name / self.attribute).resolve()
+            assert self._attrDataDirPath.exists()
 
     @property
     def addFileMode(self):
@@ -40,28 +68,36 @@ class CombinePowerSeriesTool:
     @addFileMode.setter
     def addFileMode(self, value):
         logger.debug(f"Setting addFileMode to {value}.")
-        if value == "diameter":
-            self._addFileMode = "diameter"
-        elif value == "data":
-            self._addFileMode = "data"
+        if value in self._addFileModeList:
+            self._addFileMode = value
+            if not value == "data":
+                self.attribute = self.defaultAttribute
         else:
-            logger.error(f"{value} is an invalid argument for addFileMode (only diameter and data are accepted). Using data.")
+            logger.error(f"{value} is an invalid argument for addFileMode (only diameter and data are accepted). Using data mode.")
             self._addFileMode = "data"
 
-    def set_diameter(self):
-        logger.debug("Calling set_diameter()")
-        diameterStr = input("diameter: ")
-        logger.debug(f"User input for set_diameter(): {diameterStr}")
-        self.diameter = misc.diameter_decode(diameterStr, returnStr=True)
-
-    def add_file_data(self):
-        logger.debug("Calling add_file_data()")
-        dataPath = (headDir / "data").resolve()
-        if not dataPath.exists():
-            logger.critical(f"Directory path does not exist {str(dataPath)}")
+    def set_attribute(self):
+        logger.debug("Calling set_attribute()")
+        if self.addFileMode == "data":
+            print("This command is only available when addFileMode is set to attribute.")
             return 0
-        spectraPaths = list(dataPath.rglob("*AllSpectra.dat"))
-        for i, file in enumerate(spectraPaths):
+        else:
+            attrInput = input(f"{self.attrName}: ")
+            logger.debug(f"User input for set_attribute(): {attrInput}")
+            try:
+                self.attribute = attrInput
+            except AssertionError:
+                logger.error(f"Invalid input [{attrInput}] for {self.attrName}. Keeping the current value.")
+                return 0
+
+    def add_file(self, dataDirPath):
+        logger.debug(f"Calling add_file() with dataDirPath = {str(dataDirPath)}")
+        assert isinstance(dataDirPath, Path)
+        if not dataDirPath.exists():
+            logger.critical(f"Directory path does not exist {str(dataDirPath)}")
+            return 0
+        fileList = list(dataDirPath.rglob("*AllSpectra.dat"))
+        for i, file in enumerate(fileList):
             fileName = file.name
             print(f"[{i}]   {fileName}")
             print()
@@ -71,41 +107,11 @@ class CombinePowerSeriesTool:
         fileIdx = misc.int_decode(fileIdxStr)
         if fileIdx == None:
             return 0
-        if fileIdx >= len(spectraPaths):
-            logger.warning(f"ValueError: The selected index [{fileIdx}] exceeds the max value [{len(spectraPaths)}]")
+        if fileIdx >= len(fileList):
+            logger.warning(f"ValueError: The selected index [{fileIdx}] exceeds the max value [{len(fileList)}]")
             return 0
 
-        filePath = spectraPaths[fileIdx]
-        logger.debug(f"Selected file path {filePath}")
-        fileName = filePath.name
-        self.fileDict[fileName] = PowerSeriesTool(filePath)
-
-    def add_file_diameter(self):
-        logger.debug("Calling add_file_diameter()")
-        if self.diameter == None:
-            logger.warning("AttributeError: No diameter selected. Select one now.")
-            self.set_diameter()
-        diameterPath = (headDir / self.sortedDataDirName / self.diameter / self.fineSpectraDirName).resolve()
-        logger.debug(f"diameter path {diameterPath}")
-        if not diameterPath.exists():
-            logger.critical(f"Directory path does not exist {str(diameterPath)}")
-            return 0
-        diameterFiles = list(diameterPath.glob("*"))
-        for i, file in enumerate(diameterFiles):
-            fileName = file.name
-            print(f"[{i}]   {fileName}")
-            print()
-
-        fileIdxStr = input("select file to add: ")
-        logger.debug(f"User input for add_file_diameter(), select file to add: {fileIdxStr}")
-        fileIdx = misc.int_decode(fileIdxStr)
-        if fileIdx == None:
-            return 0
-        if fileIdx >= len(diameterFiles):
-            logger.warning(f"ValueError: The selected index [{fileIdx}] exceeds the max value [{len(diameterFiles)}]")
-            return 0
-
-        filePath = diameterFiles[fileIdx]
+        filePath = fileList[fileIdx]
         logger.debug(f"Selected file path {filePath}")
         fileName = filePath.name
         self.fileDict[fileName] = PowerSeriesTool(filePath)
@@ -254,8 +260,9 @@ single spectrum (ss), multiple spectra (ms)]: """)
         print()
         print("/"*100)
         print()
-        print(f"diameter:   {self.diameter}")
-        print()
+        if not self.addFileMode == "data":
+            print(f"{self.attrName}:   {self.attribute}")
+            print()
         if len(list(self.fileDict.keys())) == 0:
             print("{}")
         for file in self.fileDict.keys():
@@ -291,17 +298,17 @@ single spectrum (ss), multiple spectra (ms)]: """)
                 return 1
         elif case == "exit":
             exit()
-        elif case == "set diameter":
-            self.set_diameter()
+        elif not self.addFileMode == "data" and case == f"set {self.attrName}":
+            self.set_attribute()
             return 1
-        elif case == "change add file mode":
-            self.addFileMode = input("Add file mode: ")
+        elif case == "change add mode":
+            self.addFileMode = input("Add file mode (data or attribute): ")
             return 1
         elif case == "add":
-            if self.addFileMode == "diameter":
-                self.add_file_diameter()
+            if self.addFileMode == "data":
+                self.add_file(self._dataDirPath)
             else:
-                self.add_file_data()
+                self.add_file(self._attrDataDirPath)
             return 1
         elif case == "del":
             self.del_file()
@@ -346,5 +353,5 @@ single spectrum (ss), multiple spectra (ms)]: """)
 
 
 if __name__ == "__main__":
-    test = CombinePowerSeriesTool()
-    test.run()
+    main = CombinePowerSeriesTool()
+    main.run()
