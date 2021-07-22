@@ -7,7 +7,7 @@ headDirPath = pathlib.Path(__file__).resolve().parents[1]
 sys.path.append(str(headDirPath))
 
 from setup.config_logging import LoggingConfig
-import utils.misc as misc
+from utils.filename_analysis import FileNameReader
 
 loggerObj = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
@@ -15,8 +15,6 @@ logger = loggerObj.init_logger(__name__)
 class DataQlab2:
     rowsToSkip = [1, 3]
     name = "QLAB2"
-    diameterIndicator = "np7509_ni_"
-    temperatureIndicator = "µm_"
 
     def __init__(self, dataPath):
         assert isinstance(dataPath, pathlib.PurePath)
@@ -51,24 +49,18 @@ class DataQlab2:
 
     @property
     def diameter(self):
-        strFileNameUpper = self.strFilePath.upper()
-        fileNameIdx = strFileNameUpper.find(self.diameterIndicator.upper())
-        diameterIdx = fileNameIdx + len(self.diameterIndicator)
-        truncatedStrFileName = self.strFilePath[diameterIdx : ]
-        diameter = misc.diameter_decode(truncatedStrFileName, returnStr=False)
-        return diameter
+        DiameterReader = FileNameReader("diameter", "µm", "_", indicatorAtStart=False)
+        return DiameterReader(self.fileName)
 
     @property
     def temperature(self):
-        strFileNameUpper = self.strFilePath.upper()
-        fileNameIdx = strFileNameUpper.find(self.temperatureIndicator.upper())
-        tempStartIdx = fileNameIdx + len(self.temperatureIndicator)
-        truncatedStrFileName = self.strFilePath[tempStartIdx : ]
-        tempStr = truncatedStrFileName.split("K")[0]
-        try:
-            temperature = int(tempStr)
-        except ValueError:
-            logger.error(f"ValueError: temperature ({tempStr}) could not be extracted from file name. Setting it to None.")
-            temperature = None
-        finally:
-            return temperature
+        TemperatureReader = FileNameReader("temperature", "K_", "_", indicatorAtStart=False)
+        return TemperatureReader(self.fileName)
+
+if __name__ == "__main__":
+    testFileName = "NP7509_Ni_4µm_20K_Powerserie_1-01s_deteOD05_fine4AllSpectra.dat"
+    testPath = (headDirPath / ".." / "data" / "20210308" / testFileName).resolve()
+    print(testPath)
+    test = DataQlab2(testPath)
+    print(test.diameter)
+    print(test.temperature)
