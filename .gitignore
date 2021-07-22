@@ -7,7 +7,7 @@ data/*
 *.pptx
 fine_data/
 non_fine_data/
-sorted_data/
+sorted_data*/
 *.csv
 *.log*
 *.xlsx
