@@ -4,6 +4,7 @@
 
 ### General
 
+- rework create_ini_files (not use configparser)
 - docs
   - move __init__ doc to base def
   - add all attributes description to base class
