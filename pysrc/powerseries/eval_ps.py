@@ -55,7 +55,7 @@ class EvalPowerSeries:
             logger.debug("""EvalPowerSeries object initialized.
                 file name: {}""".format(DataObj.fileName))
             self.read_powerseries_ini_file()
-            self.read_powerseries_ini_file_data_model()
+            self.read_data_format_ini_file()
 
     @property
     def dataModel(self):
@@ -139,7 +139,7 @@ class EvalPowerSeries:
                 self.exclude = []
         self.backgroundFitMode = config["eval_ps.py"]["background fit mode"].replace(" ", "")
 
-    def read_powerseries_ini_file_data_model(self):
+    def read_data_format_ini_file(self):
         logger.debug("Calling read_powerseries_ini_file()")
         configIniPath = (headDir / "config" / "data_format.ini").resolve()
         config = ConfigParser()
