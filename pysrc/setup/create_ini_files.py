@@ -174,7 +174,7 @@ indicator = \u03BCm
 splitter = _
 
 ; whether the indicator marks the start or the end of the special sequence
-indicator at start = false
+indicator at start = false  
 
 ; whether to distinguish between full spectra and fine spectra
 ; used for data sorting
@@ -183,5 +183,5 @@ distinguish full fine spectra = true
 ; directory name of the sorted data
 sorted data dir name = sorted_data"""
 
-with open(str(dataFormatFilePath), "w", encoding="utf-8") as configFile:
-    configFile.write(configDataFormat)
+    with open(str(dataFormatFilePath), "w", encoding="utf-8") as configFile:
+        configFile.write(configDataFormat)
