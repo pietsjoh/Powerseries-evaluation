@@ -28,10 +28,11 @@ class CombinePowerSeriesTool:
 
     def read_data_format_ini_file(self):
         logger.debug("Calling read_powerseries_ini_file()")
-        configIniPath: Path = (headDir / "config" / "data_format.ini").resolve()
+        configDataFormatIniPath: Path = (headDir / "config" / "data_format.ini").resolve()
+        configPowerseriesIniPath: Path = (headDir / "config" / "powerseries.ini").resolve()
         config: ConfigParser = ConfigParser()
-        config.read(str(configIniPath))
-        self.addFileMode: str = config["data format"]["add file mode"].replace(" ", "")
+        config.read([str(configDataFormatIniPath), str(configPowerseriesIniPath)])
+        self.addFileMode: str = config["combine_ps_tool.py"]["add file mode"].replace(" ", "")
         self.attrName: str = config["data format"]["attribute name"].replace(" ", "")
         self._sorted_data_dir_name: str = config["data format"]["sorted data dir name"].replace(" ", "") + f"_{self.attrName}"
         self._possibleAttrList: typing.Union[list[str], None] = config["data format"]["attribute possibilities"].replace(" ", "").split(",")
@@ -39,7 +40,7 @@ class CombinePowerSeriesTool:
             self._possibleAttrList = None
         self.distinguishFullFineSpectra = LoggingConfig.check_true_false(
             config["data format"]["distinguish full fine spectra"].replace(" ", ""))
-        self.defaultAttribute: str = config["data format"]["default attribute"].replace(" ", "")
+        self.defaultAttribute: str = config["combine_ps_tool.py"]["default attribute"].replace(" ", "")
         try:
             self.attribute: str = self.defaultAttribute
         except AssertionError:
