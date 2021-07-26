@@ -174,7 +174,7 @@ indicator = \u03BCm
 splitter = _
 
 ; whether the indicator marks the start or the end of the special sequence
-indicator at start = false  
+indicator at start = false
 
 ; whether to distinguish between full spectra and fine spectra
 ; used for data sorting
