@@ -129,6 +129,7 @@ class DataQlab2:
         return TemperatureReader(self.fileName)
 
 if __name__ == "__main__":
+    ## just testing
     testFileName = "NP7509_Ni_4µm_20K_Powerserie_1-01s_deteOD05_fine4AllSpectra.dat"
     testPath = (headDirPath / ".." / "data" / "20210308" / testFileName).resolve()
     print(testPath)

@@ -245,6 +245,7 @@ class Bootstrap:
         return self.parameterOriginal, self.parameterErrorMeanBiasCorr, self.parameterMean, self.parameterErrorMean
 
 if __name__ == "__main__":
+    ## just testing
     import numpy.random as random
 
     def gaussian(x, mu, sigma):

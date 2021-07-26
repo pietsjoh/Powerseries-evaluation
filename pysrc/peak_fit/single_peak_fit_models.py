@@ -289,6 +289,7 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
         return (lowerBounds, upperBounds)
 
 if __name__ == "__main__":
+    ## just testing
     pass
     # import os, sys
     # from pathlib import Path

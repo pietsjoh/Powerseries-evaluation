@@ -102,6 +102,7 @@ class FileNameReader:
 
 
 if __name__ == "__main__":
+    ## just testing
     test = FileNameReader("diameter", "µm", "_", indicatorAtStart=False)
     testFileName = "NP7509_Ni_2µm_20K_Powerserie_1-01s_deteOD0_fine2AllSpectra.dat"
     print(test(testFileName))
