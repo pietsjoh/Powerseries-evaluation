@@ -54,11 +54,12 @@ def shutdown_server():
     else:
         return 1
 
-if __name__ == "__main__":
+def main():
+    """Starts the default webbrowser, displaying the program documentation.
+    """
     with ThreadedTCPServer((HOST, PORT), Handler) as server:
-        ip: str
         port: int
-        ip, port = server.server_address
+        _, port = server.server_address
         print(f"Serving at port: {port}")
         server_thread: threading.Thread = threading.Thread(target=server.serve_forever)
         server_thread.daemon = True
@@ -69,3 +70,6 @@ if __name__ == "__main__":
         while shutdownServerFlag == 1:
             shutdownServerFlag = shutdown_server()
         server.shutdown()
+
+if __name__ == "__main__":
+    main()

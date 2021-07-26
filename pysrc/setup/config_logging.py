@@ -297,6 +297,11 @@ class LoggingConfig:
         logging.getLogger('matplotlib').setLevel(logging.WARNING)
         return logging.getLogger(name)
 
-if __name__ == "__main__":
+def main():
+    """Updates the logging configuration .json file based on the .ini file.
+    """
     runLoggingConfig: LoggingConfig = LoggingConfig()
     runLoggingConfig.run_logging_config()
+
+if __name__ == "__main__":
+    main()
