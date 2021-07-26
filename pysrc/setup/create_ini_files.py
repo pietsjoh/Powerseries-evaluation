@@ -178,10 +178,7 @@ indicator at start = false
 
 ; whether to distinguish between full spectra and fine spectra
 ; used for data sorting
-distinguish full fine spectra = true
-
-; directory name of the sorted data
-sorted data dir name = sorted_data"""
+distinguish full fine spectra = true"""
 
     with open(str(dataFormatFilePath), "w", encoding="utf-8") as configFile:
         configFile.write(configDataFormat)

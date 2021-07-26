@@ -34,7 +34,7 @@ class CombinePowerSeriesTool:
         config.read([str(configDataFormatIniPath), str(configPowerseriesIniPath)])
         self.addFileMode: str = config["combine_ps_tool.py"]["add file mode"].replace(" ", "")
         self.attrName: str = config["data format"]["attribute name"].replace(" ", "")
-        self._sorted_data_dir_name: str = config["data format"]["sorted data dir name"].replace(" ", "") + f"_{self.attrName}"
+        self._sorted_data_dir_name: str = f"sorted_data_{self.attrName}"
         self._possibleAttrList: typing.Union[list[str], None] = config["data format"]["attribute possibilities"].replace(" ", "").split(",")
         if len(self._possibleAttrList) == 1 and self._possibleAttrList[0].upper() == "NONE":
             self._possibleAttrList = None
