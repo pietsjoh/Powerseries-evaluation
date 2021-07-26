@@ -38,7 +38,7 @@ class CombinePowerSeriesTool:
         self._possibleAttrList: typing.Union[list[str], None] = config["data format"]["attribute possibilities"].replace(" ", "").split(",")
         if len(self._possibleAttrList) == 1 and self._possibleAttrList[0].upper() == "NONE":
             self._possibleAttrList = None
-        self.distinguishFullFineSpectra = LoggingConfig.check_true_false(
+        self.distinguishFullFineSpectra: bool = LoggingConfig.check_true_false(
             config["data format"]["distinguish full fine spectra"].replace(" ", ""))
         self.defaultAttribute: str = config["combine_ps_tool.py"]["default attribute"].replace(" ", "")
         try:
