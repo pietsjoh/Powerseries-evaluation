@@ -119,14 +119,24 @@ class DataQlab2:
         """The diameter of the pillar, extracted from the filename.
         """
         DiameterReader: FileNameReader = FileNameReader("diameter", "µm", "_", indicatorAtStart=False)
-        return DiameterReader(self.fileName)
+        try:
+            rVal = DiameterReader(self.fileName)
+        except AssertionError:
+            return None
+        else:
+            return rVal
 
     @property
     def temperature(self) -> str:
         """The temperature of the measurement, extracted from the filename.
         """
         TemperatureReader: FileNameReader = FileNameReader("temperature", "K_", "_", indicatorAtStart=False)
-        return TemperatureReader(self.fileName)
+        try:
+            rVal = TemperatureReader(self.fileName)
+        except AssertionError:
+            return None
+        else:
+            return rVal
 
 if __name__ == "__main__":
     ## just testing
