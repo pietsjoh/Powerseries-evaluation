@@ -149,12 +149,6 @@ use iterative guess = false"""
     dataFormatFilePath: Path = (configDir / "data_format.ini").resolve()
 
     configDataFormat: str = u"""[data format]
-; add file mode (data or attribute)
-add file mode = data
-
-; default attribute (of attribute name), ignored when add file mode is set to data
-default attribute = 4
-
 ; the data model that shall be used (available: qlab2)
 data model = Qlab2
 
