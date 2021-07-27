@@ -152,6 +152,9 @@ use iterative guess = false"""
 ; the data model that shall be used (available: qlab2)
 data model = Qlab2
 
+; whether to use the sorting by attribute
+use attribute = true
+
 ; special sequence name from filename (for example: diameter or temperature)
 ; this will be used to sort the data
 attribute name = diameter
