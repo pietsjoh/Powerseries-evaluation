@@ -97,7 +97,7 @@ class SortData:
                 self.borderFullFineWavelength: float = float(config["data format"]["full fine border"].replace(" ", ""))
             except ValueError:
                 logger.error("Invalid argument for full fine border in the .ini file (no float).")
-                exit()
+                sys.exit()
         self.useAttribute: bool = LoggingConfig.check_true_false(
             config["data format"]["use attribute"].replace(" ", ""))
         self.sortedDataDirPath: Path
@@ -118,7 +118,7 @@ class SortData:
             self.sortedDataDirPath = (headDirPath / "sorted_data").resolve()
         else:
             logger.error("According to the .ini file, no sorting shall be done. Aborting.")
-            exit()
+            sys.exit()
         try:
             self.dataModel = config["data format"]["data model"].replace(" ", "")
         except AssertionError:
@@ -261,7 +261,7 @@ class SortData:
                 self.sort_data_fine(self.sortedDataDirPath)
             else:
                 logger.error("According to the .ini file, no sorting shall be done. Aborting.")
-                exit()
+                sys.exit()
 
 def main():
     """Uses the SortData class to sort the data. Is called upon running the script.

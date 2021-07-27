@@ -48,13 +48,13 @@ class CombinePowerSeriesTool:
                 self.attribute: str = self.defaultAttribute
             except AssertionError:
                 logger.critical("The initial value read from the data_format.ini file is invalid. Aborting.")
-                exit()
+                sys.exit()
         elif not self.useAttribute and self.distinguishFullFineSpectra:
             try:
                 self.sortedDataPath: Path = (headDir / "sorted_data" / "fine_spectra").resolve()
             except AssertionError:
                 logger.critical(f"""Path to the sorted data [sorted_data/fine_spectra] does not exist. Aborting.""")
-                exit()
+                sys.exit()
         elif not self.useAttribute and not self.distinguishFullFineSpectra:
             if not self.addFileMode == "data":
                 logger.warning(f"""Sorting by attribute and full/fine is disabled.
@@ -323,7 +323,7 @@ single spectrum (ss), multiple spectra (ms)]: """)
                 logger.error(f"Invalid input {confirmationExit} only 'y' and 'n' are accepted. Not closing the application.")
                 return 1
         elif case == "exit":
-            exit()
+            sys.exit()
         elif not self.addFileMode == "data" and case == f"set {self.attrName}":
             self.set_attribute()
             return 1

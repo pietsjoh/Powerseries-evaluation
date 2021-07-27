@@ -32,7 +32,7 @@ class PowerSeriesTool(EvalPowerSeries):
         if case == "q":
             return 0
         elif case == "exit":
-            exit()
+            sys.exit()
         elif case == "config":
             self.config()
             return 1
