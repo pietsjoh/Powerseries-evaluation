@@ -15,10 +15,10 @@ loggerObj: LoggingConfig = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
 
 class SortData:
-    _dataModelList = {"QLAB2" : DataQlab2}
+    _dataModelList: dict = {"QLAB2" : DataQlab2}
     dataDirPath: Path = (headDirPath / "data").resolve()
 
-    def __init__(self):
+    def __init__(self) -> None:
         logger.debug("Initializing SortData object.")
         self.read_data_format_ini_file()
         if self.dataModel.name == "QLAB2":
@@ -26,7 +26,7 @@ class SortData:
         else:
             raise NotImplementedError
 
-    def read_data_format_ini_file(self):
+    def read_data_format_ini_file(self) -> None:
         logger.debug("Calling read_data_format_ini_file()")
         configIniPath: Path = (headDirPath / "config" / "data_format.ini").resolve()
         config: ConfigParser = ConfigParser()
@@ -66,7 +66,7 @@ class SortData:
         return self._dataModel
 
     @dataModel.setter
-    def dataModel(self, value):
+    def dataModel(self, value: str):
         logger.debug(f"Setting dataModel to {value}.")
         if not value.upper() in self._dataModelList.keys():
             logger.error(f"{value} is not a valid data model (subclass of DataSuper). Aborting.")
@@ -74,11 +74,12 @@ class SortData:
         else:
             self._dataModel = self._dataModelList[value.upper()]
 
-    def sort_data_attribute(self):
+    def sort_data_attribute(self) -> None:
         logger.debug("Calling sort_data_attribute()")
         if not self.sortedDataDirPath.exists():
             self.sortedDataDirPath.mkdir()
 
+        filePath: Path
         for filePath in self.PathsList:
             fileName: str = filePath.name
             fileDir: str = filePath.parts[-2]
@@ -117,6 +118,11 @@ class SortData:
                     logger.warning(f"File at end location [{newFilePath}] already exists. Not copying the file [{fileName}]")
                     continue
                 shutil.copy2(str(filePath), str(newFilePath))
+
+    def sort_data_fine(self):
+        pass
+
+
 def main():
     runSortData: SortData = SortData()
     runSortData.sort_data_attribute()
