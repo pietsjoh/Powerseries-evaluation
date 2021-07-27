@@ -15,7 +15,7 @@ headDirPath = Path(__file__).resolve().parents[1]
 sys.path.append(str(headDirPath))
 
 from setup.config_logging import LoggingConfig
-from utils.filename_analysis import FileNameReader
+from data_tools.filename_analysis import FileNameReader
 
 loggerObj: LoggingConfig = LoggingConfig()
 logger = loggerObj.init_logger(__name__)

@@ -7,7 +7,7 @@ import typing
 headDirPath: Path = Path(__file__).resolve().parents[2]
 srcDirPath: Path = (headDirPath / "pysrc").resolve()
 sys.path.append(str(srcDirPath))
-from utils.filename_analysis import FileNameReader
+from data_tools.filename_analysis import FileNameReader
 from setup.config_logging import LoggingConfig
 from data_tools.data_formats import DataQlab2
 import utils.misc as misc
