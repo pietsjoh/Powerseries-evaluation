@@ -115,7 +115,7 @@ class DataQlab2:
         return self.data[self.columns[idx]].to_numpy()[::-1]
 
     @property
-    def diameter(self) -> str:
+    def diameter(self) -> typing.Union[str, None]:
         """The diameter of the pillar, extracted from the filename.
         """
         DiameterReader: FileNameReader = FileNameReader("diameter", "µm", "_", indicatorAtStart=False)
@@ -127,7 +127,7 @@ class DataQlab2:
             return rVal
 
     @property
-    def temperature(self) -> str:
+    def temperature(self) -> typing.Union[str, None]:
         """The temperature of the measurement, extracted from the filename.
         """
         TemperatureReader: FileNameReader = FileNameReader("temperature", "K_", "_", indicatorAtStart=False)

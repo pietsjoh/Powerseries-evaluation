@@ -10,7 +10,6 @@ sys.path.append(str(srcDirPath))
 from data_tools.filename_analysis import FileNameReader
 from setup.config_logging import LoggingConfig
 from data_tools.data_formats import DataQlab2
-import utils.misc as misc
 
 loggerObj: LoggingConfig = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
@@ -25,7 +24,7 @@ class SortData:
         logger.debug("Initializing SortData object.")
         self.read_data_format_ini_file()
         if self.dataModel.name == "QLAB2":
-            self.originalPathsGen = self.dataDirPath.rglob("*AllSpectra.dat")
+            self.originalPathsGen: typing.Generator[Path, None, None] = self.dataDirPath.rglob("*AllSpectra.dat")
         else:
             raise NotImplementedError
 
@@ -37,16 +36,18 @@ class SortData:
         self.distinguishFullFineSpectra: bool = LoggingConfig.check_true_false(
             config["data format"]["distinguish full fine spectra"].replace(" ", ""))
         if self.distinguishFullFineSpectra:
-            self.borderFullFineWavelength: floatOrNone = misc.float_decode(config["data format"]["full fine border"].replace(" ", ""))
-            if self.borderFullFineWavelength is None:
-                logger.error("Invalid argument for full fine border in the .ini file.")
+            try:
+                self.borderFullFineWavelength: float = float(config["data format"]["full fine border"].replace(" ", ""))
+            except ValueError:
+                logger.error("Invalid argument for full fine border in the .ini file (no float).")
                 exit()
         self.useAttribute: bool = LoggingConfig.check_true_false(
             config["data format"]["use attribute"].replace(" ", ""))
+        self.sortedDataDirPath: Path
         if self.useAttribute:
             self.attrName: str = config["data format"]["attribute name"].replace(" ", "")
             sortedDataDirName: str = f"sorted_data_{self.attrName}"
-            self.sortedDataDirPath: Path = (headDirPath / sortedDataDirName).resolve()
+            self.sortedDataDirPath = (headDirPath / sortedDataDirName).resolve()
             indicator: str = config["data format"]["indicator"].replace(" ", "")
             splitter: str = config["data format"]["splitter"].replace(" ", "")
             indicatorAtStart: bool = LoggingConfig.check_true_false(
@@ -57,7 +58,7 @@ class SortData:
             if len(self.possibleAttrList) == 1 and self.possibleAttrList[0].upper() == "NONE":
                 self.possibleAttrList = None
         elif not self.useAttribute and self.distinguishFullFineSpectra:
-            self.sortedDataDirPath: Path = (headDirPath / "sorted_data").resolve()
+            self.sortedDataDirPath = (headDirPath / "sorted_data").resolve()
         else:
             logger.error("According to the .ini file, no sorting shall be done. Aborting.")
             exit()
@@ -130,22 +131,23 @@ class SortData:
         assert self.distinguishFullFineSpectra
         assert isinstance(dirPath, Path)
         assert dirPath.exists()
-        pathsList: list[Path] = dirPath.rglob("*AllSpectra.dat")
+        pathsGen: typing.Generator[Path, None, None] = dirPath.rglob("*AllSpectra.dat")
         fineSpectraPath: Path = (dirPath / "fine_spectra").resolve()
         fullSpectraPath: Path = (dirPath / "full_spectra").resolve()
         filePath: Path
-        for filePath in pathsList:
+        for filePath in pathsGen:
             data = self.dataModel(filePath)
             wavelengthRange: number = max(data.wavelengths) - min(data.wavelengths)
+            newFilePath: Path
             if wavelengthRange <= self.borderFullFineWavelength:
                 if not fineSpectraPath.exists():
                     fineSpectraPath.mkdir()
-                newFilePath: Path = (fineSpectraPath / filePath.name).resolve()
+                newFilePath = (fineSpectraPath / filePath.name).resolve()
                 shutil.move(filePath, newFilePath)
             else:
                 if not fullSpectraPath.exists():
                     fullSpectraPath.mkdir()
-                newFilePath: Path = (fullSpectraPath / filePath.name).resolve()
+                newFilePath = (fullSpectraPath / filePath.name).resolve()
                 shutil.move(filePath, newFilePath)
 
     def run(self) -> None:
@@ -153,7 +155,7 @@ class SortData:
             self.sort_data_attribute()
             if self.distinguishFullFineSpectra:
                 dirPath: Path
-                dirPathGen = self.sortedDataDirPath.glob("*")
+                dirPathGen: typing.Generator[Path, None, None] = self.sortedDataDirPath.glob("*")
                 for dirPath in dirPathGen:
                     self.sort_data_fine(dirPath)
         else:
