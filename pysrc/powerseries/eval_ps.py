@@ -1,10 +1,10 @@
 import numpy as np
 from configparser import ConfigParser
-
+import typing
 import sys
 from pathlib import Path
-headDir = Path(__file__).resolve().parents[2]
-srcDirPath = (headDir / "pysrc").resolve()
+headDir: Path = Path(__file__).resolve().parents[2]
+srcDirPath: Path = (headDir / "pysrc").resolve()
 sys.path.append(str(srcDirPath))
 
 from peak_fit.single_peak_fit_models import GaussianPeakFit, LorentzPeakFit, VoigtPeakFit, PseudoVoigtPeakFit
@@ -13,45 +13,35 @@ from peak_fit.single_peak_fit_base import PeakFitSuper
 from setup.config_logging import LoggingConfig
 import utils.misc as misc
 
-loggerObj = LoggingConfig()
+loggerObj: LoggingConfig = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
 
-class EvalPowerSeries:
-    _fitModelList = {"LORENTZ": LorentzPeakFit, "GAUSS": GaussianPeakFit, "VOIGT": VoigtPeakFit, "PSEUDOVOIGT": PseudoVoigtPeakFit}
-    _dataModelList = {"QLAB2" : DataQlab2}
-    _snapshots = 10
-    _initRange = None
-    _maxInitRange = 0
-    _exclude = []
-    _fitModel = LorentzPeakFit
-    _fitRangeScale = 1
-    _intCoverage = 1
-    _constantPeakWidth = 50
-    _powerScale = 1
-    _enableBackgroundFit = False
-    _backgroundFitMode = "constant"
+tupleIntOrNone = typing.Union[tuple[int, int], None]
+number = typing.Union[int, float, np.number]
 
-    def __init__(self, DataObj):
+class EvalPowerSeries:
+    _fitModelList: dict = {"LORENTZ": LorentzPeakFit, "GAUSS": GaussianPeakFit, "VOIGT": VoigtPeakFit, "PSEUDOVOIGT": PseudoVoigtPeakFit}
+    _dataModelList: dict = {"QLAB2" : DataQlab2}
+
+    def __init__(self, DataObj) -> None:
         try:
             self.check_DataObj_attributes(DataObj)
             assert hasattr(DataObj, "name")
             self.dataModel = DataObj.name
         except AssertionError:
             logger.exception("DataObj does not satisfy the requirements. Aborting.")
-            raise ValueError("DataObj did not satisfy the requirements.")
+            sys.exit()
         else:
             self.data = DataObj
-            self.wavelengths = self.data.wavelengths
-            self.energies = self.data.energies
-            self.inputPower = self.data.inputPower
-            self.lenInputPower = self.data.lenInputPower
-            self.maxEnergy = self.data.maxEnergy
-            self.minEnergy = self.data.minEnergy
-            self.minInputPower = self.data.minInputPower
-            self.maxInputPower = self.data.maxInputPower
+            self.wavelengths: np.ndarray = self.data.wavelengths
+            self.energies: np.ndarray = self.data.energies
+            self.inputPower: np.ndarray = self.data.inputPower
+            self.lenInputPower: int = self.data.lenInputPower
+            self.maxEnergy: number = self.data.maxEnergy
+            self.minEnergy: number = self.data.minEnergy
+            self.minInputPower: number = self.data.minInputPower
+            self.maxInputPower: number = self.data.maxInputPower
             self.fileName = self.data.fileName
-            self.temperature = self.data.temperature
-            self.diameter = self.data.diameter
             logger.debug("""EvalPowerSeries object initialized.
                 file name: {}""".format(DataObj.fileName))
             self.read_powerseries_ini_file()
