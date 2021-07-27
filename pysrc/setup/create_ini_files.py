@@ -76,7 +76,7 @@ enable file logging = true"""
     ## create powerseries.ini file
     powerseriesFilePath: Path = (configDir / "powerseries.ini").resolve()
     configPowerseries: str = """[combine_ps_tool.py]
-; add file mode (data or attribute)
+; add file mode (data or sorted_data)
 add file mode = data
 
 ; default attribute (of attribute name), ignored when add file mode is set to data
