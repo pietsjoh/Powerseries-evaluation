@@ -20,6 +20,7 @@ set result=false
 if not exist .\config\debugging.ini set result=true
 if not exist .\config\logging.ini set result=true
 if not exist .\config\powerseries.ini set result=true
+if not exist .\config\data_format.ini set result=true
 if "%result%"=="true" (echo Creating config files && python .\pysrc\setup\create_ini_files.py)
 
 @REM if logs directory does not exist then create it
