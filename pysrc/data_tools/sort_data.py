@@ -24,7 +24,7 @@ class SortData:
         logger.debug("Initializing SortData object.")
         self.read_data_format_ini_file()
         if self.dataModel.name == "QLAB2":
-            self.originalPathsList: list[Path] = list(self.dataDirPath.rglob("*AllSpectra.dat"))
+            self.originalPathsGen = self.dataDirPath.rglob("*AllSpectra.dat")
         else:
             raise NotImplementedError
 
@@ -80,7 +80,7 @@ class SortData:
             self.sortedDataDirPath.mkdir()
 
         filePath: Path
-        for filePath in self.originalPathsList:
+        for filePath in self.originalPathsGen:
             fileName: str = filePath.name
             fileDir: str = filePath.parts[-2]
             newFileName: str = f"{fileDir}_{fileName}"
@@ -117,7 +117,7 @@ class SortData:
                 if newFilePath.exists():
                     logger.warning(f"File at end location [{newFilePath}] already exists. Not copying the file [{fileName}]")
                     continue
-                shutil.copy2(str(filePath), str(newFilePath))
+                shutil.copy2(filePath, newFilePath)
 
     def sort_data_fine(self, dirPath: Path) -> None:
         logger.debug("Calling sort_data_fine")
@@ -147,13 +147,15 @@ class SortData:
             self.sort_data_attribute()
             if self.distinguishFullFineSpectra:
                 dirPath: Path
-                dirPathList: list[Path] = self.sortedDataDirPath.glob("*")
-                for dirPath in dirPathList:
+                dirPathGen = self.sortedDataDirPath.glob("*")
+                for dirPath in dirPathGen:
                     self.sort_data_fine(dirPath)
         else:
             if self.distinguishFullFineSpectra:
                 filePath: Path
-                for filePath in self.originalPathsList:
+                for filePath in self.originalPathsGen:
+                    if not self.sortedDataDirPath.exists():
+                        self.sortedDataDirPath.mkdir()
                     fileName: str = filePath.name
                     fileDir: str = filePath.parts[-2]
                     newFileName: str = f"{fileDir}_{fileName}"
@@ -161,15 +163,11 @@ class SortData:
                     if newFilePath.exists():
                         logger.warning(f"File at end location [{newFilePath}] already exists. Not copying the file [{fileName}]")
                         continue
-                    shutil.copy2(str(filePath), str(newFilePath))
-                newFilePathList: list[Path] = self.sortedDataDirPath.glob("*")
-                newFilePath: Path
-                for newFilePath in newFilePathList:
-                    self.sort_data_fine(newFilePath)
+                    shutil.copy2(filePath, newFilePath)
+                self.sort_data_fine(self.sortedDataDirPath)
             else:
                 logger.error("According to the .ini file, no sorting shall be done. Aborting.")
                 exit()
-
 
 def main():
     runSortData: SortData = SortData()
