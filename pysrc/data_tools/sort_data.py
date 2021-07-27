@@ -153,7 +153,7 @@ class SortData:
         else:
             if self.distinguishFullFineSpectra:
                 filePath: Path
-                for filePath in self.orginialPathsList:
+                for filePath in self.originalPathsList:
                     fileName: str = filePath.name
                     fileDir: str = filePath.parts[-2]
                     newFileName: str = f"{fileDir}_{fileName}"
