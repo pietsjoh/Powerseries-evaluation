@@ -26,27 +26,39 @@ class SortData:
             raise NotImplementedError
 
     def read_data_format_ini_file(self):
+        logger.debug("Calling read_data_format_ini_file()")
         configIniPath: Path = (headDirPath / "config" / "data_format.ini").resolve()
         config: ConfigParser = ConfigParser()
         config.read(str(configIniPath))
         self.attrName: str = config["data format"]["attribute name"].replace(" ", "")
         sortedDataDirName: str = f"sorted_data_{self.attrName}"
         self.sortedDataDirPath: Path = (headDirPath / sortedDataDirName).resolve()
-        self.possibleAttrList: typing.Union[list[str], None] = config["data format"]["attribute possibilities"].replace(" ", "").split(",")
-        if len(self.possibleAttrList) == 1 and self.possibleAttrList[0].upper() == "NONE":
-            self.possibleAttrList = None
         self.distinguishFullFineSpectra: bool = LoggingConfig.check_true_false(
         config["data format"]["distinguish full fine spectra"].replace(" ", ""))
         indicator: str = config["data format"]["indicator"].replace(" ", "")
         splitter: str = config["data format"]["splitter"].replace(" ", "")
         indicatorAtStart: bool = LoggingConfig.check_true_false(
             config["data format"]["indicator at start"])
+        self.possibleAttrList: typing.Union[list[str], None] = config["data format"]["attribute possibilities"].replace(" ", "").split(",")
         try:
             self.dataModel = config["data format"]["data model"].replace(" ", "")
         except AssertionError:
             raise TypeError("Config file value for data model is invalid.")
         self.AttrReader: FileNameReader = FileNameReader(name=self.attrName, indicator=indicator,
             splitter=splitter, indicatorAtStart=indicatorAtStart)
+
+        logger.debug(f"""Read attributes from data_format.ini file:
+attrName: {self.attrName}
+sortedDataDirPath: {self.sortedDataDirPath}
+distinguishFullFineSpectra: {self.distinguishFullFineSpectra}
+indicator: {indicator}
+splitter: {splitter}
+indicatorAtStart: {indicatorAtStart}
+possibleAttrList: {self.possibleAttrList}
+dataModel: {self.dataModel.name}""")
+
+        if len(self.possibleAttrList) == 1 and self.possibleAttrList[0].upper() == "NONE":
+            self.possibleAttrList = None
 
     @property
     def dataModel(self):
@@ -69,6 +81,11 @@ class SortData:
             fileName: str = filePath.name
             fileDir: str = filePath.parts[-2]
             newFileName: str = f"{fileDir}_{fileName}"
+
+            logger.debug(f"""Information about the to be copied file:
+fileName: {fileName}
+fileDir: {fileDir}
+filePath: {filePath}""")
             if "tesst" or "fail" in fileName:
                 continue
             try:
@@ -86,11 +103,16 @@ class SortData:
                 if not attrPath.exists():
                     attrPath.mkdir()
                 newFilePath: Path = (attrPath / newFileName).resolve()
+
+                logger.debug(f"""Information about the new file location:
+read attribute: {attr}
+attribute path: {attrPath}
+newFileName: {newFileName}
+newFilePath: {newFilePath}""")
                 if newFilePath.exists():
                     logger.error(f"File at end location [{newFilePath}] already exists. Not copying the file [{fileName}]")
                     continue
-                else:
-                    shutil.copy2(str(filePath), str(newFilePath))
+                shutil.copy2(str(filePath), str(newFilePath))
 def main():
     runSortData: SortData = SortData()
     runSortData.sort_data_attribute()
