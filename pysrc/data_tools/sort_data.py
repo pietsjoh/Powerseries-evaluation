@@ -84,10 +84,10 @@ class SortData:
             fileDir: str = filePath.parts[-2]
             newFileName: str = f"{fileDir}_{fileName}"
 
-            logger.debug("""Information about the to be copied file:
-            fileName: {}
-            fileDir: {}
-            filePath: {}""".format(fileName, fileDir, filePath))
+            logger.debug(f"""Information about the to be copied file:
+    fileName: {fileName}
+    fileDir: {fileDir}
+    filePath: {filePath}""")
             if "tesst" in fileName or "fail" in fileName:
                 continue
             try:
@@ -108,13 +108,13 @@ class SortData:
                 newFilePath: Path = (attrPath / newFileName).resolve()
 
                 logger.debug(f"""Information about the new file location:
-read attribute: {attr}
-attribute path: {attrPath}
-newFileName: {newFileName}
-newFilePath: {newFilePath}""")
+    read attribute: {attr}
+    attribute path: {attrPath}
+    newFileName: {newFileName}
+    newFilePath: {newFilePath}""")
 
                 if newFilePath.exists():
-                    logger.error(f"File at end location [{newFilePath}] already exists. Not copying the file [{fileName}]")
+                    logger.warning(f"File at end location [{newFilePath}] already exists. Not copying the file [{fileName}]")
                     continue
                 shutil.copy2(str(filePath), str(newFilePath))
 def main():
