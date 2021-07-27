@@ -18,6 +18,8 @@ logger = loggerObj.init_logger(__name__)
 
 tupleIntOrNone = typing.Union[tuple[int, int], None]
 number = typing.Union[int, float, np.number]
+floatOrNone = typing.Union[float, None]
+intOrNone = typing.Union[int, None]
 
 class EvalPowerSeries:
     _fitModelList: dict = {"LORENTZ": LorentzPeakFit, "GAUSS": GaussianPeakFit, "VOIGT": VoigtPeakFit, "PSEUDOVOIGT": PseudoVoigtPeakFit}
@@ -41,7 +43,7 @@ class EvalPowerSeries:
             self.minEnergy: number = self.data.minEnergy
             self.minInputPower: number = self.data.minInputPower
             self.maxInputPower: number = self.data.maxInputPower
-            self.fileName = self.data.fileName
+            self.fileName: str = self.data.fileName
             logger.debug("""EvalPowerSeries object initialized.
                 file name: {}""".format(DataObj.fileName))
             self.read_powerseries_ini_file()
@@ -52,7 +54,7 @@ class EvalPowerSeries:
         return self._dataModel
 
     @dataModel.setter
-    def dataModel(self, value):
+    def dataModel(self, value: str) -> None:
         logger.debug(f"Setting dataModel to {value}.")
         if not value.upper() in self._dataModelList.keys():
             logger.error(f"{value} is not a valid data model (subclass of DataSuper). Aborting.")
@@ -85,26 +87,23 @@ class EvalPowerSeries:
         assert (DataObj.inputPower >= 0).all()
         assert (DataObj.wavelengths >= 0).all()
 
-    def read_powerseries_ini_file(self):
+    def read_powerseries_ini_file(self) -> None:
         logger.debug("Calling read_powerseries_ini_file()")
-        configIniPath = (headDir / "config" / "powerseries.ini").resolve()
-        config = ConfigParser()
+        configIniPath: Path = (headDir / "config" / "powerseries.ini").resolve()
+        config: ConfigParser = ConfigParser()
         config.read(str(configIniPath), encoding="UTF-8")
-        snapshots = misc.int_decode(config["eval_ps.py"]["snapshots"].replace(" ", ""))
-        self.snapshots = snapshots
-        fitRangeScale = misc.float_decode(config["eval_ps.py"]["fit range scale"].replace(" ", ""))
-        self.fitRangeScale = fitRangeScale
-        intCoverage = misc.float_decode(config["eval_ps.py"]["integration coverage"].replace(" ", ""))
-        self.intCoverage = intCoverage
-        constantPeakWidth = misc.int_decode(config["eval_ps.py"]["constant peak width"].replace(" ", ""))
-        self.constantPeakWidth = constantPeakWidth
-        powerScale = misc.float_decode(config["eval_ps.py"]["power scale"].replace(" ", ""))
-        self.powerScale = powerScale
-        fitModel = config["eval_ps.py"]["fit model"].replace(" ", "")
+        self.snapshots: intOrNone = misc.int_decode(config["eval_ps.py"]["snapshots"].replace(" ", ""))
+        self.fitRangeScale: floatOrNone = misc.float_decode(config["eval_ps.py"]["fit range scale"].replace(" ", ""))
+        self.intCoverage: floatOrNone = misc.float_decode(config["eval_ps.py"]["integration coverage"].replace(" ", ""))
+        self.constantPeakWidth: intOrNone = misc.int_decode(config["eval_ps.py"]["constant peak width"].replace(" ", ""))
+        self.powerScale: floatOrNone = misc.float_decode(config["eval_ps.py"]["power scale"].replace(" ", ""))
+        fitModel: str = config["eval_ps.py"]["fit model"].replace(" ", "")
         self.check_input_fitmodel(fitModel)
-        minInitRangeEnergyStr = config["eval_ps.py"]["min energy"].replace(" ", "")
-        maxInitRangeEnergyStr = config["eval_ps.py"]["max energy"].replace(" ", "")
-        maxInitRangeStr = config["eval_ps.py"]["max init range"].replace(" ", "")
+        minInitRangeEnergyStr: str = config["eval_ps.py"]["min energy"].replace(" ", "")
+        maxInitRangeEnergyStr: str = config["eval_ps.py"]["max energy"].replace(" ", "")
+        maxInitRangeStr: str = config["eval_ps.py"]["max init range"].replace(" ", "")
+        useInitRange: bool
+        self.initRange: tupleIntOrNone
         try:
             useInitRange = LoggingConfig.check_true_false(config["eval_ps.py"]["use init range"].replace(" ", ""))
         except ValueError:
@@ -115,8 +114,10 @@ class EvalPowerSeries:
                 self.check_input_initial_range(minInitRangeEnergyStr, maxInitRangeEnergyStr, maxInitRangeStr)
             else:
                 self.initRange = None
-        minInputPowerRangeStr = config["eval_ps.py"]["min inputpower"].replace(" ", "")
-        maxInputPowerRangeStr = config["eval_ps.py"]["max inputpower"].replace(" ", "")
+        minInputPowerRangeStr: str = config["eval_ps.py"]["min inputpower"].replace(" ", "")
+        maxInputPowerRangeStr: str = config["eval_ps.py"]["max inputpower"].replace(" ", "")
+        useExclude: bool
+        self.exclude: list[int]
         try:
             useExclude = LoggingConfig.check_true_false(config["eval_ps.py"]["use exclude"].replace(" ", ""))
         except ValueError:
@@ -127,19 +128,19 @@ class EvalPowerSeries:
                 self.check_input_exclude(minInputPowerRangeStr, maxInputPowerRangeStr)
             else:
                 self.exclude = []
-        self.backgroundFitMode = config["eval_ps.py"]["background fit mode"].replace(" ", "")
+        self.backgroundFitMode: str = config["eval_ps.py"]["background fit mode"].replace(" ", "")
 
-    def read_data_format_ini_file(self):
+    def read_data_format_ini_file(self) -> None:
         logger.debug("Calling read_powerseries_ini_file()")
-        configIniPath = (headDir / "config" / "data_format.ini").resolve()
-        config = ConfigParser()
+        configIniPath: Path = (headDir / "config" / "data_format.ini").resolve()
+        config: ConfigParser = ConfigParser()
         config.read(str(configIniPath), encoding="UTF-8")
         try:
             self.dataModel = config["data format"]["data model"].replace(" ", "")
         except AssertionError:
             raise TypeError("Config file value for data model is invalid.")
 
-    def energy_to_idx(self, energy):
+    def energy_to_idx(self, energy: number) -> int:
         logger.debug(f"Calling energy_to_idx(), energy: {energy}")
         if (energy < self.minEnergy):
             logger.warning("""ValueError: The selected energy {} is out of bounce. Possible range: [{}, {}].
@@ -147,12 +148,13 @@ Selecting the minimum value.""".format(energy, self.minEnergy, self.maxEnergy))
         elif (energy > self.maxEnergy):
             logger.warning("""ValueError: The selected energy {} is out of bounce. Possible range: [{}, {}].
 Selecting the maximum value.""".format(energy, self.minEnergy, self.maxEnergy))
-        idx = int(np.argmin(np.abs(self.energies - energy)))
+        idx: int = int(np.argmin(np.abs(self.energies - energy)))
         logger.debug(f"energy_to_idx(), Index: {idx}")
         return idx
 
-    def inputPower_to_idx(self, inputPower):
+    def inputPower_to_idx(self, inputPower: number) -> int:
         logger.debug(f"Calling inputPower_to_idx(), inputPower: {inputPower}")
+        idx: int
         if (inputPower < self.minInputPower):
             logger.warning("""ValueError: The selected input power {} is out of bounce. Possible range: [{}, {}].
 Selecting the minimum value.""".format(inputPower, self.minInputPower, self.maxInputPower))
@@ -166,14 +168,15 @@ Selecting the maximum value.""".format(inputPower, self.minInputPower, self.maxI
         return idx
 
     @property
-    def backgroundFitMode(self):
+    def backgroundFitMode(self) -> str:
         return self._backgroundFitMode
 
     @backgroundFitMode.setter
-    def backgroundFitMode(self, value):
+    def backgroundFitMode(self, value: str) -> None:
         logger.debug(f"Setting backgroundFitMode to {value}.")
         assert isinstance(value, str)
-        val = value.lower().replace(" ", "")
+        val: str = value.lower().replace(" ", "")
+        self._backgroundFitMode: str
         if val in ["spline", "constant", "local_all", "local_left", "local_right", "none", "offset", "disable"]:
             self._backgroundFitMode = val
         else:
@@ -181,13 +184,13 @@ Selecting the maximum value.""".format(inputPower, self.minInputPower, self.maxI
             self._backgroundFitMode = "none"
 
     @property
-    def snapshots(self):
+    def snapshots(self) -> int:
         return self._snapshots
 
     @snapshots.setter
-    def snapshots(self, value):
+    def snapshots(self, value: int) -> None:
         logger.debug(f"Setting snapshots to {value}.")
-        self._snapshots = value
+        self._snapshots: int = value
         if self._snapshots is None:
             self._snapshots = 0
         if not isinstance(self._snapshots, (int, np.integer)):
@@ -203,35 +206,40 @@ Setting snapshots to the max possible value.""".format(self._snapshots, self.len
             self._snapshots = self.lenInputPower - len(self._exclude)
         logger.debug(f"snapshots has been set to {self._snapshots}")
 
-    def check_input_initial_range(self, minInitRangeEnergyStr, maxInitRangeEnergyStr, maxInitRangeStr):
+    def check_input_initial_range(self, minInitRangeEnergyStr: str, maxInitRangeEnergyStr: str,
+        maxInitRangeStr: str) -> None:
         logger.debug("Calling check_input_initial_range()")
-        self.minInitRangeEnergy = misc.float_decode(minInitRangeEnergyStr)
-        self.maxInitRangeEnergy = misc.float_decode(maxInitRangeEnergyStr)
-        self.maxInitRange = misc.int_decode(maxInitRangeStr)
-        if self.minInitRangeEnergy == None:
+        self.minInitRangeEnergy: floatOrNone = misc.float_decode(minInitRangeEnergyStr)
+        self.maxInitRangeEnergy: floatOrNone = misc.float_decode(maxInitRangeEnergyStr)
+        self.maxInitRange: intOrNone = misc.int_decode(maxInitRangeStr)
+        if self.minInitRangeEnergy is None:
             self.minInitRangeEnergy = self.minEnergy
             logger.error(f"Invalid input for min energy. Using the min possible value {self.minInitRangeEnergy}")
-        if self.maxInitRangeEnergy == None:
+        if self.maxInitRangeEnergy is None:
             self.maxInitRangeEnergy = self.maxEnergy
             logger.error(f"Invalid input for max energy. Using the max possible value {self.maxInitRangeEnergy}")
-        minIdx = self.energy_to_idx(self.minInitRangeEnergy)
-        maxIdx = self.energy_to_idx(self.maxInitRangeEnergy)
+        minIdx: int = self.energy_to_idx(self.minInitRangeEnergy)
+        maxIdx: int = self.energy_to_idx(self.maxInitRangeEnergy)
         logger.debug(f"input_initial_range(), Initial range: [{minIdx}, {maxIdx}]")
-        self.initRange = minIdx, maxIdx
+        self.initRange: tuple[int, int] = minIdx, maxIdx
 
     @property
-    def initRange(self):
+    def initRange(self) -> tupleIntOrNone:
         return self._initRange
 
     @initRange.setter
-    def initRange(self, value):
+    def initRange(self, value: tupleIntOrNone) -> None:
         logger.debug(f"Setting initRange to {value}.")
-        self._initRange = value
+        self._initRange: tupleIntOrNone = value
         if isinstance(self._initRange, tuple):
             if len(self._initRange) == 2:
+                idx1: int
+                idx2: int
                 idx1, idx2 = self._initRange
                 if idx1 != idx2:
-                    idxList = [idx1, idx2]
+                    idxList: list[int, int] = [idx1, idx2]
+                    i: int
+                    idx: int
                     for i, idx in enumerate(idxList):
                         if not np.issubdtype(type(idx), np.integer):
                             logger.error(f"TypeError: Index [{idx}] is not an integer. Setting initialRange to None.")
@@ -255,22 +263,22 @@ Setting snapshots to the max possible value.""".format(self._snapshots, self.len
         logger.debug(f"initRange has been set to {self._initRange}")
 
     @property
-    def maxInitRange(self):
+    def maxInitRange(self) -> int:
         return self._maxInitRange
 
     @maxInitRange.setter
-    def maxInitRange(self, value):
+    def maxInitRange(self, value: intOrNone) -> None:
         logger.debug(f"Setting maxInitRange to {value}.")
-        self._maxInitRange = value
-        if self._maxInitRange is None:
+        if value is None:
             self._maxInitRange = 0
         if not np.issubdtype(type(value), np.integer):
             logger.error(f"TypeError: {self._maxInitRange} is not a valid input. Setting maxInitRange to 0.")
             self._maxInitRange = 0
+        self._maxInitRange: int = value
         if self._maxInitRange < 0:
             logger.warning(f"ValueError: {self._maxInitRange} is smaller than 0. Setting maxInitRange to 0.")
             self._maxInitRange = 0
-        if self._maxInitRange >= self.lenInputPower:
+        elif self._maxInitRange >= self.lenInputPower:
             logger.warning("""ValueError: maxInitRange ({}) exceeds the number of data sets
 ({}) (different input powers).
 Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.lenInputPower))
@@ -282,7 +290,7 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
         return self._fitModel
 
     @fitModel.setter
-    def fitModel(self, value):
+    def fitModel(self, value) -> None:
         logger.debug(f"Setting fitModel to {value}.")
         self._fitModel = value
         if not issubclass(self._fitModel, PeakFitSuper):
@@ -290,7 +298,7 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
             self._fitModel = LorentzPeakFit
         logger.debug(f"fitModel has been set to {self._fitModel}")
 
-    def check_input_fitmodel(self, value):
+    def check_input_fitmodel(self, value: str) -> None:
         logger.debug("Calling check_input_fitmodel()")
         if value.upper() in self._fitModelList.keys():
             self.fitModel = self._fitModelList[value.upper()]
@@ -300,12 +308,13 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
         logger.debug(f"fitModel has been set to {value}")
 
     @property
-    def exclude(self):
+    def exclude(self) -> list[number]:
         return self._exclude
 
     @exclude.setter
-    def exclude(self, value):
+    def exclude(self, value: typing.Union[list[number], None]) -> None:
         logger.debug(f"Setting exclude to {value}.")
+        self._exclude: list[number]
         if value is None:
             self._exclude = []
         if isinstance(value, (list, np.ndarray)):
@@ -316,29 +325,29 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
             self._exclude = []
         logger.debug(f"exclude has been set to {self._exclude}")
 
-    def check_input_exclude(self, minInputPowerRangeStr, maxInputPowerRangeStr):
+    def check_input_exclude(self, minInputPowerRangeStr: str, maxInputPowerRangeStr: str) -> None:
         logger.debug("Calling check_input_exclude()")
-        self.minInputPowerRange = misc.float_decode(minInputPowerRangeStr)
-        self.maxInputPowerRange = misc.float_decode(maxInputPowerRangeStr)
-        if self.minInputPowerRange == None:
+        self.minInputPowerRange: floatOrNone = misc.float_decode(minInputPowerRangeStr)
+        self.maxInputPowerRange: floatOrNone = misc.float_decode(maxInputPowerRangeStr)
+        if self.minInputPowerRange is None:
             self.minInputPowerRange = self.minInputPower
             logger.error(f"Invalid input for min input power. Using the min possible value {self.minInputPowerRange}")
-        if self.maxInputPowerRange == None:
+        if self.maxInputPowerRange is None:
             self.maxInputPowerRange = self.maxInputPower
             logger.error(f"Invalid input for max input power. Using the max possible value {self.maxInputPowerRange}")
-        minIdx = self.inputPower_to_idx(self.minInputPowerRange)
-        maxIdx = self.inputPower_to_idx(self.maxInputPowerRange)
+        minIdx: int = self.inputPower_to_idx(self.minInputPowerRange)
+        maxIdx: int = self.inputPower_to_idx(self.maxInputPowerRange)
         logger.debug(f"input_exclude(), Exclude: [minIdx: {minIdx}, maxIdx: {maxIdx}]")
-        self.exclude = list(range(0, minIdx)) + list(range(maxIdx, self.lenInputPower))
+        self.exclude: list[number] = list(range(0, minIdx)) + list(range(maxIdx, self.lenInputPower))
 
     @property
-    def fitRangeScale(self):
+    def fitRangeScale(self) -> number:
         return self._fitRangeScale
 
     @fitRangeScale.setter
-    def fitRangeScale(self, value):
+    def fitRangeScale(self, value: number) -> None:
         logger.debug(f"Setting fitRangeScale to {value}.")
-        self._fitRangeScale = value
+        self._fitRangeScale: number = value
         if not ( np.issubdtype(type(value), np.integer) or np.issubdtype(type(value), np.floating) ):
             logger.error(f"TypeError: {value} is not a valid argument. Setting fitRangeScale to 1.")
             self._fitRangeScale = 1
@@ -348,13 +357,13 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
         logger.debug(f"fitRangeScale has been set to {self._fitRangeScale}")
 
     @property
-    def intCoverage(self):
+    def intCoverage(self) -> number:
         return self._intCoverage
 
     @intCoverage.setter
-    def intCoverage(self, value):
+    def intCoverage(self, value: number) -> None:
         logger.debug(f"Setting intCoverage to {value}.")
-        self._intCoverage = value
+        self._intCoverage: number = value
         if not ( np.issubdtype(type(value), np.integer) or np.issubdtype(type(value), np.floating) ):
             logger.error(f"TypeError: {value} is not a valid argument. Setting intCoverage to 1.")
             self._intCoverage = 1
@@ -364,13 +373,13 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
         logger.debug(f"intCoverage has been set to {self._intCoverage}")
 
     @property
-    def constantPeakWidth(self):
+    def constantPeakWidth(self) -> int:
         return self._constantPeakWidth
 
     @constantPeakWidth.setter
-    def constantPeakWidth(self, value):
+    def constantPeakWidth(self, value: int) -> None:
         logger.debug(f"Setting constantPeakWidth to {value}.")
-        self._constantPeakWidth = value
+        self._constantPeakWidth: int = value
         if not ( np.issubdtype(type(value), np.integer) ):
             logger.error(f"TypeError: {value} is not a valid argument. Setting constantPeakWidth to 50.")
             self._constantPeakWidth = 50
@@ -380,21 +389,21 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
         logger.debug(f"constantPeakWidth has been set to {self._constantPeakWidth}")
 
     @property
-    def outputPowerArr(self):
+    def outputPowerArr(self) -> np.ndarray:
         return self.powerScale * self._outputPowerArr
 
     @property
-    def uncOutputPowerArr(self):
+    def uncOutputPowerArr(self) -> np.ndarray:
         return self.powerScale * self._uncOutputPowerArr
 
     @property
-    def powerScale(self):
+    def powerScale(self) -> number:
         return self._powerScale
 
     @powerScale.setter
-    def powerScale(self, value):
+    def powerScale(self, value: number) -> None:
         logger.debug(f"Setting powerScale to {value}.")
-        self._powerScale = value
+        self._powerScale: number = value
         if not ( np.issubdtype(type(value), np.integer) or np.issubdtype(type(value), np.floating) ):
             logger.error(f"TypeError: {value} is not a valid argument. Setting powerScale to 1.")
             self._powerScale = 1
@@ -509,15 +518,16 @@ fitRangeScale=self.fitRangeScale, constantPeakWidth=self.constantPeakWidth, back
 
 
 if __name__ == "__main__":
+    ## just testing
+    pass
     # dataDirPath = (Path(__file__).parents[1] / "data").resolve()
-    head = (Path(__file__).parents[2]).resolve()
-    fileName = "data\\20210303\\NP7509_Ni_4µm_20K_Powerserie_1-01s_deteOD0_fine3_WithoutLensAllSpectra.dat"
-    fileName = fileName.replace("\\", "/")
-    filePath = (head / fileName).resolve()
-    test = EvalPowerSeries(filePath)
-    test.initRange = 500, 700
-    print(test.diameter)
-    test.get_power_dependent_data()
+    # head = (Path(__file__).parents[2]).resolve()
+    # fileName = "data\\20210303\\NP7509_Ni_4µm_20K_Powerserie_1-01s_deteOD0_fine3_WithoutLensAllSpectra.dat"
+    # fileName = fileName.replace("\\", "/")
+    # filePath = (head / fileName).resolve()
+    # test = EvalPowerSeries(filePath)
+    # test.initRange = 500, 700
+    # test.get_power_dependent_data()
     # print(test.modeWavelength)
     # test.plot_lw_s()
     # test.plot_outputPower()
