@@ -175,7 +175,11 @@ indicator at start = false
 
 ; whether to distinguish between full spectra and fine spectra
 ; used for data sorting
-distinguish full fine spectra = true"""
+distinguish full fine spectra = true
+
+; the border between full and fine spectra
+; wavelength range in nm
+full fine border = 30"""
 
     with open(str(dataFormatFilePath), "w", encoding="utf-8") as configFile:
         configFile.write(configDataFormat)

@@ -10,15 +10,16 @@ sys.path.append(str(srcDirPath))
 from utils.filename_analysis import FileNameReader
 from setup.config_logging import LoggingConfig
 from data_tools.data_formats import DataQlab2
+import utils.misc as misc
 
 loggerObj: LoggingConfig = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
 
 number = typing.Union[float, int]
+floatOrNone = typing.Union[float, None]
 class SortData:
     _dataModelList: dict = {"QLAB2" : DataQlab2}
     dataDirPath: Path = (headDirPath / "data").resolve()
-    borderFullFineWavelength: number = 30 #nm
 
     def __init__(self) -> None:
         logger.debug("Initializing SortData object.")
@@ -35,6 +36,11 @@ class SortData:
         config.read(str(configIniPath), encoding="UTF-8")
         self.distinguishFullFineSpectra: bool = LoggingConfig.check_true_false(
             config["data format"]["distinguish full fine spectra"].replace(" ", ""))
+        if self.distinguishFullFineSpectra:
+            self.borderFullFineWavelength: floatOrNone = misc.float_decode(config["data format"]["full fine border"].replace(" ", ""))
+            if self.borderFullFineWavelength is None:
+                logger.error("Invalid argument for full fine border in the .ini file.")
+                exit()
         self.useAttribute: bool = LoggingConfig.check_true_false(
             config["data format"]["use attribute"].replace(" ", ""))
         if self.useAttribute:
