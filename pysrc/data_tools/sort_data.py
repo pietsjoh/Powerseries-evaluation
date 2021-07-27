@@ -19,6 +19,7 @@ class SortData:
     dataDirPath: Path = (headDirPath / "data").resolve()
 
     def __init__(self):
+        logger.debug("Initializing SortData object.")
         self.read_data_format_ini_file()
         if self.dataModel.name == "QLAB2":
             self.PathsList: list = list(self.dataDirPath.rglob("*AllSpectra.dat"))
@@ -48,14 +49,14 @@ class SortData:
             splitter=splitter, indicatorAtStart=indicatorAtStart)
 
         logger.debug(f"""Read attributes from data_format.ini file:
-attrName: {self.attrName}
-sortedDataDirPath: {self.sortedDataDirPath}
-distinguishFullFineSpectra: {self.distinguishFullFineSpectra}
-indicator: {indicator}
-splitter: {splitter}
-indicatorAtStart: {indicatorAtStart}
-possibleAttrList: {self.possibleAttrList}
-dataModel: {self.dataModel.name}""")
+    attrName: {self.attrName}
+    sortedDataDirPath: {self.sortedDataDirPath}
+    distinguishFullFineSpectra: {self.distinguishFullFineSpectra}
+    indicator: {indicator}
+    splitter: {splitter}
+    indicatorAtStart: {indicatorAtStart}
+    possibleAttrList: {self.possibleAttrList}
+    dataModel: {self.dataModel.name}""")
 
         if len(self.possibleAttrList) == 1 and self.possibleAttrList[0].upper() == "NONE":
             self.possibleAttrList = None
@@ -74,6 +75,7 @@ dataModel: {self.dataModel.name}""")
             self._dataModel = self._dataModelList[value.upper()]
 
     def sort_data_attribute(self):
+        logger.debug("Calling sort_data_attribute()")
         if not self.sortedDataDirPath.exists():
             self.sortedDataDirPath.mkdir()
 
@@ -82,10 +84,10 @@ dataModel: {self.dataModel.name}""")
             fileDir: str = filePath.parts[-2]
             newFileName: str = f"{fileDir}_{fileName}"
 
-            logger.debug(f"""Information about the to be copied file:
-fileName: {fileName}
-fileDir: {fileDir}
-filePath: {filePath}""")
+            logger.debug("""Information about the to be copied file:
+    fileName: {}
+    fileDir: {}
+    filePath: {}""".format(fileName, fileDir, filePath))
             if "tesst" or "fail" in fileName:
                 continue
             try:
@@ -97,7 +99,8 @@ filePath: {filePath}""")
                 if self.possibleAttrList is not None:
                     if attr not in self.possibleAttrList:
                         logger.error(f"""Extracted attribute {attr} is not a part of the specified list
- 'attribute possiblities' in the data_format.ini file""")
+'attribute possiblities' in the data_format.ini file.""")
+                        continue
 
                 attrPath: Path = (self.sortedDataDirPath / attr).resolve()
                 if not attrPath.exists():
@@ -109,6 +112,7 @@ read attribute: {attr}
 attribute path: {attrPath}
 newFileName: {newFileName}
 newFilePath: {newFilePath}""")
+
                 if newFilePath.exists():
                     logger.error(f"File at end location [{newFilePath}] already exists. Not copying the file [{fileName}]")
                     continue
