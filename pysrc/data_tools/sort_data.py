@@ -35,7 +35,7 @@ class SortData:
         path to the data directory
 
     originalPathsGen: Generator, set by __init__
-        Generator of all *AllSpectra.dat files in the data directory.
+        Generator of all \*AllSpectra.dat files in the data directory.
 
     distinguishFullFineSpectra: bool, set by read_data_format_ini_file
         when set to True, then the files will be sorted based on their wavelength range
@@ -66,6 +66,7 @@ class SortData:
     NotImplementedError:
         When the datamodel is not QLAB2
     """
+
     _dataModelDict: dict = {"QLAB2" : DataQlab2}
     _dataDirPath: Path = (headDirPath / "data").resolve()
 
