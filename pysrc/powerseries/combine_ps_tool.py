@@ -18,7 +18,7 @@ logger = loggerObj.init_logger(__name__)
 
 class CombinePowerSeriesTool:
     fileDict: dict = {}
-    _addFileModeList: list[str] = ["data", "attribute"]
+    _addFileModeList: list[str] = ["data", "sorted_data"]
     _dataDirPath: Path = (headDir / "data").resolve()
 
     def __init__(self):
@@ -32,20 +32,44 @@ class CombinePowerSeriesTool:
         configPowerseriesIniPath: Path = (headDir / "config" / "powerseries.ini").resolve()
         config: ConfigParser = ConfigParser()
         config.read([str(configDataFormatIniPath), str(configPowerseriesIniPath)], encoding="UTF-8")
-        self.addFileMode: str = config["combine_ps_tool.py"]["add file mode"].replace(" ", "")
-        self.attrName: str = config["data format"]["attribute name"].replace(" ", "")
-        self._sorted_data_dir_name: str = f"sorted_data_{self.attrName}"
-        self._possibleAttrList: typing.Union[list[str], None] = config["data format"]["attribute possibilities"].replace(" ", "").split(",")
-        if len(self._possibleAttrList) == 1 and self._possibleAttrList[0].upper() == "NONE":
-            self._possibleAttrList = None
+        self.useAttribute: bool = LoggingConfig.check_true_false(
+            config["data format"]["use attribute"])
         self.distinguishFullFineSpectra: bool = LoggingConfig.check_true_false(
             config["data format"]["distinguish full fine spectra"].replace(" ", ""))
-        self.defaultAttribute: str = config["combine_ps_tool.py"]["default attribute"].replace(" ", "")
-        try:
-            self.attribute: str = self.defaultAttribute
-        except AssertionError:
-            logger.critical("The initial value read from the data_format.ini file is invalid. Aborting.")
-            exit()
+        self.addFileMode: str = config["combine_ps_tool.py"]["add file mode"].replace(" ", "")
+        if self.useAttribute:
+            self.attrName: str = config["data format"]["attribute name"].replace(" ", "")
+            self._sortedDataDirName: str = f"sorted_data_{self.attrName}"
+            self._possibleAttrList: typing.Union[list[str], None] = config["data format"]["attribute possibilities"].replace(" ", "").split(",")
+            if len(self._possibleAttrList) == 1 and self._possibleAttrList[0].upper() == "NONE":
+                self._possibleAttrList = None
+            self.defaultAttribute: str = config["combine_ps_tool.py"]["default attribute"].replace(" ", "")
+            try:
+                self.attribute: str = self.defaultAttribute
+            except AssertionError:
+                logger.critical("The initial value read from the data_format.ini file is invalid. Aborting.")
+                exit()
+        elif not self.useAttribute and self.distinguishFullFineSpectra:
+            try:
+                self.sortedDataPath: Path = (headDir / "sorted_data" / "fine_spectra").resolve()
+            except AssertionError:
+                logger.critical(f"""Path to the sorted data [sorted_data/fine_spectra] does not exist. Aborting.""")
+                exit()
+        elif not self.useAttribute and not self.distinguishFullFineSpectra:
+            if not self.addFileMode == "data":
+                logger.warning(f"""Sorting by attribute and full/fine is disabled.
+Hence, addFileMode [{self.addFileMode}] is expected to be data. It will be set to data now.""")
+                self.addFileMode = "data"
+
+    @property
+    def sortedDataPath(self) -> Path:
+        return self._sortedDataPath
+
+    @sortedDataPath.setter
+    def sortedDataPath(self, value: Path):
+        assert isinstance(value, Path)
+        assert value.exists()
+        self._sortedDataPath: Path = value
 
     @property
     def attribute(self) -> str:
@@ -61,10 +85,9 @@ class CombinePowerSeriesTool:
                 assert value in self._possibleAttrList
             self._attribute: str = value
             if self.distinguishFullFineSpectra:
-                self._attrDataDirPath: Path = (headDir / self._sorted_data_dir_name / self.attribute / "fine_spectra").resolve()
+                self.sortedDataPath: Path = (headDir / self._sortedDataDirName / self.attribute / "fine_spectra").resolve()
             else:
-                self._attrDataDirPath: Path = (headDir / self._sorted_data_dir_name / self.attribute).resolve()
-            assert self._attrDataDirPath.exists()
+                self.sortedDataPath: Path = (headDir / self._sortedDataDirName / self.attribute).resolve()
 
     @property
     def addFileMode(self):
@@ -75,8 +98,6 @@ class CombinePowerSeriesTool:
         logger.debug(f"Setting addFileMode to {value}.")
         if value in self._addFileModeList:
             self._addFileMode = value
-            if not value == "data":
-                self.attribute = self.defaultAttribute
         else:
             logger.error(f"{value} is an invalid argument for addFileMode (only diameter and data are accepted). Using data mode.")
             self._addFileMode = "data"
@@ -306,14 +327,11 @@ single spectrum (ss), multiple spectra (ms)]: """)
         elif not self.addFileMode == "data" and case == f"set {self.attrName}":
             self.set_attribute()
             return 1
-        elif case == "change add mode":
-            self.addFileMode = input("Add file mode (data or attribute): ")
-            return 1
         elif case == "add":
             if self.addFileMode == "data":
                 self.add_file(self._dataDirPath)
             else:
-                self.add_file(self._attrDataDirPath)
+                self.add_file(self._sortedDataPath)
             return 1
         elif case == "del":
             self.del_file()
