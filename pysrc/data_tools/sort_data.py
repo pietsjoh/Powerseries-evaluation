@@ -24,7 +24,7 @@ class SortData:
         logger.debug("Initializing SortData object.")
         self.read_data_format_ini_file()
         if self.dataModel.name == "QLAB2":
-            self.orginialPathsList: list[Path] = list(self.dataDirPath.rglob("*AllSpectra.dat"))
+            self.originalPathsList: list[Path] = list(self.dataDirPath.rglob("*AllSpectra.dat"))
         else:
             raise NotImplementedError
 
