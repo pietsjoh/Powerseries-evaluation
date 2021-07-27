@@ -833,14 +833,14 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         assert hasattr(cls, "paramBounds")
 
     @property
-    def outputParameters(self):
+    def outputParameters(self) -> tuple[number, number, number]:
         """Results of the fitting process. Mode wavelength, FWHM and integrated intensity.
         Are set to np.nan when fitting or peak finding did not work.
         """
         return self.muFit, self.fwhmFit, self.integratedPeak
 
     @property
-    def uncertaintyOutputParameters(self):
+    def uncertaintyOutputParameters(self) -> tuple[number, number, number]:
         """Uncertainty of the fit parameters (outputParameters)
         """
         return self.uncMuFit, self.uncFwhmFit, self.uncintegratedPeak

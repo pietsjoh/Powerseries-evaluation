@@ -234,7 +234,7 @@ class Bootstrap:
             self.parameterErrorMean = np.nan
 
     @property
-    def results(self):
+    def results(self) -> tuple[number, number, number, number]:
         """Tuple of bootstrap results.
 
         Contains the value of the original fit parameter,
