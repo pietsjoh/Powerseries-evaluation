@@ -190,7 +190,7 @@ class LoggingConfig:
         """
         configIniPath = (self._headDirPath / "config" / "logging.ini").resolve()
         config = ConfigParser()
-        config.read(str(configIniPath))
+        config.read(str(configIniPath), encoding="UTF-8")
 
         self._consoleLevel = config["logging configuration"]["console level"].replace(" ", "")
         self._enableConsoleLogging = self.check_true_false(config["logging configuration"]["enable console logging"].replace(" ", ""))
@@ -218,7 +218,7 @@ class LoggingConfig:
         """
         configIniPath: Path = (self._headDirPath / "config" / "debugging.ini").resolve()
         config: ConfigParser = ConfigParser()
-        config.read(str(configIniPath))
+        config.read(str(configIniPath), encoding="UTF-8")
 
         self._enableDebugging: bool = self.check_true_false(config["debugging configuration"]["enable debugging"].replace(" ", ""))
         self._debugFitRange: bool

@@ -31,7 +31,7 @@ class CombinePowerSeriesTool:
         configDataFormatIniPath: Path = (headDir / "config" / "data_format.ini").resolve()
         configPowerseriesIniPath: Path = (headDir / "config" / "powerseries.ini").resolve()
         config: ConfigParser = ConfigParser()
-        config.read([str(configDataFormatIniPath), str(configPowerseriesIniPath)])
+        config.read([str(configDataFormatIniPath), str(configPowerseriesIniPath)], encoding="UTF-8")
         self.addFileMode: str = config["combine_ps_tool.py"]["add file mode"].replace(" ", "")
         self.attrName: str = config["data format"]["attribute name"].replace(" ", "")
         self._sorted_data_dir_name: str = f"sorted_data_{self.attrName}"

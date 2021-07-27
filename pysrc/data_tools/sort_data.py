@@ -30,7 +30,7 @@ class SortData:
         logger.debug("Calling read_data_format_ini_file()")
         configIniPath: Path = (headDirPath / "config" / "data_format.ini").resolve()
         config: ConfigParser = ConfigParser()
-        config.read(str(configIniPath))
+        config.read(str(configIniPath), encoding="UTF-8")
         self.attrName: str = config["data format"]["attribute name"].replace(" ", "")
         sortedDataDirName: str = f"sorted_data_{self.attrName}"
         self.sortedDataDirPath: Path = (headDirPath / sortedDataDirName).resolve()
@@ -85,9 +85,9 @@ class SortData:
             newFileName: str = f"{fileDir}_{fileName}"
 
             logger.debug("""Information about the to be copied file:
-    fileName: {}
-    fileDir: {}
-    filePath: {}""".format(fileName, fileDir, filePath))
+            fileName: {}
+            fileDir: {}
+            filePath: {}""".format(fileName, fileDir, filePath))
             if "tesst" or "fail" in fileName:
                 continue
             try:

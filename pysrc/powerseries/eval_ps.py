@@ -99,7 +99,7 @@ class EvalPowerSeries:
         logger.debug("Calling read_powerseries_ini_file()")
         configIniPath = (headDir / "config" / "powerseries.ini").resolve()
         config = ConfigParser()
-        config.read(str(configIniPath))
+        config.read(str(configIniPath), encoding="UTF-8")
         snapshots = misc.int_decode(config["eval_ps.py"]["snapshots"].replace(" ", ""))
         self.snapshots = snapshots
         fitRangeScale = misc.float_decode(config["eval_ps.py"]["fit range scale"].replace(" ", ""))
@@ -143,7 +143,7 @@ class EvalPowerSeries:
         logger.debug("Calling read_powerseries_ini_file()")
         configIniPath = (headDir / "config" / "data_format.ini").resolve()
         config = ConfigParser()
-        config.read(str(configIniPath))
+        config.read(str(configIniPath), encoding="UTF-8")
         try:
             self.dataModel = config["data format"]["data model"].replace(" ", "")
         except AssertionError:
