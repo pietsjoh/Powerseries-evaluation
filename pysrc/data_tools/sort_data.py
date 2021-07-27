@@ -88,7 +88,7 @@ class SortData:
             fileName: {}
             fileDir: {}
             filePath: {}""".format(fileName, fileDir, filePath))
-            if "tesst" or "fail" in fileName:
+            if "tesst" in fileName or "fail" in fileName:
                 continue
             try:
                 attr: str = self.AttrReader(fileName)
