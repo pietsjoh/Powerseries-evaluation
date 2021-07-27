@@ -64,9 +64,9 @@ class FileNameReader:
         assert isinstance(indicator, str)
         assert isinstance(splitter, str)
         assert isinstance(indicatorAtStart, bool)
-        self.name: str = name
-        self.indicator: str = indicator
-        self.splitter: str = splitter
+        self.name: str = name.casefold()
+        self.indicator: str = indicator.casefold()
+        self.splitter: str = splitter.casefold()
         self.indicatorAtStart: bool = indicatorAtStart
 
     def __call__(self, fileName: str) -> str:
@@ -88,15 +88,16 @@ class FileNameReader:
                 when fileName is not a string,
                 when the indicator or the splitter are not part of the fileName
         """
-        assert isinstance(fileName, str)
-        assert self.indicator in fileName
-        indicatorIdx: int = fileName.find(self.indicator)
+        fileNameCf = fileName.casefold()
+        assert isinstance(fileNameCf, str)
+        assert self.indicator in fileNameCf
+        indicatorIdx: int = fileNameCf.find(self.indicator)
         if self.indicatorAtStart:
-            fileNameIndicatorToEnd: str = fileName[indicatorIdx + len(self.indicator) : ]
+            fileNameIndicatorToEnd: str = fileNameCf[indicatorIdx + len(self.indicator) : ]
             assert self.splitter in fileNameIndicatorToEnd
             return fileNameIndicatorToEnd.split(self.splitter)[0]
         else:
-            fileNameStartToIndicator: str = fileName[ : indicatorIdx]
+            fileNameStartToIndicator: str = fileNameCf[ : indicatorIdx]
             assert self.splitter in fileNameStartToIndicator
             return fileNameStartToIndicator.split(self.splitter)[-1]
 
