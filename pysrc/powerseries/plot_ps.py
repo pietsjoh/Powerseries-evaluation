@@ -236,7 +236,7 @@ class PlotPowerSeries:
         "modeEnergy" : self.modeWavelength[0], "uncModeEnergy" : self.modeWavelength[1]}
         if self.useBootstrap:
             dictData["uncBetaBootstrap"] = self.uncBetaBootstrap
-        df: DataFrame = pd.DataFrame(dictData)
+        df: pd.DataFrame = pd.DataFrame(dictData)
         filePath: Path = (self.outputPath / fileName).resolve()
         df.to_csv(filePath, sep="\t", index=False)
 
