@@ -18,12 +18,18 @@ logger = loggerObj.init_logger(__name__)
 
 tupleIntOrNone = typing.Union[tuple[int, int], None]
 number = typing.Union[int, float, np.number]
+numberOrNone = typing.Optional[number]
 floatOrNone = typing.Union[float, None]
 intOrNone = typing.Union[int, None]
+listOrNone = typing.Union[list, None]
 
 class EvalPowerSeries:
     _fitModelList: dict = {"LORENTZ": LorentzPeakFit, "GAUSS": GaussianPeakFit, "VOIGT": VoigtPeakFit, "PSEUDOVOIGT": PseudoVoigtPeakFit}
     _dataModelList: dict = {"QLAB2" : DataQlab2}
+    _snapshots: intOrNone = None
+    _exclude: list = []
+    _maxInitRange: int = 0
+    _initRange: tupleIntOrNone = None
 
     def __init__(self, DataObj) -> None:
         try:
@@ -199,11 +205,11 @@ Selecting the maximum value.""".format(inputPower, self.minInputPower, self.maxI
         if self._snapshots < 0:
             logger.warning(f"ValueError: {self._snapshots} is smaller than 0. Setting snapshots to 0.")
             self._snapshots = 0
-        if self._snapshots > (self.lenInputPower - len(self._exclude)):
+        if self._snapshots > (self.lenInputPower - len(self.exclude)):
             logger.warning("""ValueError: The number of snapshots ({}) exceeds the number of data sets
 ({}) (different input powers).
-Setting snapshots to the max possible value.""".format(self._snapshots, self.lenInputPower - len(self._exclude)))
-            self._snapshots = self.lenInputPower - len(self._exclude)
+Setting snapshots to the max possible value.""".format(self._snapshots, self.lenInputPower - len(self.exclude)))
+            self._snapshots = self.lenInputPower - len(self.exclude)
         logger.debug(f"snapshots has been set to {self._snapshots}")
 
     def check_input_initial_range(self, minInitRangeEnergyStr: str, maxInitRangeEnergyStr: str,
@@ -415,20 +421,20 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
     @staticmethod
     def select_debugging_plots(Fit):
         if hasattr(Fit, "p"):
-            if loggerObj.debugFitRange:
+            if loggerObj._debugFitRange:
                 Fit.plot_fitRange_with_fit()
-            if loggerObj.debuginitialRange:
+            if loggerObj._debuginitialRange:
                 Fit.plot_initRange_with_fit()
-            if loggerObj.debugFWHM:
+            if loggerObj._debugFWHM:
                 Fit.plot_fwhm()
-            if not ( loggerObj.debugFitRange or loggerObj.debuginitialRange or loggerObj.debugFWHM ):
+            if not ( loggerObj._debugFitRange or loggerObj._debuginitialRange or loggerObj._debugFWHM ):
                 Fit.plot_fit(block=True)
         else:
-            if loggerObj.debugFitRange:
+            if loggerObj._debugFitRange:
                 Fit.plot_fitRange_without_fit()
-            if loggerObj.debuginitialRange:
+            if loggerObj._debuginitialRange:
                 Fit.plot_initRange_without_fit()
-            if loggerObj.debugFWHM:
+            if loggerObj._debugFWHM:
                 Fit.plot_fwhmEstimate()
 
     def get_power_dependent_data(self):
