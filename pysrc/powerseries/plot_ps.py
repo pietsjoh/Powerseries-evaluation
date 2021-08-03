@@ -577,12 +577,12 @@ Hence, the Q-factor (taken at the inputpower which is closest to the threshold) 
 
 
 if __name__ == "__main__":
+    ## just testing
     head = (Path(__file__).parents[2]).resolve()
     fileName = "data\\20210303\\NP7509_Ni_4µm_20K_Powerserie_1-01s_deteOD0_fine3_WithoutLensAllSpectra.dat"
     fileName = fileName.replace("\\", "/")
     filePath = (head / fileName).resolve()
     test = EvalPowerSeries(filePath)
-    print(test.diameter)
     test.get_power_dependent_data()
     test2 = PlotPowerSeries([test])
     test2.plot_outputPower()
