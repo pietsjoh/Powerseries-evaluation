@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from pandas.core.frame import DataFrame
 import scipy.optimize as optimize
 from matplotlib.collections import PolyCollection
 import matplotlib.ticker as mticker
