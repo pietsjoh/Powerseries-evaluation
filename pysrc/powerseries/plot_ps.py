@@ -372,7 +372,10 @@ class PlotPowerSeries:
             assert funcArgs[2] == "p"
             self.in_out_curve = in_out_func
             numArgs = len(funcArgs) - 1
-            if self.initialParamGuess is not None:
+            if self.initialParamGuess is None:
+                listOfOnes: list = [1 for _ in range(numArgs)]
+                self.initialParamGuess = ",".join(str(i) for i in listOfOnes)
+            else:
                 assert numArgs == len(self.initialParamGuess)
             if self.useParamBounds:
                 lowerBounds = [0] * (numArgs)
@@ -421,7 +424,7 @@ class PlotPowerSeries:
             else:
                 raise NotImplementedError("Only relative and absolute modes are implemented")
 
-            logger.info(f"xiHatEstimate; n0 not estimated: {self.xiHatEstimateWithoutn0:.5f}")
+            logger.debug(f"xiHatEstimate; n0 not estimated: {self.xiHatEstimateWithoutn0:.5f}")
             np.set_printoptions(precision=5, suppress=True)
             self.fitParams = p
             self.uncFitParams = np.sqrt(np.diag(cov))
@@ -450,7 +453,7 @@ Hence, the Q-factor (taken at the inputpower which is closest to the threshold) 
             logger.info(f"threshold input: {self.thresholdInput:.5f}")
             logger.info(f"mode energy: {self.modeWavelength[0]:.7f} \u00B1 {self.modeWavelength[1]:.7f}")
             logger.info(f"Q-factor at threshold: {self.QFactorThreshold:.0f} \u00B1 {self.uncQFactorThreshold:.0f}")
-            logger.info(f"New value for xiHatEstimate (used Q-factor): {self.xiHatEstimateWithoutn0:.5f}")
+            logger.debug(f"New value for xiHatEstimate (used Q-factor): {self.xiHatEstimateWithoutn0:.5f}")
             if self.saveData:
                 self.save_fit_data("beta_fit.csv")
         return wrapper
@@ -508,7 +511,7 @@ Hence, the Q-factor (taken at the inputpower which is closest to the threshold) 
     def plot_outputPower(self, block=True):
         if hasattr(self, "beta"):
             outputPlotArr = np.logspace(np.log10(np.amin(self.outputPowerArr)), np.log10(np.amax(self.outputPowerArr)), 100)
-            inputPlotArr = self.in_out_curve(outputPlotArr, *self.fitParamsInOut)
+            inputPlotArr = self.in_out_curve(outputPlotArr, *self.fitParams)
             plt.plot(inputPlotArr, outputPlotArr, color="orange")
         plt.errorbar(self.inputPower, self.outputPowerArr, yerr=self.uncOutputPowerArr, capsize=3, fmt=".")
         lowX, lowY, highX, highY = self.constant_lines_inout()
@@ -558,7 +561,7 @@ Hence, the Q-factor (taken at the inputpower which is closest to the threshold) 
         ax1.errorbar(self.inputPower, self.outputPowerArr, yerr=self.uncOutputPowerArr, capsize=3, fmt="b.")
         if hasattr(self, "beta"):
             outputPlotArr = np.logspace(np.log10(np.amin(self.outputPowerArr)), np.log10(np.amax(self.outputPowerArr)), 100)
-            inputPlotArr = self.in_out_curve(outputPlotArr, *self.fitParamsInOut)
+            inputPlotArr = self.in_out_curve(outputPlotArr, *self.fitParams)
             ax1.plot(inputPlotArr, outputPlotArr, color="orange")
         lowX, lowY, highX, highY = self.constant_lines_inout()
         ax1.plot(lowX, lowY, color="orange")
