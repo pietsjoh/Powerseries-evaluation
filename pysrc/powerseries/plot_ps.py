@@ -22,20 +22,12 @@ from setup.config_logging import LoggingConfig
 from utils import misc
 from utils.bootstrap import Bootstrap
 
-loggerObj = LoggingConfig()
+loggerObj: LoggingConfig = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
 
-hbar = 6.582119514 * 10**(-16)
+hbar: float = 6.582119514 * 10**(-16)
 """Reduced Planck constant in eV*s.
 Taken from Particle Physics Booklet (2018, particle data group).
-"""
-
-tauSP, QEstimate, n0EstimatePaper = 10**(-9), 1.5 * 10**4, 3000
-"""Estimate of parameters to estimate the xiHat parameter in the fitting of the in-out-curve.
-These estimates were taken from 'Optical pumping of quantum dot micropillar lasers' paper.
-
-L. Andreoli, X. Porte, T. Heuser, J. Große, B. Moeglen-Paget, L. Furfaro, S. Reitzenstein, and D. Brunner,
-"Optical pumping of quantum dot micropillar lasers," Opt. Express 29, 9084-9097 (2021)
 """
 
 class PlotPowerSeries:
@@ -51,6 +43,8 @@ class PlotPowerSeries:
     L. Andreoli, X. Porte, T. Heuser, J. Große, B. Moeglen-Paget, L. Furfaro, S. Reitzenstein, and D. Brunner,
     "Optical pumping of quantum dot micropillar lasers," Opt. Express 29, 9084-9097 (2021)
     """
+    n0Min, n0Max = 2000, 4000
+    QMin, QMax = 10000, 20000
     outputPath = (headDir / "output").resolve()
     """Path to the output directory
     """
@@ -122,6 +116,14 @@ class PlotPowerSeries:
         self.read_powerseries_ini_file()
         if self.saveData:
             self.save_powerseries_data("powerseries.csv")
+
+    @property
+    def xiHatMin(self):
+        return self.n0Min * hbar * self.QMin / self.tauSP / self.modeWavelength[0]
+
+    @property
+    def xiHatMax(self):
+        return self.n0Max * hbar * self.QMax / self.tauSP / self.modeWavelength[0]
 
     @property
     def xiHatEstimateWithn0(self):
@@ -228,11 +230,13 @@ class PlotPowerSeries:
             self._minimizeError = 'rel'
 
     def save_fit_data(self, fileName: str) -> None:
-        dictData: dict = {"xiMin" : self.xiMin, "xiMax" : self.xiMax, "xiEstimateFit" : self.xiHatEstimateWithn0,
-        "fitParamsBeta" : self.fitParamsInOut, "uncFitParamsBeta" : self.uncFitParamsInOut,
-        "beta" : self.beta, "uncBetaFit" : self.uncBetaFit, "uncBetaBootstrap" : self.uncBetaBootstrap,
-        "threshold" : self.thresholdInput, "Q-factor" : self.QFactorThreshold,
-        "unc Q-factor" : self.uncQFactorThreshold}
+        dictData: dict = {"xiMin" : self.xiHatMin, "xiMax" : self.xiHatMax, "xiEstimateFit" : self.xiHatEstimateWithoutn0,
+        "fitParamsBeta" : self.fitParams, "uncFitParamsBeta" : self.uncFitParams,
+        "beta" : self.beta, "uncBetaFit" : self.uncBetaFit, "threshold" : self.thresholdInput,
+        "Q-factor" : self.QFactorThreshold, "unc Q-factor" : self.uncQFactorThreshold,
+        "modeEnergy" : self.modeWavelength[0], "uncModeEnergy" : self.modeWavelength[1]}
+        if self.useBootstrap:
+            dictData["uncBetaBootstrap"] = self.uncBetaBootstrap
         df: DataFrame = pd.DataFrame(dictData)
         filePath: Path = (self.outputPath / fileName).resolve()
         df.to_csv(filePath, sep="\t", index=False)
@@ -420,16 +424,18 @@ class PlotPowerSeries:
 
             logger.info(f"xiHatEstimate; n0 not estimated: {self.xiHatEstimateWithoutn0:.5f}")
             np.set_printoptions(precision=5, suppress=True)
-            logger.info(f"fit parameters (beta, p, A, xiHat): {p}")
-            logger.info(f"unc fit params (beta, p, A, xiHat): {np.sqrt(np.diag(cov))}")
+            self.fitParams = p
+            self.uncFitParams = np.sqrt(np.diag(cov))
+            logger.info(f"fit parameters (beta, p, A, xiHat): {self.fitParams}")
+            logger.info(f"unc fit params (beta, p, A, xiHat): {self.uncFitParams}")
             np.set_printoptions(precision=8, suppress=False)
             if self.useBootstrap:
                 bootstrap.results
+                self.uncBetaBootstrap = bootstrap.results[1]
                 logger.info(f"bootstrap results beta (original, unc bias corrected): {bootstrap.results[0]:.7f} \u00B1 {bootstrap.results[1]:.7f}")
                 logger.info(f"bootstrap results beta (mean, error mean): {bootstrap.results[2]:.7f} \u00B1 {bootstrap.results[3]:.7f}")
-            self.fitParamsInOut = p
             self.beta = p[0]
-            self.uncBeta = np.sqrt(cov[0, 0])
+            self.uncBetaFit = np.sqrt(cov[0, 0])
             self.thresholdOutput = 1 / p[1]
             self.uncThresholdOutput = np.sqrt(cov[1, 1]) / p[1]
             self.thresholdInput = self.in_out_curve(self.thresholdOutput, *p)
