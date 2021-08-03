@@ -3,7 +3,7 @@ def main():
     import numpy as np
     import pandas as pd
     import matplotlib.pyplot as plt
-    from scipy.optimize import curve_fit as cf
+    from scipy.optimize import curve_fit
     from pathlib import Path
     np.set_printoptions(suppress=True)
     headDir = Path(__file__).resolve().parent
@@ -34,8 +34,8 @@ def main():
     weights = unc
 
 
-    pWithXi, covWithXi = cf(log_in_out_curve_with_xi, outP, np.log(inP), p0=p0WithXi)
-    pWithoutXi, covWithoutXi = cf(log_in_out_curve_without_xi, outP, np.log(inP), p0=p0WithoutXi)
+    pWithXi, covWithXi = curve_fit(log_in_out_curve_with_xi, outP, np.log(inP), p0=p0WithXi)
+    pWithoutXi, covWithoutXi = curve_fit(log_in_out_curve_without_xi, outP, np.log(inP), p0=p0WithoutXi)
 
     print("fit with xi as parameter:")
     print(f"parameters: {pWithXi}")
