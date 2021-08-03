@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from pandas.core.frame import DataFrame
 import scipy.optimize as optimize
 from matplotlib.collections import PolyCollection
 import matplotlib.ticker as mticker
@@ -15,7 +16,6 @@ from pathlib import Path
 headDir = Path(__file__).resolve().parents[2]
 srcDirPath = (headDir / "pysrc").resolve()
 sys.path.append(str(srcDirPath))
-outputPath = (headDir / "output" / "powerseries.csv").resolve()
 
 from powerseries.eval_ps import EvalPowerSeries
 from setup.config_logging import LoggingConfig
@@ -50,6 +50,9 @@ class PlotPowerSeries:
 
     L. Andreoli, X. Porte, T. Heuser, J. Große, B. Moeglen-Paget, L. Furfaro, S. Reitzenstein, and D. Brunner,
     "Optical pumping of quantum dot micropillar lasers," Opt. Express 29, 9084-9097 (2021)
+    """
+    outputPath = (headDir / "output").resolve()
+    """Path to the output directory
     """
     def __init__(self, powerSeriesList):
         assert isinstance(powerSeriesList, (list, np.ndarray))
@@ -118,7 +121,7 @@ class PlotPowerSeries:
         logger.debug("PlotPowerSeries object initialized.")
         self.read_powerseries_ini_file()
         if self.saveData:
-            self.save_powerseries_data()
+            self.save_powerseries_data("powerseries.csv")
 
     @property
     def xiHatEstimateWithn0(self):
@@ -224,13 +227,24 @@ class PlotPowerSeries:
             logger.error(f"{value} is an invalid argument for minimzeError. Only 'relative' and 'absolute' are accepted. Setting it to relative")
             self._minimizeError = 'rel'
 
-    def save_powerseries_data(self):
-        dictData = {"in" : self.inputPower, "out" : self.outputPowerArr, "uncOut" : self.uncOutputPowerArr,
+    def save_fit_data(self, fileName: str) -> None:
+        dictData: dict = {"xiMin" : self.xiMin, "xiMax" : self.xiMax, "xiEstimateFit" : self.xiHatEstimateWithn0,
+        "fitParamsBeta" : self.fitParamsInOut, "uncFitParamsBeta" : self.uncFitParamsInOut,
+        "beta" : self.beta, "uncBetaFit" : self.uncBetaFit, "uncBetaBootstrap" : self.uncBetaBootstrap,
+        "threshold" : self.thresholdInput, "Q-factor" : self.QFactorThreshold,
+        "unc Q-factor" : self.uncQFactorThreshold}
+        df: DataFrame = pd.DataFrame(dictData)
+        filePath: Path = (self.outputPath / fileName).resolve()
+        df.to_csv(filePath, sep="\t", index=False)
+
+    def save_powerseries_data(self, fileName: str) -> None:
+        dictData: dict = {"in" : self.inputPower, "out" : self.outputPowerArr, "uncOut" : self.uncOutputPowerArr,
         "lw" : self.linewidthArr, "uncLw" : self.uncLinewidthArr,
         "modeEnergy" : self.modeWavelengthArr, "uncModeEnergy" : self.uncModeWavelengthArr,
         "Q-factor" : self.QFactorArr, "uncQ-factor" : self.uncQFactorArr}
-        df = pd.DataFrame(dictData)
-        df.to_csv(outputPath, sep="\t", index=False)
+        df: pd.DataFrame = pd.DataFrame(dictData)
+        filePath: Path = (self.outputPath / fileName).resolve()
+        df.to_csv(filePath, sep="\t", index=False)
 
     def access_single_spectrum(self, idx):
         logger.debug("Calling access_single_spectrum()")
@@ -432,6 +446,8 @@ Hence, the Q-factor (taken at the inputpower which is closest to the threshold) 
             logger.info(f"mode energy: {self.modeWavelength[0]:.7f} \u00B1 {self.modeWavelength[1]:.7f}")
             logger.info(f"Q-factor at threshold: {self.QFactorThreshold:.0f} \u00B1 {self.uncQFactorThreshold:.0f}")
             logger.info(f"New value for xiHatEstimate (used Q-factor): {self.xiHatEstimateWithoutn0:.5f}")
+            if self.saveData:
+                self.save_fit_data("beta_fit.csv")
         return wrapper
 
 ## in all models x corresponds to the mean intracavity photon number <n>
