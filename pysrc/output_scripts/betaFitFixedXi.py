@@ -24,8 +24,6 @@ def main():
     dfBetaFit: pd.DataFrame = pd.read_csv(filePathBetaFit, sep="\t")
     xiMin: number = dfBetaFit["xiMin"].to_numpy()[0]
     xiMax: number = dfBetaFit["xiMax"].to_numpy()[0]
-    xiMiddle: number = (xiMax - xiMin) / 2
-    assert xiMiddle > 0
     xiEstimateFit: number = dfBetaFit["xiEstimateFit"].to_numpy()[0]
     fitParamsWithXi: np.ndarray = dfBetaFit["fitParamsBeta"].to_numpy()
     uncFitParamsWithXi: np.ndarray = dfBetaFit["uncFitParamsBeta"].to_numpy()
@@ -38,11 +36,8 @@ def main():
         return np.log(in_out_curve(x, beta, p, a, xi))
 
     ## definitions of initial parameter guesses and boundaries for the fit parameters
-    boundsWithXi = (0, [1, np.inf, np.inf, np.inf])
     boundsWithoutXi = (0, [1, np.inf, np.inf])
-    p0WithXi = (0.5, 1, 1, xiMiddle)
     p0WithoutXi = (0.5, 1, 1)
-    weights = uncOutP
 
     ## fitting using the estimated xi from the fit (using the Q-factor from the fit)
     log_in_out_curve_xi_estimate_fit = partial(log_in_out_curve, xi=xiEstimateFit)
@@ -92,24 +87,6 @@ def main():
     print(f"mean beta factor:               {meanBeta}")
     print(f"mean beta factor uncertainty:   {meanUncBeta}")
     print(f"std beta factor:                {stdBeta}")
-
-
-    # fig, axs = plt.subplots(nrows=1, ncols=2)
-    # ax1, ax2 = axs
-    # outputPlotArr = np.logspace(np.log10(np.amin(outP)), np.log10(np.amax(outP)), 100)
-    # inputPlotArrWithXi = in_out_curve_with_xi(outputPlotArr, *pWithXi)
-    # inputPlotArrWithoutXi = in_out_curve_without_xi(outputPlotArr, *pWithoutXi)
-    # ax1.errorbar(inP, outP, yerr=unc, fmt="b.", capsize=3)
-    # ax2.errorbar(inP, outP, yerr=unc, fmt="b.", capsize=3)
-    # ax1.plot(inputPlotArrWithXi, outputPlotArr, color="orange")
-    # ax1.set_title("fit with xi as parameter")
-    # ax1.set_yscale("log")
-    # ax1.set_xscale("log")
-    # ax2.plot(inputPlotArrWithoutXi, outputPlotArr, color="orange")
-    # ax2.set_title("fit with fixed xi")
-    # ax2.set_xscale("log")
-    # ax2.set_yscale("log")
-    # plt.show()
 
 if __name__ == "__main__":
     main()
