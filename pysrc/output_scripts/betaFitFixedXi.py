@@ -2,7 +2,6 @@
 def main():
     import numpy as np
     import pandas as pd # type:ignore
-    import matplotlib.pyplot as plt
     import scipy.optimize as optimize # type:ignore
     from pathlib import Path
     from functools import partial
@@ -36,11 +35,13 @@ def main():
         return np.log(in_out_curve(x, beta, p, a, xi))
 
     ## definitions of initial parameter guesses and boundaries for the fit parameters
-    boundsWithoutXi = (0, [1, np.inf, np.inf])
-    p0WithoutXi = (0.5, 1, 1)
+    boundsWithoutXi: tuple = (0, [1, np.inf, np.inf])
+    p0WithoutXi: tuple = (0.5, 1, 1)
 
     ## fitting using the estimated xi from the fit (using the Q-factor from the fit)
-    log_in_out_curve_xi_estimate_fit = partial(log_in_out_curve, xi=xiEstimateFit)
+    log_in_out_curve_xi_estimate_fit: typing.Callable = partial(log_in_out_curve, xi=xiEstimateFit) #type: ignore
+    pXiEstimateFit: np.ndarray
+    covXiEstimateFit: np.ndarray
     pXiEstimateFit, covXiEstimateFit = optimize.curve_fit(log_in_out_curve_xi_estimate_fit, outP, np.log(inP),
         p0=p0WithoutXi, bounds=boundsWithoutXi)
 
@@ -50,8 +51,13 @@ def main():
     xiArr: np.ndarray = np.linspace(xiMin, xiMax, numSamples)
     betaArr: np.ndarray = np.empty(numSamples)
     uncBetaArr: np.ndarray = np.empty(numSamples)
+    i: int
+    xi: number
+    p: np.ndarray
+    cov: np.ndarray
+    unc: np.ndarray
     for i, xi in enumerate(xiArr):
-        log_in_out_curve_fixed_xi = partial(log_in_out_curve, xi=xi)
+        log_in_out_curve_fixed_xi: typing.Callable = partial(log_in_out_curve, xi=xi) # type: ignore
         try:
             p, cov = optimize.curve_fit(log_in_out_curve_fixed_xi, outP, np.log(inP),
                 p0=p0WithoutXi, bounds=boundsWithoutXi)
@@ -60,7 +66,7 @@ def main():
             betaArr[i] = np.nan
             uncBetaArr[i] = np.nan
         else:
-            unc: np.ndarray = np.sqrt(np.diag(cov))
+            unc = np.sqrt(np.diag(cov))
             betaArr[i] = p[0]
             uncBetaArr[i] = unc[0]
 
