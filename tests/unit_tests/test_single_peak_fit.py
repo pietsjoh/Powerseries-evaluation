@@ -67,7 +67,7 @@ class TestPeakFitSuper:
     def test_peak_in_initialRange(self, seed=None):
         TestObj = PeakFitSuper(x, y)
         gen = RNGenerator(seed=seed)
-        initialRange = tuple(gen.uniform(low=0, high=x.size - 1, size=2))
+        initialRange = tuple(gen.integers(low=0, high=x.size - 1, size=2))
         print(f"initial range: {initialRange}")
         try:
             TestObj.get_peak(initialRange)
@@ -81,7 +81,7 @@ class TestPeakFitSuper:
     def test_peakHeightEstimate(self, seed=None):
         TestObj = PeakFitSuper(x, y)
         gen = RNGenerator(seed=seed)
-        initialRange = tuple(gen.uniform(low=0, high=x.size - 1, size=2))
+        initialRange = tuple(gen.integers(low=0, high=x.size - 1, size=2))
         print(f"initial range: {initialRange}")
         try:
             TestObj.get_peak(initialRange)
