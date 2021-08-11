@@ -255,8 +255,9 @@ class PeakFitSuper:
         except RuntimeError:
             foundPeakFlag = False
             logger.error("RuntimeError: get_peak() could not find a peak.")
-            plt.title("no peak could be found")
-            self.plot_original_data(block=True)
+            if loggerObj._debugNoFit:
+                plt.title("no peak could be found")
+                self.plot_original_data(block=True)
         else:
             foundPeakFlag = True
             if self.backgroundFitMode == "spline":
@@ -275,21 +276,24 @@ class PeakFitSuper:
                 except ValueError:
                     foundPeakFlag = False
                     logger.error(f"ValueError: estimate of peak height ({self.peakHeightEstimate}) is below 0.")
-                    plt.title("peak height estimate below 0")
-                    self.plot_original_data(block=True)
+                    if loggerObj._debugNoFit:
+                        plt.title("peak height estimate below 0")
+                        self.plot_original_data(block=True)
                 except RuntimeError:
                     foundPeakFlag = False
                     logger.error("RuntimeError: get_peak() could not find a peak.")
-                    plt.title("no peak could be found")
-                    self.plot_original_data(block=True)
+                    if loggerObj._debugNoFit:
+                        plt.title("no peak could be found")
+                        self.plot_original_data(block=True)
             if foundPeakFlag:
                 try:
                     self.fit_peak(intCoverage=self.intCoverage, fitRangeScale=self.fitRangeScale)
                 except RuntimeError:
                     convergenceFitFlag = False
                     logger.error("RuntimeError: fit_peak() could not fit the peak.")
-                    plt.title("the peak could not be fitted")
-                    self.plot_original_data(block=True)
+                    if loggerObj._debugNoFit:
+                        plt.title("the peak could not be fitted")
+                        self.plot_original_data(block=True)
                 else:
                     convergenceFitFlag = True
                     self.set_fwhm() # type: ignore

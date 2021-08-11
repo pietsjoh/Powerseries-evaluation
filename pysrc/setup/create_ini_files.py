@@ -47,7 +47,9 @@ fit range = false
 
 initial range = false
 
-fwhm = false"""
+fwhm = false
+
+no fit = false"""
 
     with open(str(debuggingFilePath), "w", encoding="utf-8") as configFile:
         configFile.write(configDebugging)
