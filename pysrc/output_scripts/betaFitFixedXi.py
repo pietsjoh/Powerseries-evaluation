@@ -93,6 +93,7 @@ def main():
     print(f"mean beta factor:               {meanBeta}")
     print(f"mean beta factor uncertainty:   {meanUncBeta}")
     print(f"std beta factor:                {stdBeta}")
+    print(f"uncertainty beta factor:        {stdBeta + meanUncBeta}")
 
 if __name__ == "__main__":
     main()

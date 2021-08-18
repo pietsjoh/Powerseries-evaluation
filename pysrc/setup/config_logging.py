@@ -222,14 +222,17 @@ class LoggingConfig:
         self._debugFitRange: bool
         self._debuginitialRange: bool
         self._debugFWHM: bool
+        self._debugNoFit: bool
         if not self._enableDebugging:
             self._debugFitRange = False
             self._debuginitialRange = False
             self._debugFWHM = False
+            self._debugNoFit = False
         else:
             self._debugFitRange = self.check_true_false(config["debugging configuration"]["fit range"].replace(" ", ""))
             self._debuginitialRange = self.check_true_false(config["debugging configuration"]["initial range"].replace(" ", ""))
             self._debugFWHM = self.check_true_false(config["debugging configuration"]["fwhm"].replace(" ", ""))
+            self._debugNoFit = self.check_true_false(config["debugging configuration"]["no fit"].replace(" ", ""))
 
     @staticmethod
     def check_true_false(value: str) -> bool:
