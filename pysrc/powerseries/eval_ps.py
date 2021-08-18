@@ -1,3 +1,5 @@
+"""Contains a class that evaluates a powerseries. The individual spectra are analyzed using the peak_fit module.
+"""
 import numpy as np
 from configparser import ConfigParser
 import typing
@@ -24,6 +26,24 @@ intOrNone = typing.Union[int, None]
 listOrNone = typing.Union[list, None]
 
 class EvalPowerSeries:
+    """Evaluates a powerseries extracting outputpower, linewidth, Q-factor and wavelength for each input power.
+
+    The main method get_power_dependent_data() performs the evalutation of the powerseries.
+    Apart from that the rest of the class consists of setter/getter methods which handle adjustable parameters for
+    the powerseries evaluation.
+
+    The file ps_tool.py contains a wrapper for this class to set the parameters using console input.
+
+    A Data object is required for the __init__ method.
+    Currently, only DataQlab2 objects are accepted.
+    If you want to use a different data format, then create a class in the data_tools/data_formats.py file
+    which is similar to DataQlab2.
+    Moreover, this class should be added to the imports (line 13) and into the _dataModelList.
+    Look at the check_DataObj_attributes() method to check whether your class satisfies the required attributes.
+
+    In the __init__ method the required attributes of the DataObj are saved as attributes. Furthermore, the .ini files
+    powerseries.ini and data_format.ini are read.
+    """
     _fitModelList: dict = {"LORENTZ": LorentzPeakFit, "GAUSS": GaussianPeakFit, "VOIGT": VoigtPeakFit, "PSEUDOVOIGT": PseudoVoigtPeakFit}
     _dataModelList: dict = {"QLAB2" : DataQlab2}
     _snapshots: intOrNone = None
@@ -57,6 +77,8 @@ class EvalPowerSeries:
 
     @property
     def dataModel(self):
+        """Format of the data.
+        """
         return self._dataModel
 
     @dataModel.setter
@@ -70,6 +92,13 @@ class EvalPowerSeries:
 
     @staticmethod
     def check_DataObj_attributes(DataObj) -> None:
+        """Checks whether the provided DataObj has the required attributes.
+
+        Raises
+        ------
+        AssertionError:
+            When an attribute is missing or of an invalid datatype.
+        """
         assert hasattr(DataObj, "__getitem__")
         assert hasattr(DataObj, "energies")
         assert hasattr(DataObj, "wavelengths")
@@ -94,6 +123,9 @@ class EvalPowerSeries:
         assert (DataObj.wavelengths >= 0).all()
 
     def read_powerseries_ini_file(self) -> None:
+        """Reads the config/powerseries.ini file and uses the settings from the eval_ps.py section.
+        These attributes are used as initial parameters for the powerseries evaluation.
+        """
         logger.debug("Calling read_powerseries_ini_file()")
         configIniPath: Path = (headDir / "config" / "powerseries.ini").resolve()
         config: ConfigParser = ConfigParser()
@@ -137,6 +169,8 @@ class EvalPowerSeries:
         self.backgroundFitMode: str = config["eval_ps.py"]["background fit mode"].replace(" ", "")
 
     def read_data_format_ini_file(self) -> None:
+        """Reads the config/data_format.ini file. Only reads the data model.
+        """
         logger.debug("Calling read_powerseries_ini_file()")
         configIniPath: Path = (headDir / "config" / "data_format.ini").resolve()
         config: ConfigParser = ConfigParser()
@@ -147,6 +181,15 @@ class EvalPowerSeries:
             raise TypeError("Config file value for data model is invalid.")
 
     def energy_to_idx(self, energy: number) -> int:
+        """If the provided energy lies within the range [minEnergy, maxEnergy] then
+        the index of the energy array closest to the input energy is returned.
+        Otherwise the maxEnergy and the minEnergy respectively are returned with a warning message.
+
+        Returns
+        -------
+        int:
+            Index of the element of the energy array closest to the input.
+        """
         logger.debug(f"Calling energy_to_idx(), energy: {energy}")
         if (energy < self.minEnergy):
             logger.warning("""ValueError: The selected energy {} is out of bounce. Possible range: [{}, {}].
@@ -159,6 +202,15 @@ Selecting the maximum value.""".format(energy, self.minEnergy, self.maxEnergy))
         return idx
 
     def inputPower_to_idx(self, inputPower: number) -> int:
+        """If the provided inputPower lies within the range [minInputPower, maxInputPower] then
+        the index of the inputPower array closest to the input inputPower is returned.
+        Otherwise the maxInputPower and the minInputPower respectively are returned with a warning message.
+
+        Returns
+        -------
+        int:
+            Index of the element of the inputPower array closest to the input.
+        """
         logger.debug(f"Calling inputPower_to_idx(), inputPower: {inputPower}")
         idx: int
         if (inputPower < self.minInputPower):
@@ -175,6 +227,8 @@ Selecting the maximum value.""".format(inputPower, self.minInputPower, self.maxI
 
     @property
     def backgroundFitMode(self) -> str:
+        """Sets the way the background of spectra is handled. For more information look into peak_fit/single_peak_fit_base.py.
+        """
         return self._backgroundFitMode
 
     @backgroundFitMode.setter
@@ -191,6 +245,12 @@ Selecting the maximum value.""".format(inputPower, self.minInputPower, self.maxI
 
     @property
     def snapshots(self) -> int:
+        """Defines how many spectra are shown when evaluating a powerseries.
+
+        Example
+        -------
+        If snapshots is set to 10, then every 10th spectra is shown starting at 0.
+        """
         return self._snapshots
 
     @snapshots.setter
@@ -214,6 +274,9 @@ Setting snapshots to the max possible value.""".format(self._snapshots, self.len
 
     def check_input_initial_range(self, minInitRangeEnergyStr: str, maxInitRangeEnergyStr: str,
         maxInitRangeStr: str) -> None:
+        """Transforms energy values for the initial range into index values, which are
+        required for peak_fit/single_peak_fit_base.py.
+        """
         logger.debug("Calling check_input_initial_range()")
         self.minInitRangeEnergy: floatOrNone = misc.float_decode(minInitRangeEnergyStr)
         self.maxInitRangeEnergy: floatOrNone = misc.float_decode(maxInitRangeEnergyStr)
@@ -231,6 +294,9 @@ Setting snapshots to the max possible value.""".format(self._snapshots, self.len
 
     @property
     def initRange(self) -> tupleIntOrNone:
+        """When set to None, no initial range is used
+        Otherwise the program looks only for peaks in between [min(initRange), max(initRange)]
+        """
         return self._initRange
 
     @initRange.setter
@@ -270,6 +336,8 @@ Setting snapshots to the max possible value.""".format(self._snapshots, self.len
 
     @property
     def maxInitRange(self) -> int:
+        """Max index where initial range shall be used.
+        """
         return self._maxInitRange
 
     @maxInitRange.setter
@@ -293,6 +361,11 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
 
     @property
     def fitModel(self):
+        """The fit model that shall be used. Check peak_fit/single_peak_fit_models.py for
+        more information about the available fit models.
+
+        When creating a new fit model do not forget to add it to the imports and to _fitModelList.
+        """
         return self._fitModel
 
     @fitModel.setter
@@ -305,6 +378,8 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
         logger.debug(f"fitModel has been set to {self._fitModel}")
 
     def check_input_fitmodel(self, value: str) -> None:
+        """Tries to transform a string to a fit model.
+        """
         logger.debug("Calling check_input_fitmodel()")
         if value.upper() in self._fitModelList.keys():
             self.fitModel = self._fitModelList[value.upper()]
@@ -315,6 +390,8 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
 
     @property
     def exclude(self) -> list[number]:
+        """List of indices of the inputpower that shall be excluded.
+        """
         return self._exclude
 
     @exclude.setter
@@ -332,6 +409,9 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
         logger.debug(f"exclude has been set to {self._exclude}")
 
     def check_input_exclude(self, minInputPowerRangeStr: str, maxInputPowerRangeStr: str) -> None:
+        """Checks the user input for exclude. Transforms input powers to indices. Using this method
+        only tails can be cut, but one cannot exclude data points in the middle.
+        """
         logger.debug("Calling check_input_exclude()")
         self.minInputPowerRange: floatOrNone = misc.float_decode(minInputPowerRangeStr)
         self.maxInputPowerRange: floatOrNone = misc.float_decode(maxInputPowerRangeStr)
@@ -348,6 +428,8 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
 
     @property
     def fitRangeScale(self) -> number:
+        """For more information look into peak_fit/single_peak_fit_base.py
+        """
         return self._fitRangeScale
 
     @fitRangeScale.setter
@@ -364,6 +446,8 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
 
     @property
     def intCoverage(self) -> number:
+        """For more information look into peak_fit/single_peak_fit_base.py
+        """
         return self._intCoverage
 
     @intCoverage.setter
@@ -380,6 +464,8 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
 
     @property
     def constantPeakWidth(self) -> int:
+        """For more information look into peak_fit/single_peak_fit_base.py
+        """
         return self._constantPeakWidth
 
     @constantPeakWidth.setter
@@ -396,14 +482,22 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
 
     @property
     def outputPowerArr(self) -> np.ndarray:
+        """Outputpower array scaled by powerScale.
+        """
         return self.powerScale * self._outputPowerArr
 
     @property
     def uncOutputPowerArr(self) -> np.ndarray:
+        """Uncertainty outputpower array scaled by powerScale.
+        """
         return self.powerScale * self._uncOutputPowerArr
 
     @property
     def powerScale(self) -> number:
+        """Scales the outputpower by multiplying the array with this number.
+
+        This is used to stitch multiple data sets with different OD-filters together.
+        """
         return self._powerScale
 
     @powerScale.setter
@@ -420,6 +514,11 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
 
     @staticmethod
     def select_debugging_plots(Fit):
+        """When snapshots are enabled, then this method is used to plot the snapshots.
+
+        The settings in the config/debugging.ini file are applied.
+        Hence, the fwhm/initial range or the fit range are shown if selected.
+        """
         if hasattr(Fit, "p"):
             if loggerObj._debugFitRange:
                 Fit.plot_fitRange_with_fit()
@@ -438,7 +537,20 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
                 Fit.plot_fwhmEstimate()
 
     def get_power_dependent_data(self):
+        """The main method, performs the evaluation of the powerseries.
+
+        First, the config/debugging.ini file is read.
+        Then peak_fit with the specified fit model is used to fit every spectra
+        except those on the exclude list.
+        The peak_fit is instantiated with all the adjustable parameters.
+
+        The outputpower, linewidth, mode energy and Q-factor and their respectable uncertainties 
+        are saved in an array.
+
+        In the process snapshots are shown.
+        """
         logger.debug("Calling get_power_dependent_data")
+        loggerObj.read_debugging_ini_file()
         if self.snapshots > 0:
             snap = self.snapshots
         else:
@@ -516,6 +628,13 @@ backgroundFitMode=self.backgroundFitMode)
         self.lenInputPowerPlot = self.inputPowerPlotArr.size
 
     def access_single_spectrum(self, idx):
+        """Accesses a single spectrum out of the powerseries data set.
+
+        This is used in plot_ps.py to plot one spectrum
+        Returns
+        -------
+        PeakFitSuper object
+        """
         logger.debug("Calling access_single_spectrum()")
         assert 0 <= idx < self.lenInputPower
         return self._fitModel(self.energies, self.data[idx], intCoverage=self.intCoverage, initRange=self.initRange,
