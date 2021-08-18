@@ -19,8 +19,6 @@ class LoggingConfig:
     Moreover, the config/debugging.ini is read.
     Finally, a logger object can be created which should be used to create logging messages.
 
-    Upon initialization self.read_debugging_ini_file() is called.
-
     Attributes
     ----------
     _headDirPath: Path, class variable
@@ -152,7 +150,7 @@ class LoggingConfig:
     }
 
     def __init__(self) -> None:
-        self.read_debugging_ini_file()
+        pass
 
     def write_logging_json_file(self) -> None:
         """Writes the information saved in the attributes (set by read_logging_ini_file) to a json file.
