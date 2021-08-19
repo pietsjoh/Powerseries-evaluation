@@ -90,9 +90,83 @@ class PowerSeriesTool(EvalPowerSeries):
             if self.init_plot():
                 self.input_plot_selector()
             return 1
+        elif case == "help":
+            self.input_help()
+            return 1
         else:
             logger.error(f"ValueError: {case} is not a valid input (type help for more information).")
             return 1
+
+    def input_help(self):
+        """Takes and handles input for the help command.
+        """
+        helpType = input("""What kind of information are you looking for?
+
+        - commands of PowerSeriesTool: enter commands
+
+        - powerseries program parameters: enter powerseries
+
+        - peak fit program parameters: enter peak fit
+
+        - available plots: enter plots
+
+        - everything: enter all
+        """).lower().replace(" ", "")
+        logger.debug(f"User inout for input_help(): {helpType}")
+        inputList = ["commands", "powerseries", "peakfit", "plots", "all", "q"]
+        if not helpType in inputList:
+            logger.error(f"{helpType} is an invalid input. Exiting.")
+            return 0
+        elif helpType == "q":
+            return 1
+        elif helpType == "commands":
+            self.help_commands()
+            return 1
+        elif helpType == "powerseries":
+            self.help_powerseries()
+            return 1
+        elif helpType == "peakfit":
+            self.help_peak_fit()
+            return 1
+        elif helpType == "plots":
+            self.help_plots()
+            return 1
+        elif helpType == "all":
+            self.help_commands()
+            self.help_peak_fit()
+            self.help_powerseries()
+            self.help_plots()
+            return 1
+
+    @staticmethod
+    def help_commands():
+        """Prints out information about the available commands.
+
+        This information can also be found in the documentation of this class.
+        """
+        pass
+
+    @staticmethod
+    def help_powerseries():
+        """Prints out information about the powerseries program parameters.
+
+        This information can also be found in the powerseries/eval_ps.py documentation.
+        """
+        pass
+
+    @staticmethod
+    def help_peak_fit():
+        """Prints out information about the peak fitting program parameters.
+        
+        This information can also be found in the peak_fit/single_peak_fit_base.py documentation"""
+        pass
+
+    @staticmethod
+    def help_plots():
+        """Prints out information about the available plots.
+        
+        This information can also be found in the powerseries/plot_ps.py documentation."""
+        pass
 
     def input_fitRangeScale(self):
         """Takes and handles user input for fitRangeScale

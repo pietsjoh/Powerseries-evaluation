@@ -359,9 +359,67 @@ single spectrum (ss), multiple spectra (ms)]: """)
                     print()
                     self.input_plot_selector()
             return 1
+        elif case == "help":
+            self.input_help()
+            return 1
         else:
             logger.error(f"ValueError: {case} is not implemented. Type help for more information.")
             return 1
+
+    def input_help(self):
+        """Takes and handles input for the help command.
+        """
+        helpType = input("""What kind of information are you looking for?
+
+        - commands of CombinePowerSeriesTool: enter combine
+
+        - commands of PowerSeriesTool: enter commands
+
+        - powerseries program parameters: enter powerseries
+
+        - peak fit program parameters: enter peak fit
+
+        - available plots: enter plots
+
+        - everything: enter all
+        """).lower().replace(" ", "")
+        logger.debug(f"User inout for input_help(): {helpType}")
+        inputList = ["combine", "commands", "powerseries", "peakfit", "plots", "all", "q"]
+        if not helpType in inputList:
+            logger.error(f"{helpType} is an invalid input. Exiting.")
+            return 0
+        elif helpType == "q":
+            return 1
+        elif helpType == "combine":
+            self.help_combine_ps()
+            return 1
+        elif helpType == "commands":
+            PowerSeriesTool.help_commands()
+            return 1
+        elif helpType == "powerseries":
+            PowerSeriesTool.help_powerseries()
+            return 1
+        elif helpType == "peakfit":
+            PowerSeriesTool.help_peak_fit()
+            return 1
+        elif helpType == "plots":
+            PowerSeriesTool.help_plots()
+            return 1
+        elif helpType == "all":
+            self.help_combine_ps()
+            PowerSeriesTool.help_commands()
+            PowerSeriesTool.help_peak_fit()
+            PowerSeriesTool.help_powerseries()
+            PowerSeriesTool.help_plots()
+            return 1
+
+    @staticmethod
+    def help_combine_ps():
+        """Prints out information about the commands.
+
+        This information can also be found in the documentation of CombinePowerSeries.
+        """
+        pass
 
     def run(self):
         print()
