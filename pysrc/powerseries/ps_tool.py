@@ -1,4 +1,6 @@
-from configparser import ConfigParser
+"""Contains a console based application wrapper
+around eval_ps.py
+"""
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[2]))
@@ -12,6 +14,15 @@ loggerObj = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
 
 class PowerSeriesTool(EvalPowerSeries):
+    """Enables adjustments of parameters for the powerseries evaluation using console input.
+
+    Child of EvalPowerSeries. Fulfills the same purpose aswell, but one can change the
+    program parameters in runtime with console input.
+
+    In the __init__ method a filepath to the powerseries data has to be provided.
+    Then the base class, EvalPowerSeries, is instantiated with the data object from
+    the file. The data model of the config/data_format.ini file is used.
+    """
     minInitRangeEnergy = None
     maxInitRangeEnergy = None
     minInputPowerRange = None
@@ -25,6 +36,8 @@ class PowerSeriesTool(EvalPowerSeries):
             filepath: {}""".format(filePath))
 
     def input_decoder(self):
+        """Function that takes the user input and decides what to do.
+        """
         print()
         case = input("enter instruction (type help for more information): ")
         logger.debug(f"User input for input_decoder(): {case}")
@@ -82,16 +95,26 @@ class PowerSeriesTool(EvalPowerSeries):
             return 1
 
     def input_fitRangeScale(self):
+        """Takes and handles user input for fitRangeScale
+        For more information on this parameter take a look at
+        single_peak_fit_base.py.
+        """
         fitRangeScaleStr = input("fit range scale: ")
         logger.debug(f"User input for input_fitRangeScale(): {fitRangeScaleStr}")
         self.fitRangeScale = misc.float_decode(fitRangeScaleStr)
 
     def input_constantPeakWidth(self):
+        """Takes and handles user input for constantPeakWidth.
+        For more information on this parameter take a look at
+        single_peak_fit_base.py.
+        """
         constantpeakWidthStr = input("constant peak width: ")
         logger.debug(f"User input for input_constantPeakWidth(): {constantpeakWidthStr}")
         self.constantPeakWidth = misc.int_decode(constantpeakWidthStr)
 
     def input_plot_selector(self):
+        """Takes user input to select which plot shall be shown.
+        """
         plotStr = input("""plot [S+lw (lws), power(p), linewidth(lw), QFactor(q), modeEnergy(m),
 single spectrum (ss), multiple spectra (ms)]: """)
         logger.debug(f"User input for input_plot_selector(): {plotStr}")
@@ -125,6 +148,10 @@ single spectrum (ss), multiple spectra (ms)]: """)
             logger.error(f"ValueError: {plotStr} is not a valid input.")
 
     def init_plot(self):
+        """Initializes PlotPowerSeries object to create plots.
+        Also checks whether this can be done
+        (the commannd run has to be called atleast once).
+        """
         logger.debug("Calling init_plot()")
         try:
             self.plots = PlotPowerSeries([self])
@@ -134,23 +161,39 @@ single spectrum (ss), multiple spectra (ms)]: """)
             return False
 
     def input_snapshots(self):
+        """Takes and handles user input for snapshots.
+        For more information on this parameter take a look at
+        eval_ps.py.
+        """
         snapshotsStr = input("number of snapshots: ")
         logger.debug(f"User input for input_snapshots(): {snapshotsStr}")
         self.snapshots = misc.int_decode(snapshotsStr)
 
     def input_backgroundFitMode(self):
+        """Takes and handles user input for backgroundFitMode.
+        For more information on this parameter take a look at
+        single_peak_fit_base.py.
+        """
         backgroundFitModeStr = input("background fit mode: ")
         logger.debug(f"User input for input_backgroundFitMode(): {backgroundFitModeStr}")
         self.backgroundFitMode = backgroundFitModeStr
 
     @staticmethod
     def input_fitmodel():
+        """Takes and handles user input for fitModel.
+        For more information on this parameter take a look at
+        single_peak_fit_models.py.
+        """
         fitModelStr = input("fitmodel (gauss, lorentz, voigt, pseudovoigt): ")
         logger.debug(f"User input for input_fitModel(): {fitModelStr}")
         return fitModelStr
 
     @staticmethod
     def input_initial_range():
+        """Takes and handles user input for initialRange.
+        For more information on this parameter take a look at
+        single_peak_fit_base.py.
+        """
         minInitRangeEnergyStr = input("min energy: ")
         logger.debug(f"User input for input_initial_range(), min energy: {minInitRangeEnergyStr}")
         maxInitRangeEnergyStr = input("max energy: ")
@@ -161,6 +204,10 @@ single spectrum (ss), multiple spectra (ms)]: """)
 
     @staticmethod
     def input_exclude():
+        """Takes and handles user input for exclude.
+        For more information on this parameter take a look at
+        single_peak_fit_base.py.
+        """
         minInputPowerRangeStr = input("min input power: ")
         logger.debug(f"User input for input_exclude(), min input power: {minInputPowerRangeStr}")
         maxInputPowerRangeStr = input("max input power: ")
@@ -168,6 +215,8 @@ single spectrum (ss), multiple spectra (ms)]: """)
         return minInputPowerRangeStr, maxInputPowerRangeStr
 
     def config(self):
+        """Prints gathered information about the current evaluation of the powerseries.
+        """
         print()
         print("/"*100)
         print()
@@ -200,6 +249,8 @@ single spectrum (ss), multiple spectra (ms)]: """)
         print()
 
     def run(self):
+        """Main Method, runs the input decoder until an exit is called.
+        """
         print()
         print("-"*100)
         print("Running PowerSeriesTool")
@@ -211,6 +262,7 @@ single spectrum (ss), multiple spectra (ms)]: """)
             j = self.input_decoder()
 
 if __name__ == "__main__":
+    ## just testing
     head = (Path(__file__).parents[2]).resolve()
     fileName = "data\\20210303\\NP7509_Ni_4µm_20K_Powerserie_1-01s_deteOD0_fine3_WithoutLensAllSpectra.dat"
     fileName = fileName.replace("\\", "/")
