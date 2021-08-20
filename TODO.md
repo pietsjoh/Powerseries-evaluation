@@ -4,7 +4,10 @@
 
 ### General
 
-- rework create_ini_files (not use configparser)
+- use loops for add / delete / run powerseries (only exit when q is called)
+- Write help functions
+- Write description of available commands also into the docstring of input decoder
+- rework create_ini_files (not use configparser) [x]
 - docs
   - move __init__ doc to base def
   - add all attributes description to base class
