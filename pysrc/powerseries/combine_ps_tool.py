@@ -371,15 +371,15 @@ single spectrum (ss), multiple spectra (ms)]: """)
         """
         helpType = input("""What kind of information are you looking for?
 
-        - commands of CombinePowerSeriesTool: enter combine
+        - commands of CombinePowerSeriesTool:   enter combine
 
-        - commands of PowerSeriesTool: enter commands
+        - commands of PowerSeriesTool:          enter commands
 
-        - powerseries program parameters: enter powerseries
+        - powerseries program parameters:       enter powerseries
 
-        - peak fit program parameters: enter peak fit
+        - peak fit program parameters:          enter peak fit
 
-        - available plots: enter plots
+        - available plots:                      enter plots
 
         - everything: enter all
         """).lower().replace(" ", "")
