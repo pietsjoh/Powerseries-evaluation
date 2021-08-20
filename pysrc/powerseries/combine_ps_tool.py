@@ -1,3 +1,7 @@
+"""Contains a class that can stitch different powerseries together.
+Running this script initializes and runs this CombinePowerSeriesTool class.
+This the main script to execute when doing a powerseries evaluation.
+"""
 import sys
 from pathlib import Path
 import matplotlib.pyplot as plt
@@ -17,6 +21,11 @@ loggerObj: LoggingConfig = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
 
 class CombinePowerSeriesTool:
+    """Loads powerseries data and runs them using PowerSeriesTool. Can stitch multiple
+    powerseries together.
+
+    Upon initialization the data format file is read.
+    """
     fileDict: dict = {}
     _addFileModeList: list[str] = ["data", "sorted_data"]
     _dataDirPath: Path = (headDir / "data").resolve()
@@ -27,6 +36,11 @@ class CombinePowerSeriesTool:
         self.read_data_format_ini_file()
 
     def read_data_format_ini_file(self):
+        """Reads the config/data_format.ini file.
+
+        This is used to decide whether to use the data inside the data or
+        the sorted_data directory.
+        """
         logger.debug("Calling read_powerseries_ini_file()")
         configDataFormatIniPath: Path = (headDir / "config" / "data_format.ini").resolve()
         configPowerseriesIniPath: Path = (headDir / "config" / "powerseries.ini").resolve()
@@ -63,6 +77,8 @@ Hence, addFileMode [{self.addFileMode}] is expected to be data. It will be set t
 
     @property
     def sortedDataPath(self) -> Path:
+        """Path to the sorted_data directory
+        """
         return self._sortedDataPath
 
     @sortedDataPath.setter
@@ -73,6 +89,9 @@ Hence, addFileMode [{self.addFileMode}] is expected to be data. It will be set t
 
     @property
     def attribute(self) -> str:
+        """Value of the attribute, not set when addFileMode is data.
+        Upon setting sortedDataPath is also set.
+        """
         return self._attribute
 
     @attribute.setter
@@ -91,6 +110,9 @@ Hence, addFileMode [{self.addFileMode}] is expected to be data. It will be set t
 
     @property
     def addFileMode(self):
+        """Can either be data or sorted_data.
+        The respective data in the folder can then be evaluated.
+        """
         return self._addFileMode
 
     @addFileMode.setter
@@ -103,6 +125,14 @@ Hence, addFileMode [{self.addFileMode}] is expected to be data. It will be set t
             self._addFileMode = "data"
 
     def set_attribute(self):
+        """Takes and handles values for the attribute.
+
+        Example
+        -------
+        Let's say the attribute name is diameter. This method shall
+        be used to change the value of the attribute in runtime.
+        (from 2 to 3)
+        """
         logger.debug("Calling set_attribute()")
         if self.addFileMode == "data":
             print("This command is only available when addFileMode is set to attribute.")
@@ -117,6 +147,19 @@ Hence, addFileMode [{self.addFileMode}] is expected to be data. It will be set t
                 return 0
 
     def add_file(self, dataDirPath):
+        """Takes and handles user input to select a file.
+
+        Upon calling a list of all appropiate (see data_format.ini) files
+        are displayed. Enter the number on the left to add the desired file.
+        
+        The file is saved in a dictionary. The content of the file
+        is never altered.
+        One can run the powerseries then.
+        The performed actions of PowerSeriesTool are saved in runtime.
+        (setting initRange for example)
+        Upon exiting the program or calling del_file() these saved settings are lost.
+        This method works independent of addFileMode.
+        """
         logger.debug(f"Calling add_file() with dataDirPath = {str(dataDirPath)}")
         assert isinstance(dataDirPath, Path)
         if not dataDirPath.exists():
@@ -143,6 +186,18 @@ Hence, addFileMode [{self.addFileMode}] is expected to be data. It will be set t
         self.fileDict[fileName] = PowerSeriesTool(filePath)
 
     def del_file(self):
+        """Takes and handles user input to delete file.
+
+        Upon calling a list of all files saved in the dictionary
+        are displayed. Enter the number on the left to delete the desired file from
+        the dictionary. Entering all will delete all files available.
+
+        The file is not deleted in the data/sorted_data directory.
+        It is only deleted from the dictionary. There,
+        the files which are run are saved.
+        Deleting a file there deletes all changed settings of PowerSeriesTool.
+        (for example initRange)
+        """
         logger.debug("Calling del_file()")
         if len(self.fileDict.keys()) == 0:
             logger.warning("There is no file that can be deleted.")
@@ -167,6 +222,12 @@ Hence, addFileMode [{self.addFileMode}] is expected to be data. It will be set t
         del self.fileDict[fileName]
 
     def run_powerseries(self):
+        """Takes and handles user input to select which powerseries shall be run.
+
+        Upon calling a list of all files saved in the dictionary are displayed.
+        Enter the number on the left to run the desired powerseries. Entering all
+        will run all available powerseries one behind the other.
+        """
         logger.debug("Calling run_powerseries()")
         for i, file in enumerate(self.fileDict.keys()):
             print(f"[{i}]   {file}")
@@ -187,6 +248,10 @@ Hence, addFileMode [{self.addFileMode}] is expected to be data. It will be set t
             self.fileDict[fileName].run()
 
     def init_plot(self):
+        """Initializes PlotPowerSeries object to create plots.
+        Also checks whether this can be done
+        (the commannd run has to be called atleast once).
+        """
         logger.debug("Calling init_plot()")
         try:
             self.plots = PlotPowerSeries(list(self.fileDict.values()))
@@ -196,6 +261,22 @@ Hence, addFileMode [{self.addFileMode}] is expected to be data. It will be set t
             return False
 
     def input_plot_selector(self):
+        """Takes user input to select which plot shall be shown.
+
+        linewidth and outputpower vs inputpower:        s+lw, lws, "Enter"
+        outputpower vs inputpower:                      power, p
+        linewidth vs inputpower:                        linewidth, lw
+        Q-factor vs inputpower:                         qfactor, q
+        mode energy vs inputpower:                      modeenergy, m
+        single spectrum (intensity vs energy):          single spectrum, ss
+        multiple spectra (intensity vs energy):         multiple spectra, ms
+
+        For single spectrum the index has to be entered. It shows the intensity
+        measured vs energy for inputpower.
+        For multiple spectra the number of inputpowers to use has to be entered.
+        Here a waterfall plot of the measured intensity vs energy is shown for
+        different inputpowers.
+        """
         plotStr = input("""plot [S+lw (lws), power(p), linewidth(lw), QFactor(q), modeEnergy(m),
 single spectrum (ss), multiple spectra (ms)]: """)
         logger.debug(f"User input for input_plot_selector(): {plotStr}")
@@ -229,6 +310,9 @@ single spectrum (ss), multiple spectra (ms)]: """)
             logger.error(f"ValueError: {plotStr} is not a valid input.")
 
     def scale_outputPower(self):
+        """Takes and handles user input to select and scale the outputpower of
+        the files saved in the dictionary.
+        """
         logger.debug("Calling scale_outputPower()")
         for i, file in enumerate(self.fileDict.keys()):
             print(f"[{i}]   (scale: {self.fileDict[file].powerScale})   {file}")
@@ -255,6 +339,8 @@ single spectrum (ss), multiple spectra (ms)]: """)
         return 1
 
     def plot_combine(self):
+        """Plots outputpower vs inputpower for all files in the dictionary.
+        """
         if len(self.fileDict.keys()) == 0:
             logger.error("No files selected yet, use add for that.")
             return 0
@@ -274,6 +360,10 @@ single spectrum (ss), multiple spectra (ms)]: """)
                 return 1
 
     def scaling_routine(self):
+        """A routine that shall be used to stitch multiple files together.
+
+        Scale the outputpower of files until they match as desired.
+        """
         flag = 1
         while flag == 1:
             flagScalingPossible = self.plot_combine()
@@ -283,6 +373,8 @@ single spectrum (ss), multiple spectra (ms)]: """)
                 flag = 0
 
     def config(self):
+        """Prints out basic information about the selected files in the dictionary.
+        """
         print()
         print("/"*100)
         print()
@@ -308,6 +400,8 @@ single spectrum (ss), multiple spectra (ms)]: """)
         print()
 
     def input_decoder(self):
+        """Function that takes user input and decides what to do.
+        """
         print()
         case = input("enter instruction (type help for more information): ")
         logger.debug(f"User input for input_decoder(): {case}")
@@ -422,6 +516,8 @@ single spectrum (ss), multiple spectra (ms)]: """)
         pass
 
     def run(self):
+        """Main Method, runs the input decoder until an exit is called.
+        """
         print()
         print("-"*100)
         print("Running CombinePowerSeriesTool")

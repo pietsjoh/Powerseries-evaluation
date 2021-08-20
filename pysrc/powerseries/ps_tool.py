@@ -188,6 +188,20 @@ class PowerSeriesTool(EvalPowerSeries):
 
     def input_plot_selector(self):
         """Takes user input to select which plot shall be shown.
+
+        linewidth and outputpower vs inputpower:        s+lw, lws, "Enter"
+        outputpower vs inputpower:                      power, p
+        linewidth vs inputpower:                        linewidth, lw
+        Q-factor vs inputpower:                         qfactor, q
+        mode energy vs inputpower:                      modeenergy, m
+        single spectrum (intensity vs energy):          single spectrum, ss
+        multiple spectra (intensity vs energy):         multiple spectra, ms
+
+        For single spectrum the index has to be entered. It shows the intensity
+        measured vs energy for inputpower.
+        For multiple spectra the number of inputpowers to use has to be entered.
+        Here a waterfall plot of the measured intensity vs energy is shown for
+        different inputpowers.
         """
         plotStr = input("""plot [S+lw (lws), power(p), linewidth(lw), QFactor(q), modeEnergy(m),
 single spectrum (ss), multiple spectra (ms)]: """)
