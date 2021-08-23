@@ -1,3 +1,5 @@
+"""Contains a class that can visualize the powerseries.
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize as optimize
@@ -30,7 +32,20 @@ Taken from Particle Physics Booklet (2018, particle data group).
 """
 
 class PlotPowerSeries:
-## change according to experimental value
+    """Visualization of the powerseries.
+
+    Can plot the original spectra individually and as waterfall plot.
+    Moreover, the results of the powerseries evaluation can be visualized.
+
+    Q-factor, mode energy, linewidth and outputpower vs inputpower.
+
+    Furthermore, the fitting of the input-output characteristic is performed here,
+    which leads to an estimation of the beta-factor.
+
+    The __init__ method requires a list of Powerseries object (EvalPowerSeries).
+    On these objects the get_power_dependent_data() method has to have been called before.
+    """
+    ## change according to experimental value
     resolutionLimit = 20e-6
     """Resolution limit of the linewidth in eV.
     The value is determined by and obtained from the experimental setup (especially by the grating).
@@ -118,22 +133,34 @@ class PlotPowerSeries:
 
     @property
     def xiHatMin(self):
+        """Minimum estimate for xiHat
+        """
         return self.n0Min * hbar * self.QMin / self.tauSP / self.modeWavelength[0]
 
     @property
     def xiHatMax(self):
+        """Maximum estimate for xiHat
+        """
         return self.n0Max * hbar * self.QMax / self.tauSP / self.modeWavelength[0]
 
     @property
     def xiHatEstimateWithn0(self):
+        """Estimate for xiHat with the estimate for n0 using the linear tails of the
+        in-out-characteristic
+        """
         return self.n0Estimate / self.cavityDecayRateEstimate / self.tauSP
 
     @property
     def xiHatEstimateWithoutn0(self):
+        """Estimate for xiHat with estimate for n0 from the paper
+        """
         return self.n0EstimatePaper / self.cavityDecayRateEstimate / self.tauSP
 
     @property
     def modeWavelength(self):
+        """Estimate of the mode energy using the mean value of the mode energy
+        of the 5 lowest input powers
+        """
         lowerSInputPowers = self.inputPower[self.minInputPowerRange[0] : self.minInputPowerRange[1] + 1]
         lowerSModeEnergys = self.modeWavelengthArr[self.minInputPowerRange[0] : self.minInputPowerRange[1] + 1]
         if lowerSInputPowers[0] < lowerSInputPowers[-1]:
@@ -149,9 +176,14 @@ class PlotPowerSeries:
 
     @property
     def cavityDecayRateEstimate(self):
+        """Estimate of the cavity decay rate, used to estimate xihat
+        """
         return self.modeWavelength[0] / hbar / self.QEstimate
 
     def read_powerseries_ini_file(self):
+        """Reads and handles the values from the config/powerseries.ini file.
+        Only takes the plot_ps.py section into account
+        """
         logger.debug("Calling read_powerseries_ini_file()")
         configIniPath = (headDir / "config" / "powerseries.ini").resolve()
         config = ConfigParser()
@@ -169,6 +201,8 @@ class PlotPowerSeries:
 
     @property
     def initialParamGuess(self):
+        """Guess for the initial parameters for the beta fit
+        """
         return self._initialParamGuess
 
     @initialParamGuess.setter
@@ -185,6 +219,9 @@ class PlotPowerSeries:
 
     @property
     def numBootstrapSamples(self):
+        """The number of bootstrap samples that shall be generated for the
+        estimation of the uncertainty of the beta-factor
+        """
         return self._numBootstrapSamples
 
     @numBootstrapSamples.setter
@@ -200,6 +237,14 @@ class PlotPowerSeries:
 
     @property
     def lenBootstrapSamples(self):
+        """The length of the bootstrap samples that shall be generated for the
+        estimation of the uncertainty of the beta-factor
+
+        Example
+        -------
+        If the sample has 100 data points. Then the length can be between 0 and 100.
+        If the length is 50, then each bootstrap sample has 50 data points.
+        """
         return round(self._lenBootstrapSamples * self.lenInputPower)
 
     @lenBootstrapSamples.setter
@@ -215,6 +260,8 @@ class PlotPowerSeries:
 
     @property
     def minimizeError(self):
+        """Switches whether the relative or the absolute error is minimized in the beta-fit
+        """
         return self._minimizeError
 
     @minimizeError.setter
@@ -229,6 +276,8 @@ class PlotPowerSeries:
             self._minimizeError = 'rel'
 
     def save_fit_data(self, fileName: str) -> None:
+        """Handles how the results of the fit are saved. (into output/filename when saveData is enabled)
+        """
         dictData: dict = {"xiMin" : self.xiHatMin, "xiMax" : self.xiHatMax, "xiEstimateFit" : self.xiHatEstimateWithoutn0,
         "fitParamsBeta" : self.fitParams, "uncFitParamsBeta" : self.uncFitParams,
         "beta" : self.beta, "uncBetaFit" : self.uncBetaFit, "threshold" : self.thresholdInput,
@@ -241,6 +290,8 @@ class PlotPowerSeries:
         df.to_csv(filePath, sep="\t", index=False)
 
     def save_powerseries_data(self, fileName: str) -> None:
+        """Handles how the original powerseries data is saved. (into output/filename when saveData is enabled)
+        """
         dictData: dict = {"in" : self.inputPower, "out" : self.outputPowerArr, "uncOut" : self.uncOutputPowerArr,
         "lw" : self.linewidthArr, "uncLw" : self.uncLinewidthArr,
         "modeEnergy" : self.modeWavelengthArr, "uncModeEnergy" : self.uncModeWavelengthArr,
@@ -250,6 +301,8 @@ class PlotPowerSeries:
         df.to_csv(filePath, sep="\t", index=False)
 
     def access_single_spectrum(self, idx):
+        """Access an individual spectrum of the powerseries
+        """
         logger.debug("Calling access_single_spectrum()")
         logger.debug(f"lenInputPower = {np.sum(self.lenInputPowerArr)}, lenInputPowerArr = {self.lenInputPowerArr}")
         assert np.issubdtype(type(idx), np.integer)
@@ -270,6 +323,8 @@ class PlotPowerSeries:
             return None
 
     def plot_single_spectrum(self, idx):
+        """Plots an individual spectrum of the powerseries
+        """
         Fit = self.access_single_spectrum(idx)
         try:
             Fit.plot_original_data()
@@ -277,6 +332,8 @@ class PlotPowerSeries:
             logger.error("Could not plot original data, because access_single_spectrum() returned NoneType -> idx out of range")
 
     def plot_multiple_spectra(self, numPlots=5):
+        """Shows a waterfall-plot of the spectra from the powerseries.
+        """
         logger.debug("Calling plot_multiple_spectra()")
         assert np.issubdtype(type(numPlots), np.integer)
         assert 1 <= numPlots <= int(np.sum(self.lenInputPowerArr))
@@ -342,6 +399,9 @@ class PlotPowerSeries:
             plt.show()
 
     def constant_lines_inout(self):
+        """Calculates constant lines for the in-out-plot.
+        This helps to check whether the tails are linear.
+        """
         minInputPower = np.argmin(self.inputPower)
         maxInputPower = np.argmax(self.inputPower)
         lowSlope = self.outputPowerArr[minInputPower] / self.inputPower[minInputPower]
@@ -365,6 +425,11 @@ class PlotPowerSeries:
         return self.inputPower, lowY, self.inputPower, highY
 
     def decorator_in_out_fit(in_out_func):
+        """Decorator for a fitfunction of the in-out-curve.
+
+        Handles the available configurations from the .ini file
+        and performs the fit using them.
+        """
         def wrapper(self):
             assert hasattr(in_out_func, "__call__")
             funcArgs = inspect.getfullargspec(in_out_func)[0]
@@ -465,28 +530,34 @@ Hence, the Q-factor (taken at the inputpower which is closest to the threshold) 
 ## future plan: remove xiHat as fit parameter
     @decorator_in_out_fit
     def beta_factor_2(x, beta, p, A, xiHat):
+        """Main in-out-curve used in the analysis (used by Ching-Wen, Arsenty)
+        """
         return (A / beta) * ( p*x / (p*x + 1) * (1 + xiHat*beta) * (1 + beta*p*x) - (beta**2)*xiHat*p*x)
 
-    def beta_factor_xiHat(self, x, beta, p, A):
-        return (A / beta) * ( p*x / (p*x + 1) * (1 + self.xiHatEstimateWithoutn0 *beta) * (1 + beta*p*x) - (beta**2)*self.xiHatEstimateWithoutn0*p*x)
-
-## in both models x corresponds to the photon number
-## model used by DOI 1.3315869
-    @decorator_in_out_fit
-    def in_out_curve1(x, beta, p, A, xi):
-        return A * p * x * (1 + 2*xi + 2*beta*(p*x - xi)) / (1 + 2*p*x)
-
-## model used by Arsenty, Ching Wen
     @decorator_in_out_fit
     def in_out_curve2(x, beta, p, a, xi, tauFrac):
+        """Deprecated
+        In-out curve original with tauFrac and xi instead of xiHat
+        """
         return a * ( p*x / (p*x + 1) * (1 + xi) * (1 + beta*p*x + tauFrac) - beta*xi*p*x)
 
-## has to be combined with
+    @decorator_in_out_fit
+    def in_out_curve1(x, beta, p, A, xi):
+        """model used by DOI 1.3315869
+        """
+        return A * p * x * (1 + 2*xi + 2*beta*(p*x - xi)) / (1 + 2*p*x)
+
+## has to be combined with in-out fit
     @staticmethod
     def lw_fit(x, a, xi, p):
+        """Deprecated
+        fit of the linewidth, produced not very good results."""
         return a * (1 + 2*xi) / (1 + 2*p*x)
 
+    ## Disable the use of the fit
     def plot_linewidth(self, block=True):
+        """Plots the linewidth vs inputpower, also tries to fit the data.
+        """
         try:
             p, _ = optimize.curve_fit(self.lw_fit, self.outputPowerArr, self.linewidthArr, sigma=self.uncLinewidthArr)
         except RuntimeError:
@@ -509,6 +580,8 @@ Hence, the Q-factor (taken at the inputpower which is closest to the threshold) 
                 plt.close("all")
 
     def plot_outputPower(self, block=True):
+        """Plots the in-out-curve with the beta-fit already calculated.
+        """
         if hasattr(self, "beta"):
             outputPlotArr = np.logspace(np.log10(np.amin(self.outputPowerArr)), np.log10(np.amax(self.outputPowerArr)), 100)
             inputPlotArr = self.in_out_curve(outputPlotArr, *self.fitParams)
@@ -530,6 +603,8 @@ Hence, the Q-factor (taken at the inputpower which is closest to the threshold) 
             plt.close("all")
 
     def plot_mode_wavelength(self, block=True):
+        """Plots the mode energy vs inputpower
+        """
         plt.errorbar(self.inputPower, self.modeWavelengthArr, yerr=self.uncModeWavelengthArr, capsize=3, fmt=".")
         plt.xscale("log")
         plt.xlabel("input power [mW]")
@@ -543,6 +618,8 @@ Hence, the Q-factor (taken at the inputpower which is closest to the threshold) 
             plt.close("all")
 
     def plot_QFactor(self, block=True):
+        """Plots the Q-factor vs inputpower
+        """
         plt.errorbar(self.inputPower, self.QFactorArr, yerr=self.uncQFactorArr, capsize=3, fmt=".")
         plt.xscale("log")
         plt.xlabel("input power [mW]")
@@ -556,6 +633,8 @@ Hence, the Q-factor (taken at the inputpower which is closest to the threshold) 
             plt.close("all")
 
     def plot_lw_s(self, block=True):
+        """Plots the in-out-characteristic and the linewidth vs inputpower in the same plot
+        """
         fig, ax1 = plt.subplots()
         ax2 = ax1.twinx()
         ax1.errorbar(self.inputPower, self.outputPowerArr, yerr=self.uncOutputPowerArr, capsize=3, fmt="b.")
