@@ -48,7 +48,7 @@ def shutdown_server():
     int
         0 if user input is q or exit, 1 otherwise
     """
-    userInput: str = input("Shutdown server: 'q' or 'exit: ")
+    userInput: str = input("Shutdown server: 'q' or 'exit: ").lower().replace(" ", "")
     if userInput in ["q", "exit"]:
         return 0
     else:
