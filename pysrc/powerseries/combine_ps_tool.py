@@ -403,19 +403,6 @@ single spectrum (ss), multiple spectra (ms)]: """).lower().replace(" ", "")
                 plt.show()
                 return 1
 
-    def scaling_routine(self):
-        """A routine that shall be used to stitch multiple files together.
-
-        Scale the outputpower of files until they match as desired.
-        """
-        flag = 1
-        while flag == 1:
-            flagScalingPossible = self.plot_combine()
-            if flagScalingPossible == 1:
-                flag = self.scale_outputPower()
-            else:
-                flag = 0
-
     def config(self):
         """Prints out basic information about the selected files in the dictionary.
         """
