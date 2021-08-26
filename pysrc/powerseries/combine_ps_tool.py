@@ -55,7 +55,7 @@ class CombinePowerSeriesTool:
             self.attrName: str = config["data format"]["attribute name"].replace(" ", "")
             self._sortedDataDirName: str = f"sorted_data_{self.attrName}"
             self._possibleAttrList: typing.Union[list[str], None] = config["data format"]["attribute possibilities"].replace(" ", "").split(",")
-            if len(self._possibleAttrList) == 1 and self._possibleAttrList[0].upper() == "NONE":
+            if len(self._possibleAttrList) == 1 and self._possibleAttrList[0].lower() == "none":
                 self._possibleAttrList = None
             self.defaultAttribute: str = config["combine_ps_tool.py"]["default attribute"].replace(" ", "")
             try:
@@ -138,7 +138,7 @@ Hence, addFileMode [{self.addFileMode}] is expected to be data. It will be set t
             print("This command is only available when addFileMode is set to attribute.")
             return 0
         else:
-            attrInput = input(f"{self.attrName}: ")
+            attrInput = input(f"{self.attrName}: ").replace(" ", "")
             logger.debug(f"User input for set_attribute(): {attrInput}")
             try:
                 self.attribute = attrInput
@@ -146,12 +146,13 @@ Hence, addFileMode [{self.addFileMode}] is expected to be data. It will be set t
                 logger.error(f"Invalid input [{attrInput}] for {self.attrName}. Keeping the current value.")
                 return 0
 
+    @misc.input_loop
     def add_file(self, dataDirPath):
         """Takes and handles user input to select a file.
 
         Upon calling a list of all appropiate (see data_format.ini) files
         are displayed. Enter the number on the left to add the desired file.
-        
+
         The file is saved in a dictionary. The content of the file
         is never altered.
         One can run the powerseries then.
@@ -164,27 +165,33 @@ Hence, addFileMode [{self.addFileMode}] is expected to be data. It will be set t
         assert isinstance(dataDirPath, Path)
         if not dataDirPath.exists():
             logger.critical(f"Directory path does not exist {str(dataDirPath)}")
-            return 0
+            sys.exit()
         fileList = list(dataDirPath.rglob("*AllSpectra.dat"))
         for i, file in enumerate(fileList):
             fileName = file.name
             print(f"[{i}]   {fileName}")
             print()
 
-        fileIdxStr = input("select file to add: ")
+        fileIdxStr = input("select file to add: ").replace(" ", "")
         logger.debug(f"User input for add_file_data(), select file to add: {fileIdxStr}")
+        if fileIdxStr == "q":
+            return 0
+        elif fileIdxStr == "exit":
+            sys.exit()
         fileIdx = misc.int_decode(fileIdxStr)
         if fileIdx == None:
-            return 0
+            return 1
         if fileIdx >= len(fileList):
             logger.warning(f"ValueError: The selected index [{fileIdx}] exceeds the max value [{len(fileList)}]")
-            return 0
+            return 1
 
         filePath = fileList[fileIdx]
         logger.debug(f"Selected file path {filePath}")
         fileName = filePath.name
         self.fileDict[fileName] = PowerSeriesTool(filePath)
+        return 1
 
+    @misc.input_loop
     def del_file(self):
         """Takes and handles user input to delete file.
 
@@ -205,22 +212,28 @@ Hence, addFileMode [{self.addFileMode}] is expected to be data. It will be set t
         for i, file in enumerate(self.fileDict.keys()):
             print(f"[{i}]   {file}")
             print()
-        fileIdxStr = input("select file to delete: ")
+        fileIdxStr = input("select file to delete: ").replace(" ", "")
         logger.debug(f"User input for del_file(), select file to delete: {fileIdxStr}")
         if fileIdxStr == "all":
             self.fileDict.clear()
             return 0
+        elif fileIdxStr == "q":
+            return 0
+        elif fileIdxStr == "exit":
+            sys.exit()
         else:
             fileIdx = misc.int_decode(fileIdxStr)
         if fileIdx == None:
-            return 0
+            return 1
         if fileIdx >= len(self.fileDict.keys()):
             logger.warning(f"ValueError: The selected index [{fileIdx}] exceeds the max value [{len(self.fileDict.keys()) - 1}].")
-            return 0
+            return 1
 
         fileName = list(self.fileDict.keys())[fileIdx]
         del self.fileDict[fileName]
+        return 1
 
+    @misc.input_loop
     def run_powerseries(self):
         """Takes and handles user input to select which powerseries shall be run.
 
@@ -232,20 +245,26 @@ Hence, addFileMode [{self.addFileMode}] is expected to be data. It will be set t
         for i, file in enumerate(self.fileDict.keys()):
             print(f"[{i}]   {file}")
             print()
-        fileIdxStr = input("select file to run powerseries: ")
+        fileIdxStr = input("select file to run powerseries: ").replace(" ", "")
         logger.debug(f"User input for run_powerseries(), select file to run powerseries: {fileIdxStr}")
         if fileIdxStr == "all":
             for file in self.fileDict.keys():
                 self.fileDict[file].run()
+            return 0
+        elif fileIdxStr == "q":
+            return 0
+        elif fileIdxStr == "exit":
+            sys.exit()
         else:
             fileIdx = misc.int_decode(fileIdxStr)
             if fileIdx == None:
-                return 0
+                return 1
             if fileIdx >= len(self.fileDict.keys()):
                 logger.warning(f"ValueError: The selected index [{fileIdx}] exceeds the max value [{len(self.fileDict.keys())}].")
-                return 0
+                return 1
             fileName = list(self.fileDict.keys())[fileIdx]
             self.fileDict[fileName].run()
+            return 0
 
     def init_plot(self):
         """Initializes PlotPowerSeries object to create plots.
@@ -260,6 +279,7 @@ Hence, addFileMode [{self.addFileMode}] is expected to be data. It will be set t
             logger.error("AttributeError: Cannot initialize 'PlotPowerSeries'. Run powerseries first ('run ps')")
             return False
 
+    @misc.input_loop
     def input_plot_selector(self):
         """Takes user input to select which plot shall be shown.
 
@@ -277,64 +297,88 @@ Hence, addFileMode [{self.addFileMode}] is expected to be data. It will be set t
         Here a waterfall plot of the measured intensity vs energy is shown for
         different inputpowers.
         """
-        plotStr = input("""plot [S+lw (lws), power(p), linewidth(lw), QFactor(q), modeEnergy(m),
-single spectrum (ss), multiple spectra (ms)]: """)
+        plotStr = input("""plot [S+lw (lws), power(p), linewidth(lw), QFactor(qf), modeEnergy(m),
+single spectrum (ss), multiple spectra (ms)]: """).lower().replace(" ", "")
         logger.debug(f"User input for input_plot_selector(): {plotStr}")
-        if plotStr.upper() in ["POWER", "P"]:
+        if plotStr in ["power", "p"]:
             self.plots.plot_outputPower()
-        elif plotStr.upper() in ["S", "S+LW", "LWS", ""]:
+            return 0
+        elif plotStr in ["s", "s+lw", "lws", ""]:
             self.plots.plot_lw_s()
-        elif plotStr.upper() in ["LINEWIDTH", "LW"]:
+            return 0
+        elif plotStr in ["linewidth", "lw"]:
             self.plots.plot_linewidth()
-        elif plotStr.upper() in ["QFACTOR", "Q"]:
+            return 0
+        elif plotStr in ["qfactor", "qf"]:
             self.plots.plot_QFactor()
-        elif plotStr.upper() in ["MODEENERGY", "M"]:
+            return 0
+        elif plotStr in ["modeenergy", "m"]:
             self.plots.plot_mode_wavelength()
-        elif plotStr.upper() in ["SINGLE SPECTRUM", "SS"]:
-            idxStr = input("Enter index: ")
+            return 0
+        elif plotStr in ["singlespectrum", "ss"]:
+            idxStr = input("Enter index: ").replace(" ", "")
             logger.debug(f"User input for idxStr: {idxStr}")
             idx = misc.int_decode(idxStr)
             try:
                 self.plots.plot_single_spectrum(idx)
             except AssertionError:
-                logger.error(f"TypeError: [{idxStr}] is not a valid input.")
-        elif plotStr.upper() in ["MULTIPLE SPECTRA", "MS"]:
-            numPlotsStr = input("number of plots: ")
+                logger.error(f"ValueError: [{idxStr}] is not a valid input.")
+                return 1
+            else:
+                return 0
+        elif plotStr in ["multiplespectra", "ms"]:
+            numPlotsStr = input("number of plots: ").replace(" ", "")
             logger.debug(f"User input for numPlotsStr: {numPlotsStr}")
             numPlots = misc.int_decode(numPlotsStr)
             try:
                 self.plots.plot_multiple_spectra(numPlots)
             except AssertionError:
                 logger.error(f"Invalid input (numbers in the range [1:{self.plots.lenInputPower}] are accepted).")
+                return 1
+            else:
+                return 0
+        elif plotStr == "q":
+            return 0
+        elif plotStr == "exit":
+            sys.exit()
         else:
             logger.error(f"ValueError: {plotStr} is not a valid input.")
+            return 1
 
+    @misc.input_loop
     def scale_outputPower(self):
         """Takes and handles user input to select and scale the outputpower of
         the files saved in the dictionary.
         """
         logger.debug("Calling scale_outputPower()")
+        flag = self.plot_combine()
+        if not flag:
+            return 0
         for i, file in enumerate(self.fileDict.keys()):
             print(f"[{i}]   (scale: {self.fileDict[file].powerScale})   {file}")
             print()
-        selectFileStr = input("select file for scaling: ")
+        selectFileStr = input("select file for scaling: ").replace(" ", "")
         logger.debug(f"User input for selectFileStr, fileIdx: {selectFileStr}")
         if selectFileStr == "q":
             return 0
+        elif selectFileStr == "exit":
+            sys.exit()
         fileIdx = misc.int_decode(selectFileStr)
         if fileIdx == None:
-            return 0
+            return 1
         elif fileIdx >= len(self.fileDict.keys()):
             logger.warning(f"ValueError: The selected index [{fileIdx}] exceeds the max value [{len(self.fileDict.keys())}].")
-            return 0
+            return 1
         fileName = list(self.fileDict.keys())[fileIdx]
-        scaleStr = input("scale: ")
+        scaleStr = input("scale: ").replace(" ", "")
         logger.debug(f"User input for scale_outputPower(), scale: {scaleStr}")
         if scaleStr == "q":
             return 0
+        elif scaleStr == "exit":
+            sys.exit()
         scale = misc.float_decode(scaleStr)
         if scale == None:
-            return 0
+            return 1
         self.fileDict[fileName].powerScale = scale
         return 1
 
@@ -399,6 +443,7 @@ single spectrum (ss), multiple spectra (ms)]: """)
         print("/"*100)
         print()
 
+    @misc.input_loop
     def input_decoder(self):
         """Function that takes user input and decides what to do.
         """
@@ -407,7 +452,7 @@ single spectrum (ss), multiple spectra (ms)]: """)
         logger.debug(f"User input for input_decoder(): {case}")
         print()
         if case == "q":
-            confirmationExit = input("Do you really want to exit the tool? [y/n]: ")
+            confirmationExit = input("Do you really want to exit the tool? [y/n]: ").lower().replace(" ", "")
             logger.debug(f"User input for confirmation exit: {confirmationExit}")
             if confirmationExit.lower().strip() == "y":
                 return 0
@@ -434,7 +479,7 @@ single spectrum (ss), multiple spectra (ms)]: """)
             self.config()
             return 1
         elif case == "scale":
-            self.scaling_routine()
+            self.scale_outputPower()
             return 1
         elif case == "run":
             self.run_powerseries()
@@ -460,6 +505,7 @@ single spectrum (ss), multiple spectra (ms)]: """)
             logger.error(f"ValueError: {case} is not implemented. Type help for more information.")
             return 1
 
+    @misc.input_loop
     def input_help(self):
         """Takes and handles input for the help command.
         """
@@ -478,34 +524,36 @@ single spectrum (ss), multiple spectra (ms)]: """)
         - everything: enter all
         """).lower().replace(" ", "")
         logger.debug(f"User inout for input_help(): {helpType}")
-        inputList = ["combine", "commands", "powerseries", "peakfit", "plots", "all", "q"]
+        inputList = ["combine", "commands", "powerseries", "peakfit", "plots", "all", "q", "exit"]
         if not helpType in inputList:
-            logger.error(f"{helpType} is an invalid input. Exiting.")
-            return 0
-        elif helpType == "q":
+            logger.error(f"{helpType} is an invalid input.")
             return 1
+        elif helpType == "q":
+            return 0
+        elif helpType == "exit":
+            sys.exit()
         elif helpType == "combine":
             self.help_combine_ps()
-            return 1
+            return 0
         elif helpType == "commands":
             PowerSeriesTool.help_commands()
-            return 1
+            return 0
         elif helpType == "powerseries":
             PowerSeriesTool.help_powerseries()
-            return 1
+            return 0
         elif helpType == "peakfit":
             PowerSeriesTool.help_peak_fit()
-            return 1
+            return 0
         elif helpType == "plots":
             PowerSeriesTool.help_plots()
-            return 1
+            return 0
         elif helpType == "all":
             self.help_combine_ps()
             PowerSeriesTool.help_commands()
             PowerSeriesTool.help_peak_fit()
             PowerSeriesTool.help_powerseries()
             PowerSeriesTool.help_plots()
-            return 1
+            return 0
 
     @staticmethod
     def help_combine_ps():
@@ -524,9 +572,8 @@ single spectrum (ss), multiple spectra (ms)]: """)
         print("-"*100)
         print()
         self.config()
-        j = self.input_decoder()
-        while j == 1:
-            j = self.input_decoder()
+        self.input_decoder()
+
 
 
 if __name__ == "__main__":

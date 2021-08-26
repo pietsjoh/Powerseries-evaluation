@@ -35,11 +35,12 @@ class PowerSeriesTool(EvalPowerSeries):
         logger.debug("""PowerSeriesTool initialized.
             filepath: {}""".format(filePath))
 
+    @misc.input_loop
     def input_decoder(self):
         """Function that takes the user input and decides what to do.
         """
         print()
-        case = input("enter instruction (type help for more information): ")
+        case = input("enter instruction (type help for more information): ").lower().replace(" ", "")
         logger.debug(f"User input for input_decoder(): {case}")
         print()
         if case == "q":
@@ -52,25 +53,25 @@ class PowerSeriesTool(EvalPowerSeries):
         elif case == "bg":
             self.input_backgroundFitMode()
             return 1
-        elif case == "set init range":
+        elif case == "setinitrange":
             minInitRangeEnergyStr, maxInitRangeEnergyStr, maxInitRangeStr = self.input_initial_range()
             self.check_input_initial_range(minInitRangeEnergyStr, maxInitRangeEnergyStr, maxInitRangeStr)
             return 1
-        elif case == "set fitmodel":
+        elif case == "setfitmodel":
             fitModelStr = self.input_fitmodel()
             self.check_input_fitmodel(fitModelStr)
             return 1
-        elif case == "set snapshots":
+        elif case == "setsnapshots":
             self.input_snapshots()
             return 1
-        elif case == "set peak width":
+        elif case == "setpeakwidth":
             self.input_constantPeakWidth()
             return 1
-        elif case == "set exclude":
+        elif case == "setexclude":
             minInputPowerRangeStr, maxInputPowerRangeStr = self.input_exclude()
             self.check_input_exclude(minInputPowerRangeStr, maxInputPowerRangeStr)
             return 1
-        elif case == "set fit range":
+        elif case == "setfitrange":
             self.input_fitRangeScale()
             return 1
         elif case == "run":
@@ -97,6 +98,7 @@ class PowerSeriesTool(EvalPowerSeries):
             logger.error(f"ValueError: {case} is not a valid input (type help for more information).")
             return 1
 
+    @misc.input_loop
     def input_help(self):
         """Takes and handles input for the help command.
         """
@@ -113,12 +115,14 @@ class PowerSeriesTool(EvalPowerSeries):
         - everything: enter all
         """).lower().replace(" ", "")
         logger.debug(f"User inout for input_help(): {helpType}")
-        inputList = ["commands", "powerseries", "peakfit", "plots", "all", "q"]
+        inputList = ["commands", "powerseries", "peakfit", "plots", "all", "q", "exit"]
         if not helpType in inputList:
-            logger.error(f"{helpType} is an invalid input. Exiting.")
+            logger.error(f"{helpType} is an invalid input.")
             return 0
         elif helpType == "q":
             return 1
+        elif helpType == "exit":
+            sys.exit()
         elif helpType == "commands":
             self.help_commands()
             return 1
@@ -157,14 +161,14 @@ class PowerSeriesTool(EvalPowerSeries):
     @staticmethod
     def help_peak_fit():
         """Prints out information about the peak fitting program parameters.
-        
+
         This information can also be found in the peak_fit/single_peak_fit_base.py documentation"""
         pass
 
     @staticmethod
     def help_plots():
         """Prints out information about the available plots.
-        
+
         This information can also be found in the powerseries/plot_ps.py documentation."""
         pass
 
@@ -173,7 +177,7 @@ class PowerSeriesTool(EvalPowerSeries):
         For more information on this parameter take a look at
         single_peak_fit_base.py.
         """
-        fitRangeScaleStr = input("fit range scale: ")
+        fitRangeScaleStr = input("fit range scale: ").replace(" ", "")
         logger.debug(f"User input for input_fitRangeScale(): {fitRangeScaleStr}")
         self.fitRangeScale = misc.float_decode(fitRangeScaleStr)
 
@@ -182,10 +186,11 @@ class PowerSeriesTool(EvalPowerSeries):
         For more information on this parameter take a look at
         single_peak_fit_base.py.
         """
-        constantpeakWidthStr = input("constant peak width: ")
+        constantpeakWidthStr = input("constant peak width: ").replace(" ", "")
         logger.debug(f"User input for input_constantPeakWidth(): {constantpeakWidthStr}")
         self.constantPeakWidth = misc.int_decode(constantpeakWidthStr)
 
+    @misc.input_loop
     def input_plot_selector(self):
         """Takes user input to select which plot shall be shown.
 
@@ -203,37 +208,53 @@ class PowerSeriesTool(EvalPowerSeries):
         Here a waterfall plot of the measured intensity vs energy is shown for
         different inputpowers.
         """
-        plotStr = input("""plot [S+lw (lws), power(p), linewidth(lw), QFactor(q), modeEnergy(m),
-single spectrum (ss), multiple spectra (ms)]: """)
+        plotStr = input("""plot [S+lw (lws), power(p), linewidth(lw), QFactor(qf), modeEnergy(m),
+single spectrum (ss), multiple spectra (ms)]: """).lower().replace(" ", "")
         logger.debug(f"User input for input_plot_selector(): {plotStr}")
-        if plotStr.upper() in ["POWER", "P"]:
+        if plotStr in ["power", "p"]:
             self.plots.plot_outputPower()
-        elif plotStr.upper() in ["S+lw", "LWS", ""]:
+            return 0
+        elif plotStr in ["s", "s+lw", "lws", ""]:
             self.plots.plot_lw_s()
-        elif plotStr.upper() in ["LINEWIDTH", "LW"]:
+            return 0
+        elif plotStr in ["linewidth", "lw"]:
             self.plots.plot_linewidth()
-        elif plotStr.upper() in ["QFACTOR", "Q"]:
+            return 0
+        elif plotStr in ["qfactor", "qf"]:
             self.plots.plot_QFactor()
-        elif plotStr.upper() in ["MODEENERGY", "M"]:
+            return 0
+        elif plotStr in ["modeenergy", "m"]:
             self.plots.plot_mode_wavelength()
-        elif plotStr.upper() in ["SINGLE SPECTRUM", "SS"]:
-            idxStr = input("Enter index: ")
+            return 0
+        elif plotStr in ["singlespectrum", "ss"]:
+            idxStr = input("Enter index: ").replace(" ", "")
             logger.debug(f"User input for idxStr: {idxStr}")
             idx = misc.int_decode(idxStr)
             try:
                 self.plots.plot_single_spectrum(idx)
             except AssertionError:
-                logger.error(f"TypeError: [{idxStr}] is not a valid input.")
-        elif plotStr.upper() in ["MULTIPLE SPECTRA", "MS"]:
-            numPlotsStr = input("number of plots: ")
+                logger.error(f"ValueError: [{idxStr}] is not a valid input.")
+                return 1
+            else:
+                return 0
+        elif plotStr in ["multiplespectra", "ms"]:
+            numPlotsStr = input("number of plots: ").replace(" ", "")
             logger.debug(f"User input for numPlotsStr: {numPlotsStr}")
             numPlots = misc.int_decode(numPlotsStr)
             try:
                 self.plots.plot_multiple_spectra(numPlots)
             except AssertionError:
                 logger.error(f"Invalid input (numbers in the range [1:{self.lenInputPower}] are accepted).")
+                return 1
+            else:
+                return 0
+        elif plotStr == "q":
+            return 0
+        elif plotStr == "exit":
+            sys.exit()
         else:
             logger.error(f"ValueError: {plotStr} is not a valid input.")
+            return 1
 
     def init_plot(self):
         """Initializes PlotPowerSeries object to create plots.
@@ -253,7 +274,7 @@ single spectrum (ss), multiple spectra (ms)]: """)
         For more information on this parameter take a look at
         eval_ps.py.
         """
-        snapshotsStr = input("number of snapshots: ")
+        snapshotsStr = input("number of snapshots: ").replace(" ", "")
         logger.debug(f"User input for input_snapshots(): {snapshotsStr}")
         self.snapshots = misc.int_decode(snapshotsStr)
 
@@ -262,7 +283,7 @@ single spectrum (ss), multiple spectra (ms)]: """)
         For more information on this parameter take a look at
         single_peak_fit_base.py.
         """
-        backgroundFitModeStr = input("background fit mode: ")
+        backgroundFitModeStr = input("background fit mode: ").lower().replace(" ", "")
         logger.debug(f"User input for input_backgroundFitMode(): {backgroundFitModeStr}")
         self.backgroundFitMode = backgroundFitModeStr
 
@@ -272,7 +293,7 @@ single spectrum (ss), multiple spectra (ms)]: """)
         For more information on this parameter take a look at
         single_peak_fit_models.py.
         """
-        fitModelStr = input("fitmodel (gauss, lorentz, voigt, pseudovoigt): ")
+        fitModelStr = input("fitmodel (gauss, lorentz, voigt, pseudovoigt): ").lower().replace(" ", "")
         logger.debug(f"User input for input_fitModel(): {fitModelStr}")
         return fitModelStr
 
@@ -282,11 +303,11 @@ single spectrum (ss), multiple spectra (ms)]: """)
         For more information on this parameter take a look at
         single_peak_fit_base.py.
         """
-        minInitRangeEnergyStr = input("min energy: ")
+        minInitRangeEnergyStr = input("min energy: ").replace(" ", "")
         logger.debug(f"User input for input_initial_range(), min energy: {minInitRangeEnergyStr}")
-        maxInitRangeEnergyStr = input("max energy: ")
+        maxInitRangeEnergyStr = input("max energy: ").replace(" ", "")
         logger.debug(f"User input for input_initial_range(), max energy: {maxInitRangeEnergyStr}")
-        maxInitRangeStr = input("max index to use init range: ")
+        maxInitRangeStr = input("max index to use init range: ").replace(" ", "")
         logger.debug(f"User input for input_initial_range(), maxInitRange: {maxInitRangeStr}")
         return minInitRangeEnergyStr, maxInitRangeEnergyStr, maxInitRangeStr
 
@@ -296,9 +317,9 @@ single spectrum (ss), multiple spectra (ms)]: """)
         For more information on this parameter take a look at
         single_peak_fit_base.py.
         """
-        minInputPowerRangeStr = input("min input power: ")
+        minInputPowerRangeStr = input("min input power: ").replace(" ", "")
         logger.debug(f"User input for input_exclude(), min input power: {minInputPowerRangeStr}")
-        maxInputPowerRangeStr = input("max input power: ")
+        maxInputPowerRangeStr = input("max input power: ").replace(" ", "")
         logger.debug(f"User input for input_exclude(), max input power: {maxInputPowerRangeStr}")
         return minInputPowerRangeStr, maxInputPowerRangeStr
 
@@ -346,8 +367,6 @@ single spectrum (ss), multiple spectra (ms)]: """)
         print()
         self.config()
         j = self.input_decoder()
-        while j == 1:
-            j = self.input_decoder()
 
 if __name__ == "__main__":
     ## just testing
