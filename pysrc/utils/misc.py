@@ -26,6 +26,15 @@ numberOrNone = typing.Union[number, None]
 
 diameterList: listOfNums = sorted(list(range(1, 21, 1)) + list(np.arange(1.5, 8.5, 1)))
 
+def input_loop(func):
+    """Decorator that calls the function until it returns false.
+    """
+    def wrapper(*args, **kwargs):
+        j = func(*args, **kwargs)
+        while j:
+            j = func(*args, **kwargs)
+    return wrapper
+
 def unc_mean(values: listOrArray, intv: str="1sigma") -> number:
     """
     Calculates the uncertainty for the mean of the values using the student-t-distribution.
