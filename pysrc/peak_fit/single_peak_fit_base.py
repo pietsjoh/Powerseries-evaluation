@@ -18,6 +18,7 @@ from setup.config_logging import LoggingConfig
 
 loggerObj: LoggingConfig = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
+loggerObj.read_debugging_ini_file()
 
 tupleIntOrNone = typing.Union[tuple[int, int], None]
 number = typing.Union[int, float, np.number]
