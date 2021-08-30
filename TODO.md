@@ -4,7 +4,8 @@
 
 ### General
 
-- use loops for add / delete / run powerseries (only exit when q is called)
+- constant fit range ???
+- use loops for add / delete / run powerseries (only exit when q is called) [x]
 - Write help functions
 - Write description of available commands also into the docstring of input decoder
 - rework create_ini_files (not use configparser) [x]
