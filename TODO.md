@@ -4,6 +4,7 @@
 
 ### General
 
+- linear approximation for Q-factor? (in between 2 input powers)
 - check whether all files have been transfered when calling sort_data
 - constant fit range ???
 - use loops for add / delete / run powerseries (only exit when q is called) [x]
