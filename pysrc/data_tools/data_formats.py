@@ -100,6 +100,10 @@ class DataQlab2:
             self.minEnergy: number = np.amin(self.energies)
             self.minInputPower: number = np.amin(self.inputPower)
             self.maxInputPower: number = np.amax(self.inputPower)
+            ## sort data based on the inputpower
+            idxSorted: np.ndarray = np.argsort(self.inputPower)
+            self.inputPower = self.inputPower[idxSorted]
+            self.columns = self.columns[idxSorted]
             self.fileName: str = self.dataPath.name
             assert len(self.data.columns) == self.lenInputPower, f"{len(self.data.columns)}, {self.lenInputPower}"
             logger.info(f"Data from {self.fileName} successfully loaded.")
