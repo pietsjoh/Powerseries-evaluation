@@ -121,6 +121,7 @@ class EvalPowerSeries:
         assert (DataObj.energies >= 0).all()
         assert (DataObj.inputPower >= 0).all()
         assert (DataObj.wavelengths >= 0).all()
+        assert all(DataObj.inputPower[i] <= DataObj.inputPower[i + 1] for i in range(len(DataObj.inputPower) - 1))
 
     def read_powerseries_ini_file(self) -> None:
         """Reads the config/powerseries.ini file and uses the settings from the eval_ps.py section.
@@ -216,6 +217,8 @@ Selecting the maximum value.""".format(energy, self.minEnergy, self.maxEnergy))
         if (inputPower < self.minInputPower):
             logger.warning("""ValueError: The selected input power {} is out of bounce. Possible range: [{}, {}].
 Selecting the minimum value.""".format(inputPower, self.minInputPower, self.maxInputPower))
+            idx = 0
+            return idx
         elif (inputPower > self.maxInputPower):
             logger.warning("""ValueError: The selected input power {} is out of bounce. Possible range: [{}, {}].
 Selecting the maximum value.""".format(inputPower, self.minInputPower, self.maxInputPower))
@@ -263,13 +266,7 @@ Selecting the maximum value.""".format(inputPower, self.minInputPower, self.maxI
             logger.error(f"TypeError: invalid argument for snapshot ({self._snapshots}). Setting snapshots to 0.")
             self._snapshots = 0
         if self._snapshots < 0:
-            logger.warning(f"ValueError: {self._snapshots} is smaller than 0. Setting snapshots to 0.")
             self._snapshots = 0
-        if self._snapshots > (self.lenInputPower - len(self.exclude)):
-            logger.warning("""ValueError: The number of snapshots ({}) exceeds the number of data sets
-({}) (different input powers).
-Setting snapshots to the max possible value.""".format(self._snapshots, self.lenInputPower - len(self.exclude)))
-            self._snapshots = self.lenInputPower - len(self.exclude)
         logger.debug(f"snapshots has been set to {self._snapshots}")
 
     def check_input_initial_range(self, minInitRangeEnergyStr: str, maxInitRangeEnergyStr: str,
@@ -402,7 +399,6 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
             self._exclude = []
         if isinstance(value, (list, np.ndarray)):
             self._exclude = value
-            self.snapshots = self._snapshots
         else:
             logger.error(f"TypeError: {self.exclude} is not valid input. Excluding no points.")
             self._exclude = []
