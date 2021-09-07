@@ -275,6 +275,13 @@ class PlotPowerSeries:
             logger.error(f"{value} is an invalid argument for minimzeError. Only 'relative' and 'absolute' are accepted. Setting it to relative")
             self._minimizeError = 'rel'
 
+    def save_settings(self, fileName: str) -> None:
+        """Handles how the settings of the Powerseries-Evaluation are saved. (into output/filename when saveData is enabled)
+        """
+        dictData: dict = {"fitmodel": None, "exclude": None, "fit range scale": None, "output scale": None,
+            "minEnergy": None, "maxEnergy": None, "maxInitRange": None, "background": None, "constantPeakWidth": None}
+        pass
+
     def save_fit_data(self, fileName: str) -> None:
         """Handles how the results of the fit are saved. (into output/filename when saveData is enabled)
         """
