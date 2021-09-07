@@ -130,6 +130,7 @@ class PlotPowerSeries:
         self.read_powerseries_ini_file()
         if self.saveData:
             self.save_powerseries_data("powerseries.csv")
+            self.save_settings("settings.csv")
 
     @property
     def xiHatMin(self):
@@ -278,9 +279,27 @@ class PlotPowerSeries:
     def save_settings(self, fileName: str) -> None:
         """Handles how the settings of the Powerseries-Evaluation are saved. (into output/filename when saveData is enabled)
         """
-        dictData: dict = {"fitmodel": None, "exclude": None, "fit range scale": None, "output scale": None,
-            "minEnergy": None, "maxEnergy": None, "maxInitRange": None, "background": None, "constantPeakWidth": None}
-        pass
+        IndexList: list = ["fitmodel", "exclude", "minInputPowerRange", "maxInputPowerRange", "fit range scale", "output scale", "initRange",
+            "minEnergy", "maxEnergy", "maxInitRange", "background", "constantPeakWidth", "intCoverage"]
+        dictData: dict = dict()
+        for powerseries in self.powerSeriesList:
+            if powerseries.initRange is None:
+                minInitRangeEnergy, maxInitRangeEnergy, maxInitRange = None, None, None
+            else:
+                minInitRangeEnergy, maxInitRangeEnergy = powerseries.minInitRangeEnergy, powerseries.maxInitRangeEnergy
+                maxInitRange = powerseries.maxInitRange
+
+            if powerseries.exclude is []:
+                minInputPowerRange, maxInputPowerRange = None, None
+            else:
+                minInputPowerRange, maxInputPowerRange = powerseries.minInputPowerRange, powerseries.maxInputPowerRange
+            dictData[powerseries.fileName] = [powerseries.fitModel.name, powerseries.exclude, minInputPowerRange, maxInputPowerRange,
+                powerseries.fitRangeScale, powerseries.powerScale, powerseries.initRange, minInitRangeEnergy, maxInitRangeEnergy, maxInitRange,
+                powerseries.backgroundFitMode, powerseries.constantPeakWidth, powerseries.intCoverage]
+
+        df: pd.DataFrame = pd.DataFrame(dictData, index=IndexList)
+        filePath: Path = (self.outputPath / fileName).resolve()
+        df.to_csv(filePath, sep="\t", index=True)
 
     def save_fit_data(self, fileName: str) -> None:
         """Handles how the results of the fit are saved. (into output/filename when saveData is enabled)
