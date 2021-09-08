@@ -523,10 +523,9 @@ class PlotPowerSeries:
             logger.info(f"unc fit params (beta, p, A, xiHat): {self.uncFitParams}")
             np.set_printoptions(precision=8, suppress=False)
             if self.useBootstrap:
-                bootstrap.results
                 self.uncBetaBootstrap = bootstrap.results[1]
-                logger.info(f"bootstrap results beta (original, unc bias corrected): {bootstrap.results[0]:.7f} \u00B1 {bootstrap.results[1]:.7f}")
-                logger.info(f"bootstrap results beta (mean, error mean): {bootstrap.results[2]:.7f} \u00B1 {bootstrap.results[3]:.7f}")
+                logger.info(f"bootstrap results beta (original, error bias corrected): {misc.round_value(bootstrap.results[0], bootstrap.results[1])}")
+                logger.info(f"bootstrap results beta (mean, error mean): {misc.round_value(bootstrap.results[2], bootstrap.results[3])}")
             self.beta = p[0]
             self.uncBetaFit = np.sqrt(cov[0, 0])
             self.thresholdOutput = 1 / p[1]
@@ -540,10 +539,10 @@ Hence, the Q-factor (taken at the inputpower which is closest to the threshold) 
             self.uncQFactorThreshold = self.uncQFactorArr[thresholdIdx]
             self.QEstimate = self.QFactorThreshold
             # logger.info(f"beta factor (1 fit cov unc): {self.beta:.5f} \u00B1 {self.uncBeta:.5f}")
-            logger.debug(f"threshold output: {self.thresholdOutput:.5f} \u00B1 {self.uncThresholdOutput:.5f}")
+            logger.debug(f"threshold output: {misc.round_value(self.thresholdOutput, self.uncThresholdOutput)}")
             logger.info(f"threshold input: {self.thresholdInput:.5f}")
-            logger.info(f"mode energy: {self.modeWavelength[0]:.7f} \u00B1 {self.modeWavelength[1]:.7f}")
-            logger.info(f"Q-factor at threshold: {self.QFactorThreshold:.0f} \u00B1 {self.uncQFactorThreshold:.0f}")
+            logger.info(f"mode energy: {misc.round_value(self.modeWavelength[0], self.modeWavelength[1])}")
+            logger.info(f"Q-factor at threshold: {misc.round_value(self.QFactorThreshold, self.uncQFactorThreshold)}")
             logger.debug(f"New value for xiHatEstimate (used Q-factor): {self.xiHatEstimateWithoutn0:.5f}")
             if self.saveData:
                 self.save_fit_data("beta_fit.csv")

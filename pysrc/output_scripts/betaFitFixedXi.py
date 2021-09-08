@@ -53,7 +53,7 @@ def main():
 
     ## fitting using different equally distributed values for in the range [xiMin, xiMax]
     ## the final value for beta and its uncertainty is obtained by calculating the mean / std of the distribution
-    numSamples: int = 10000
+    numSamples: int = 1000
     xiArr: np.ndarray = np.linspace(xiMin, xiMax, numSamples)
     betaArr: np.ndarray = np.empty(numSamples)
     uncBetaArr: np.ndarray = np.empty(numSamples)
@@ -97,26 +97,25 @@ def main():
     ax2.set_title("beta vs xi")
     plt.show()
 
-    print("fit with xi as parameter:")
-    print(f"parameters:                     {fitParamsWithXi}")
-    print(f"uncertainty:                    {uncFitParamsWithXi}")
-    print(f"beta factor:                    {fitParamsWithXi[0]:.7f} \u00B1 {uncFitParamsWithXi[0]:.7f}")
-    print()
-    print("-"*100)
-    print()
-    print("fit with fixed xi, using the estimated xi (with Q-factor)")
-    print(f"parameters:                     {pXiEstimateFit}")
-    print(f"uncertainty:                    {np.sqrt(np.diag(covXiEstimateFit))}")
-    print(f"beta factor:                    {pXiEstimateFit[0]:.7f} \u00B1 {np.sqrt(np.diag(covXiEstimateFit))[0]:.7f}")
-    print()
-    print("-"*100)
+    # print("fit with xi as parameter:")
+    # print(f"parameters:                     {fitParamsWithXi}")
+    # print(f"uncertainty:                    {uncFitParamsWithXi}")
+    # print(f"beta factor:                    {fitParamsWithXi[0]:.7f} \u00B1 {uncFitParamsWithXi[0]:.7f}")
+    # print()
+    # print("-"*100)
+    # print()
+    # print("fit with fixed xi, using the estimated xi (with Q-factor)")
+    # print(f"parameters:                     {pXiEstimateFit}")
+    # print(f"uncertainty:                    {np.sqrt(np.diag(covXiEstimateFit))}")
+    # print(f"beta factor:                    {pXiEstimateFit[0]:.7f} \u00B1 {np.sqrt(np.diag(covXiEstimateFit))[0]:.7f}")
+    # print()
+    # print("-"*100)
     print()
     print("fit using multiple values for a fixed xi to sample a distribution")
     print(f"range for xi:                   [{xiMin, xiMax}]")
-    print(f"mean beta factor:               {meanBeta}")
+    print(f"mean beta factor:               {misc.round_value(meanBeta, stdBeta + meanUncBeta)}")
     print(f"mean beta factor uncertainty:   {meanUncBeta}")
     print(f"std beta factor:                {stdBeta}")
-    print(f"uncertainty beta factor:        {stdBeta + meanUncBeta}")
 
 if __name__ == "__main__":
     main()
