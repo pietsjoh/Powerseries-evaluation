@@ -35,6 +35,110 @@ def input_loop(func):
             j = func(*args, **kwargs)
     return wrapper
 
+def round_value(value: number, uncertainty: number, useScientific: bool = False, printWarning: bool = False) -> str:
+    """Rounds the value and its uncertainty according to DIN 1333.
+
+    Parameters
+    ----------
+    value: number
+        To be rounded value
+    uncertainty: number
+        The uncertainty of the value
+    useScientific: bool
+        Whether to use scientific representation for the resulting string or not.
+        Keep in mind that even when this is set to false, scientific notation can still occur.
+        This happens when there are more than 16 digits in front of the comma or
+        if the number is smaller than 0 and there are more than 5 digits behind the comma.
+    printWarning: bool
+        Whether to print a warning message when the uncertainty exceeds the value
+
+    Returns
+    -------
+    str:
+        rounded value +/- uncertainty
+
+    Example
+    -------
+    value = 1.567, uncertainty = 0.45
+
+    1.6 \u00B1 0.5 is returned
+    """
+    assert np.issubdtype(type(value), np.integer) or np.issubdtype(type(value), np.floating)
+    assert np.issubdtype(type(uncertainty), np.integer) or np.issubdtype(type(uncertainty), np.floating)
+    assert isinstance(useScientific, bool)
+    assert isinstance(printWarning, bool)
+
+    ## extract the position in which shall be rounded
+    try:
+        nonzeroPos: number = int(np.ceil( -np.log10(uncertainty) ))
+    except OverflowError:
+        print("-"*74)
+        print("ERROR: The uncertainty is too small to handle. Returning None.")
+        print("-"*74)
+        return None
+    else:
+        ## if the first nonzero digit is 1 or 2, then the digit behind is rounded
+        if uncertainty * 10 ** nonzeroPos < 3:
+            nonzeroPos += 1
+
+        roundVal: number = np.round(value, nonzeroPos)
+        ## uncertainty is always rounded up
+        roundUnc: number = np.round(np.ceil(uncertainty * 10 ** nonzeroPos) * 10 ** (-nonzeroPos), nonzeroPos)
+
+        if roundUnc >= roundVal and printWarning:
+            print("-"*64)
+            print("WARNING: The uncertainty of the values exceeds the value itself.")
+            print("-"*64)
+
+        if useScientific:
+            ## personal preference of representation ( 10 +/- 4 => 1 +/- 0.4)
+            nonzeroPos -= 1
+            roundValScientific: number = np.round(roundVal * 10 ** nonzeroPos, 1)
+            roundUncScientific: number = np.round(roundUnc * 10 ** nonzeroPos, 1)
+            sign: str
+            if nonzeroPos <= 0:
+                sign = "\u207A"
+                nonzeroPos *= -1
+            else:
+                sign = "\u207B"
+            nonzeroPosStr: str = str(nonzeroPos)
+            exponentStr: str = sign
+            for i in nonzeroPosStr:
+                exponentStr += int_to_unicode_superscript(i)
+            return f"({roundValScientific} \u00B1 {roundUncScientific})\u00B710{exponentStr}"
+        else:
+        ## personal preference for the output (removes trailing .0 -> 9.0 +/-3.0 => 9 +/- 3)
+            if roundUnc >= 3:
+                roundUnc = int(roundUnc)
+                roundVal = int(roundVal)
+            return f"{roundVal} \u00B1 {roundUnc}"
+
+def int_to_unicode_superscript(number: str) -> str:
+    """Takes an integer [0, 9] as a str and transforms it into an unicode superscript string.
+    """
+    if number == "0":
+        return "\u2070"
+    elif number == "1":
+        return "\u00B9"
+    elif number == "2":
+        return "\u00B2"
+    elif number == "3":
+        return "\u00B3"
+    elif number == "4":
+        return "\u2074"
+    elif number == "5":
+        return "\u2075"
+    elif number == "6":
+        return "\u2076"
+    elif number == "7":
+        return "\u2077"
+    elif number == "8":
+        return "\u2078"
+    elif number == "9":
+        return "\u2079"
+    else:
+        raise ValueError(f"{number} is an invalid input.")
+
 def unc_mean(values: listOrArray, intv: str="1sigma") -> number:
     """
     Calculates the uncertainty for the mean of the values using the student-t-distribution.
@@ -205,3 +309,8 @@ def diameter_decode(strDia: str, returnStr: bool=False) -> typing.Union[numberOr
         return strDiameter
     else:
         return diameter
+
+## just testing
+if __name__ == "__main__":
+    print(round_value(1981237849178909.5123518239401783491, 0.000123784, useScientific=False))
+    # print(int_to_unicode_superscript("1"))
