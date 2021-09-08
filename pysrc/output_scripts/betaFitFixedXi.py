@@ -1,13 +1,19 @@
 ## todo: plot distribution, think about final uncertainty of beta,
 def main():
+    import sys
     import numpy as np
     import pandas as pd # type:ignore
     import scipy.optimize as optimize # type:ignore
     from pathlib import Path
     from functools import partial
     import typing
+    import matplotlib.pyplot as plt
     np.set_printoptions(suppress=True)
     headDir: Path = Path(__file__).parents[2]
+    srcDir: Path = (headDir / "pysrc").resolve()
+    sys.path.append(str(srcDir))
+    import utils.misc as misc
+
     filePathPowerseries: Path = (headDir / "output" / "powerseries.csv").resolve()
     filePathBetaFit: Path = (headDir / "output" / "beta_fit.csv").resolve()
 
@@ -73,6 +79,23 @@ def main():
     meanBeta: number = np.nanmean(betaArr)
     meanUncBeta: number = np.nanmean(uncBetaArr)
     stdBeta: number = np.nanstd(betaArr)
+
+    ## plot histogram of the distribution and xi vs beta
+    indicesNotNaN: np.ndarray = np.argwhere(~np.isnan(betaArr))
+    xiPlotArr: np.ndarray = xiArr[indicesNotNaN]
+    betaPlotArr: np.ndarray = betaArr[indicesNotNaN]
+    numberOfBins: int = misc.histo_number_of_bins(betaPlotArr)
+    fig, axs = plt.subplots(nrows=1, ncols=2)
+    ax1, ax2 = axs
+    ax1.hist(betaArr, numberOfBins)
+    ax2.plot(xiPlotArr, betaPlotArr, "b.")
+    ax1.set_xlabel("beta")
+    ax1.set_ylabel("N")
+    ax2.set_xlabel("xi")
+    ax2.set_ylabel("beta")
+    ax1.set_title("beta distribution")
+    ax2.set_title("beta vs xi")
+    plt.show()
 
     print("fit with xi as parameter:")
     print(f"parameters:                     {fitParamsWithXi}")
