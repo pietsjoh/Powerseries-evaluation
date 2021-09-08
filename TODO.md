@@ -4,7 +4,9 @@
 
 ### General
 
-- save all settings (exclude, initRange, fitmodel, fitRangeScale, intCoverage, ...)
+- calculate uncertainty for the input power
+- write a script that reproduces the beta plot and its numbers using the output directory files
+- save all settings (exclude, initRange, fitmodel, fitRangeScale, intCoverage, ...) [x]
 - linear approximation for Q-factor? (in between 2 input powers)
 - check whether all files have been transfered when calling sort_data [x]
 - constant fit range ???
