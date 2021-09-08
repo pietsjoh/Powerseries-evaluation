@@ -47,7 +47,7 @@ def main():
 
     ## fitting using different equally distributed values for in the range [xiMin, xiMax]
     ## the final value for beta and its uncertainty is obtained by calculating the mean / std of the distribution
-    numSamples: int = 1000
+    numSamples: int = 10000
     xiArr: np.ndarray = np.linspace(xiMin, xiMax, numSamples)
     betaArr: np.ndarray = np.empty(numSamples)
     uncBetaArr: np.ndarray = np.empty(numSamples)
