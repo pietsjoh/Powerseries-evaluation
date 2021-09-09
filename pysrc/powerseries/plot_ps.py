@@ -284,13 +284,13 @@ class PlotPowerSeries:
         dictData: dict = dict()
         for powerseries in self.powerSeriesList:
             if powerseries.initRange is None:
-                minInitRangeEnergy, maxInitRangeEnergy, maxInitRange = None, None, None
+                minInitRangeEnergy, maxInitRangeEnergy, maxInitRange = "NONE", "NONE", "NONE"
             else:
                 minInitRangeEnergy, maxInitRangeEnergy = powerseries.minInitRangeEnergy, powerseries.maxInitRangeEnergy
                 maxInitRange = powerseries.maxInitRange
 
             if powerseries.exclude is []:
-                minInputPowerRange, maxInputPowerRange = None, None
+                minInputPowerRange, maxInputPowerRange = "NONE", "NONE"
             else:
                 minInputPowerRange, maxInputPowerRange = powerseries.minInputPowerRange, powerseries.maxInputPowerRange
             dictData[powerseries.fileName] = [powerseries.fitModel.name, powerseries.exclude, minInputPowerRange, maxInputPowerRange,
@@ -311,6 +311,7 @@ class PlotPowerSeries:
         "modeEnergy" : self.modeWavelength[0], "uncModeEnergy" : self.modeWavelength[1]}
         if self.useBootstrap:
             dictData["uncBetaBootstrap"] = self.uncBetaBootstrap
+            dictData["bootstrap seed"] = self.bootstrapSeed
         df: pd.DataFrame = pd.DataFrame(dictData)
         filePath: Path = (self.outputPath / fileName).resolve()
         df.to_csv(filePath, sep="\t", index=False)
@@ -542,6 +543,7 @@ Hence, the Q-factor (taken at the inputpower which is closest to the threshold) 
             logger.info(f"Q-factor at threshold:                            {misc.round_value(self.QFactorThreshold, self.uncQFactorThreshold)}")
             if self.useBootstrap:
                 self.uncBetaBootstrap = bootstrap.results[1]
+                self.bootstrapSeed = bootstrap.seed
                 logger.info(f"bootstrap beta (original, error bias corrected):  {misc.round_value(bootstrap.results[0], bootstrap.results[1])}")
                 logger.info(f"bootstrap beta (mean, error mean):                {misc.round_value(bootstrap.results[2], bootstrap.results[3])}")
             if self.saveData:
