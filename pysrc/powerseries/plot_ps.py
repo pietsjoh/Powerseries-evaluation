@@ -88,26 +88,30 @@ class PlotPowerSeries:
             assert hasattr(powerSeries, "outputPowerArr")
             assert hasattr(powerSeries, "uncOutputPowerArr")
             assert hasattr(powerSeries, "inputPowerPlotArr")
-            self.inputPower = np.concatenate((self.inputPower, powerSeries.inputPowerPlotArr))
-            minInputPowerCurrent = np.amin(powerSeries.inputPowerPlotArr)
-            maxInputPowerCurrent = np.amax(powerSeries.inputPowerPlotArr)
-            if minInputPowerCurrent < self.minInputPower:
-                self.minInputPower = minInputPowerCurrent
-                self.minInputPowerIdx = i
-            if maxInputPowerCurrent > self.maxInputPower:
-                self.maxInputPower = maxInputPowerCurrent
-                self.maxInputPowerIdx = i
-            self.outputPowerArr = np.concatenate((self.outputPowerArr, powerSeries.outputPowerArr))
-            self.linewidthArr = np.concatenate((self.linewidthArr, powerSeries.linewidthArr))
-            self.modeWavelengthArr = np.concatenate((self.modeWavelengthArr, powerSeries.modeWavelengthArr))
-            self.QFactorArr = np.concatenate((self.QFactorArr, powerSeries.QFactorArr))
-            self.lenInputPower += powerSeries.lenInputPowerPlot
-            self.lenInputPowerArr = np.concatenate((self.lenInputPowerArr, np.array([powerSeries.lenInputPower], dtype="int")))
-            self.inputPowerComplete = np.concatenate((self.inputPowerComplete, powerSeries.inputPower))
-            self.uncOutputPowerArr = np.concatenate((self.uncOutputPowerArr, powerSeries.uncOutputPowerArr))
-            self.uncLinewidthArr = np.concatenate((self.uncLinewidthArr, powerSeries.uncLinewidthArr))
-            self.uncModeWavelengthArr = np.concatenate((self.uncModeWavelengthArr, powerSeries.uncModeWavelengthArr))
-            self.uncQFactorArr = np.concatenate((self.uncQFactorArr, powerSeries.uncQFactorArr))
+            try:
+                minInputPowerCurrent = np.amin(powerSeries.inputPowerPlotArr)
+                maxInputPowerCurrent = np.amax(powerSeries.inputPowerPlotArr)
+            except ValueError:
+                logger.warning(f"{powerSeries.fileName} has no data points. Excluding it for the plots.")
+            else:
+                if minInputPowerCurrent < self.minInputPower:
+                    self.minInputPower = minInputPowerCurrent
+                    self.minInputPowerIdx = i
+                if maxInputPowerCurrent > self.maxInputPower:
+                    self.maxInputPower = maxInputPowerCurrent
+                    self.maxInputPowerIdx = i
+                self.inputPower = np.concatenate((self.inputPower, powerSeries.inputPowerPlotArr))
+                self.outputPowerArr = np.concatenate((self.outputPowerArr, powerSeries.outputPowerArr))
+                self.linewidthArr = np.concatenate((self.linewidthArr, powerSeries.linewidthArr))
+                self.modeWavelengthArr = np.concatenate((self.modeWavelengthArr, powerSeries.modeWavelengthArr))
+                self.QFactorArr = np.concatenate((self.QFactorArr, powerSeries.QFactorArr))
+                self.lenInputPower += powerSeries.lenInputPowerPlot
+                self.lenInputPowerArr = np.concatenate((self.lenInputPowerArr, np.array([powerSeries.lenInputPower], dtype="int")))
+                self.inputPowerComplete = np.concatenate((self.inputPowerComplete, powerSeries.inputPower))
+                self.uncOutputPowerArr = np.concatenate((self.uncOutputPowerArr, powerSeries.uncOutputPowerArr))
+                self.uncLinewidthArr = np.concatenate((self.uncLinewidthArr, powerSeries.uncLinewidthArr))
+                self.uncModeWavelengthArr = np.concatenate((self.uncModeWavelengthArr, powerSeries.uncModeWavelengthArr))
+                self.uncQFactorArr = np.concatenate((self.uncQFactorArr, powerSeries.uncQFactorArr))
         self.lenInputPowerArrCumulative = np.cumsum(self.lenInputPowerArr)
         upperSmaxInputPower = self.lenInputPowerArrCumulative[self.maxInputPowerIdx] - 1
         upperSminInputPower = upperSmaxInputPower - self.lenInputPowerArr[self.maxInputPowerIdx] + 1
