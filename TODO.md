@@ -4,6 +4,7 @@
 
 ### General
 
+- find min beta uncertainty for fixed xi fit -> using this for plotting
 - calculate uncertainty for the input power
 - write a script that reproduces the beta plot and its numbers using the output directory files
 - save all settings (exclude, initRange, fitmodel, fitRangeScale, intCoverage, ...) [x]
