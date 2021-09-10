@@ -381,7 +381,7 @@ class PlotPowerSeries:
         for idx in idxList:
             Fit = self.access_single_spectrum(idx)
             try:
-                maxHeight = max(maxHeight, max(Fit.originalData))
+                maxHeight = max(maxHeight, max(Fit.originalIntensity))
                 wavelengths = Fit.wavelengths
                 wavelengthDistance = np.abs(wavelengths[1] - wavelengths[0])
                 padLow = Fit.minWavelength - wavelengthDistance
@@ -393,7 +393,7 @@ class PlotPowerSeries:
                 else:
                     logger.error(f"Unexpected behaviour of wavelengths array (only 1 value, or all values the same)")
                     raise ValueError
-                verts.append(list(zip(wavelengthsPad, np.pad(Fit.originalData, (1, 1), "constant", constant_values=(0, 0)))))
+                verts.append(list(zip(wavelengthsPad, np.pad(Fit.originalIntensity, (1, 1), "constant", constant_values=(0, 0)))))
             except AttributeError:
                 logger.error("Could not plot original data, because access_single_spectrum() returned NoneType -> idx out of range")
             except ValueError:
