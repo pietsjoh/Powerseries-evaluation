@@ -284,13 +284,13 @@ class PlotPowerSeries:
         dictData: dict = dict()
         for powerseries in self.powerSeriesList:
             if powerseries.initRange is None:
-                minInitRangeEnergy, maxInitRangeEnergy, maxInitRange = "NONE", "NONE", "NONE"
+                minInitRangeEnergy, maxInitRangeEnergy, maxInitRange = None, None, None
             else:
                 minInitRangeEnergy, maxInitRangeEnergy = powerseries.minInitRangeEnergy, powerseries.maxInitRangeEnergy
                 maxInitRange = powerseries.maxInitRange
 
             if powerseries.exclude is []:
-                minInputPowerRange, maxInputPowerRange = "NONE", "NONE"
+                minInputPowerRange, maxInputPowerRange = None, None
             else:
                 minInputPowerRange, maxInputPowerRange = powerseries.minInputPowerRange, powerseries.maxInputPowerRange
             dictData[powerseries.fileName] = [powerseries.fitModel.name, powerseries.exclude, minInputPowerRange, maxInputPowerRange,
