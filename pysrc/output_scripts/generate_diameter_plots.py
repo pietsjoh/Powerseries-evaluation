@@ -3,7 +3,8 @@ def main():
     import matplotlib.pyplot as plt
     from pathlib import Path
 
-    headDir = Path(__file__).resolve().parent
+    headDir = Path(__file__).resolve().parents[2]
+    # print(headDir)
     filePathThreshold = (headDir / "output" / "threshold2.csv").resolve()
     filePathbetaBootstrap = (headDir / "output" / "beta_bootstrap.csv").resolve()
     filePathbetaFixedXi = (headDir / "output" / "beta_fixed_xi.csv").resolve()
@@ -48,8 +49,8 @@ def main():
     uncBetaBFixedXiNoQEstimate = dfBetaFixedXiNoQEstimate["uncertainty"]
 
     plt.errorbar(diameterBetaBootstrap, betaBootstrap, yerr=uncBetaBootstrap, fmt="b.", capsize=3, label="Bootstrap")
-    plt.errorbar(diameterBetaFixedXi, betaFixedXi, yerr=uncBetaBFixedXi, fmt="g.", capsize=3, label="fixed xi")
-    plt.errorbar(diameterBetaFixedXiNoQEstimate, betaFixedXiNoQEstimate, yerr=uncBetaBFixedXiNoQEstimate, fmt="y.", capsize=3, label="fixed xi no Q")
+    # plt.errorbar(diameterBetaFixedXi, betaFixedXi, yerr=uncBetaBFixedXi, fmt="g.", capsize=3, label="fixed xi")
+    # plt.errorbar(diameterBetaFixedXiNoQEstimate, betaFixedXiNoQEstimate, yerr=uncBetaBFixedXiNoQEstimate, fmt="y.", capsize=3, label="fixed xi no Q")
     plt.ylabel("beta factor")
     plt.xlabel("diameter [µm]")
     plt.legend()
