@@ -74,7 +74,7 @@ class PowerSeriesTool(EvalPowerSeries):
         elif case == "setfitrange":
             self.input_fitRangeScale()
             return 1
-        elif case == "run":
+        elif case == "run" or case == "":
             self.get_power_dependent_data()
             return 1
         elif case == "beta":
