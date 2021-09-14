@@ -26,7 +26,7 @@ def main():
     dfBetaFit: pd.DataFrame = pd.read_csv(filePathBetaFit, sep="\t")
     dfSettings: pd.DataFrame = pd.read_csv(filePathSettings, sep="\t")
 
-    dataPath: Path = (headDirPath / "data").resolve()
+    dataPath: Path = (headDirPath / "sorted_data_diameter").resolve()
     dataPathGen = dataPath.rglob("*AllSpectra.dat")
 
     fileNames: list = dfSettings.columns.values.tolist()[1:]
@@ -53,6 +53,18 @@ def main():
         background: str = dfSettings[fileName][10]
         constantPeakWidth: int = int(dfSettings[fileName][11])
         intCoverage: float = float(dfSettings[fileName][12])
+        minEnergy: float = float(dfSettings[fileName][7])
+        if minEnergy is np.nan:
+            minEnergy = None
+        maxEnergy: float = float(dfSettings[fileName][8])
+        if maxEnergy is np.nan:
+            maxEnergy = None
+        minInputPower: float = float(dfSettings[fileName][2])
+        if minInputPower is np.nan:
+            minInputPower = None
+        maxInputPower: float = float(dfSettings[fileName][3])
+        if maxInputPower is np.nan:
+            maxInputPower = None
 
         ## find file with the original data
         for file in dataPathGen:
@@ -76,17 +88,23 @@ def main():
         Powerseries.check_input_fitmodel(fitmodel)
         Powerseries.powerScale = outputScale
         Powerseries.fitRangeScale = fitRangeScale
+        Powerseries.snapshots = 0
+        Powerseries.minInitRangeEnergy = minEnergy
+        Powerseries.maxInitRangeEnergy = maxEnergy
+        Powerseries.minInputPowerRange = minInputPower
+        Powerseries.maxInputPowerRange = maxInputPower
+        Powerseries.get_power_dependent_data()
 
         powerseriesList.append(Powerseries)
 
-    PlotPowerSeriesObj = PlotPowerSeries(powerseriesList)
     ## extract settings from output/beta_fit.csv
     try:
-        bootstrapSeed = int(dfBetaFit["bootstrap seed"])
+        bootstrapSeed = int(dfBetaFit["bootstrap seed"][0])
     except KeyError:
+        PlotPowerSeriesObj = PlotPowerSeries(powerseriesList)
         PlotPowerSeriesObj.useBootstrap = False
     else:
-        PlotPowerSeriesObj.bootstrapSeed = bootstrapSeed
+        PlotPowerSeriesObj = PlotPowerSeries(powerseriesList, bootstrapSeed=bootstrapSeed)
         PlotPowerSeriesObj.useBootstrap = True
     PlotPowerSeriesObj.beta_factor_2()
     PlotPowerSeriesObj.plot_lw_s()
