@@ -49,7 +49,7 @@ def main():
         try:
             maxInitRange: int = int(dfSettings[fileName][9])
         except ValueError:
-            maxInitRange = None
+            maxInitRange = 0
         background: str = dfSettings[fileName][10]
         constantPeakWidth: int = int(dfSettings[fileName][11])
         intCoverage: float = float(dfSettings[fileName][12])
