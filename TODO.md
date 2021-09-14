@@ -4,6 +4,8 @@
 
 ### General
 
+- linewidth fit
+- always use same boostrap/fitting setup and note it down to reproduce results
 - find min beta uncertainty for fixed xi fit -> using this for plotting
 - calculate uncertainty for the input power
 - write a script that reproduces the beta plot and its numbers using the output directory files
