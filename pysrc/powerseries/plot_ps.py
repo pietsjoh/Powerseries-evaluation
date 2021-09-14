@@ -548,6 +548,7 @@ Hence, the Q-factor (taken at the inputpower which is closest to the threshold) 
             if self.useBootstrap:
                 self.uncBetaBootstrap = bootstrap.results[1]
                 self.bootstrapSeed = bootstrap.seed
+                logger.debug(f"bootstrap seed: {self.bootstrapSeed}")
                 logger.info(f"bootstrap beta (original, error bias corrected):  {misc.round_value(bootstrap.results[0], bootstrap.results[1])}")
                 logger.info(f"bootstrap beta (mean, error mean):                {misc.round_value(bootstrap.results[2], bootstrap.results[3])}")
             if self.saveData:
