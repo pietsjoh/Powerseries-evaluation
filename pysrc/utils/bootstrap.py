@@ -107,8 +107,8 @@ class Bootstrap:
         assert isinstance(outputData, np.ndarray)
         assert outputData.size == inputData.size
 
-        self.seed: intOrNone = seed
         self.gen: RNGenerator = RNGenerator(seed)
+        self.seed: int = self.gen.seed
         self.outputData: np.ndarray = outputData
         self.inputData: np.ndarray = inputData
         self._N: int = inputData.size

@@ -62,9 +62,10 @@ class PlotPowerSeries:
     outputPath = (headDir / "output").resolve()
     """Path to the output directory
     """
-    def __init__(self, powerSeriesList):
+    def __init__(self, powerSeriesList, bootstrapSeed=None):
         assert isinstance(powerSeriesList, (list, np.ndarray))
         assert len(powerSeriesList) != 0
+        self.bootstrapSeed = bootstrapSeed
         self.inputPower = np.array([])
         self.outputPowerArr = np.array([])
         self.linewidthArr = np.array([])
@@ -315,7 +316,7 @@ class PlotPowerSeries:
         "modeEnergy" : self.modeWavelength[0], "uncModeEnergy" : self.modeWavelength[1]}
         if self.useBootstrap:
             dictData["uncBetaBootstrap"] = self.uncBetaBootstrap
-            dictData["bootstrap seed"] = self.bootstrapSeed
+            dictData["bootstrap seed"] = self.bootstrapSeedFinal
         df: pd.DataFrame = pd.DataFrame(dictData)
         filePath: Path = (self.outputPath / fileName).resolve()
         df.to_csv(filePath, sep="\t", index=False)
@@ -485,7 +486,7 @@ class PlotPowerSeries:
                     if self.useBootstrap:
                         bootstrap = Bootstrap(self.outputPowerArr, self.inputPower, self.in_out_curve, parameter=0,
                                 iterGuess=self.iterGuessBootstrap, paramBounds=paramBounds, weights=self.uncOutputPowerArr,
-                                pGuess=self.initialParamGuess)
+                                pGuess=self.initialParamGuess, seed=self.bootstrapSeed)
                         bootstrap.run(numSamples=self.numBootstrapSamples, lenSamples=self.lenBootstrapSamples,
                                 plotHisto=self.plotBootstrap)
                     p, cov = optimize.curve_fit(self.in_out_curve, self.outputPowerArr, self.inputPower, bounds=paramBounds,
@@ -493,7 +494,7 @@ class PlotPowerSeries:
                 else:
                     if self.useBootstrap:
                         bootstrap = Bootstrap(self.outputPowerArr, self.inputPower, self.in_out_curve, parameter=0,
-                                    iterGuess=self.iterGuessBootstrap, paramBounds=paramBounds, pGuess=self.initialParamGuess)
+                                    iterGuess=self.iterGuessBootstrap, paramBounds=paramBounds, pGuess=self.initialParamGuess, seed=self.bootstrapSeed)
                         bootstrap.run(numSamples=self.numBootstrapSamples, lenSamples=self.lenBootstrapSamples,
                                     plotHisto=self.plotBootstrap)
                     p, cov = optimize.curve_fit(self.in_out_curve, self.outputPowerArr, self.inputPower, bounds=paramBounds,
@@ -504,7 +505,7 @@ class PlotPowerSeries:
                     if self.useBootstrap:
                         bootstrap = Bootstrap(self.outputPowerArr, np.log(self.inputPower), self.log_in_out_curve, parameter=0,
                                     iterGuess=self.iterGuessBootstrap, paramBounds=paramBounds, weights=self.uncOutputPowerArr,
-                                    pGuess=self.initialParamGuess)
+                                    pGuess=self.initialParamGuess, seed=self.bootstrapSeed)
                         bootstrap.run(numSamples=self.numBootstrapSamples, lenSamples=self.lenBootstrapSamples,
                                     plotHisto=self.plotBootstrap)
                     p, cov = optimize.curve_fit(self.log_in_out_curve, self.outputPowerArr, np.log(self.inputPower),
@@ -512,7 +513,7 @@ class PlotPowerSeries:
                 else:
                     if self.useBootstrap:
                         bootstrap = Bootstrap(self.outputPowerArr, np.log(self.inputPower), self.log_in_out_curve, parameter=0,
-                                    iterGuess=self.iterGuessBootstrap, paramBounds=paramBounds, pGuess=self.initialParamGuess)
+                                    iterGuess=self.iterGuessBootstrap, paramBounds=paramBounds, pGuess=self.initialParamGuess, seed=self.bootstrapSeed)
                         bootstrap.run(numSamples=self.numBootstrapSamples, lenSamples=self.lenBootstrapSamples,
                                     plotHisto=self.plotBootstrap)
                     p, cov = optimize.curve_fit(self.log_in_out_curve, self.outputPowerArr, np.log(self.inputPower),
@@ -547,8 +548,8 @@ Hence, the Q-factor (taken at the inputpower which is closest to the threshold) 
             logger.info(f"Q-factor at threshold:                            {misc.round_value(self.QFactorThreshold, self.uncQFactorThreshold)}")
             if self.useBootstrap:
                 self.uncBetaBootstrap = bootstrap.results[1]
-                self.bootstrapSeed = bootstrap.seed
-                logger.debug(f"bootstrap seed: {self.bootstrapSeed}")
+                self.bootstrapSeedFinal = bootstrap.seed
+                logger.debug(f"bootstrap seed final, bootstrap seed: {self.bootstrapSeedFinal}, {self.bootstrapSeed}")
                 logger.info(f"bootstrap beta (original, error bias corrected):  {misc.round_value(bootstrap.results[0], bootstrap.results[1])}")
                 logger.info(f"bootstrap beta (mean, error mean):                {misc.round_value(bootstrap.results[2], bootstrap.results[3])}")
             if self.saveData:
