@@ -92,6 +92,7 @@ class PlotPowerSeries:
             try:
                 minInputPowerCurrent = np.amin(powerSeries.inputPowerPlotArr)
                 maxInputPowerCurrent = np.amax(powerSeries.inputPowerPlotArr)
+                logger.debug(f"minInputPowerCurrent, maxInputPowerCurrent: {minInputPowerCurrent}, {maxInputPowerCurrent}")
             except ValueError:
                 logger.warning(f"{powerSeries.fileName} has no data points. Excluding it for the plots.")
             else:
@@ -101,13 +102,15 @@ class PlotPowerSeries:
                 if maxInputPowerCurrent > self.maxInputPower:
                     self.maxInputPower = maxInputPowerCurrent
                     self.maxInputPowerIdx = i
+                logger.debug(f"minInputPower, maxInputPower: {self.minInputPower}, {self.maxInputPower}")
+                logger.debug(f"minInputPowerIdx, maxInputPowerIdx: {self.minInputPowerIdx}, {self.maxInputPowerIdx}")
                 self.inputPower = np.concatenate((self.inputPower, powerSeries.inputPowerPlotArr))
                 self.outputPowerArr = np.concatenate((self.outputPowerArr, powerSeries.outputPowerArr))
                 self.linewidthArr = np.concatenate((self.linewidthArr, powerSeries.linewidthArr))
                 self.modeWavelengthArr = np.concatenate((self.modeWavelengthArr, powerSeries.modeWavelengthArr))
                 self.QFactorArr = np.concatenate((self.QFactorArr, powerSeries.QFactorArr))
                 self.lenInputPower += powerSeries.lenInputPowerPlot
-                self.lenInputPowerArr = np.concatenate((self.lenInputPowerArr, np.array([powerSeries.lenInputPower], dtype="int")))
+                self.lenInputPowerArr = np.concatenate((self.lenInputPowerArr, np.array([powerSeries.lenInputPowerPlot], dtype="int")))
                 self.inputPowerComplete = np.concatenate((self.inputPowerComplete, powerSeries.inputPower))
                 self.uncOutputPowerArr = np.concatenate((self.uncOutputPowerArr, powerSeries.uncOutputPowerArr))
                 self.uncLinewidthArr = np.concatenate((self.uncLinewidthArr, powerSeries.uncLinewidthArr))
@@ -121,16 +124,16 @@ class PlotPowerSeries:
         lowerSminInputPower = lowerSmaxInputPower - self.lenInputPowerArr[self.minInputPowerIdx] + 1
         self.minInputPowerRange = lowerSminInputPower, lowerSmaxInputPower
 ## This function call is used to get the n0 estimate
-        _ = self.constant_lines_inout()
-        logger.debug(f"cavityDecayRateEstimate: {self.cavityDecayRateEstimate}")
-        logger.debug(f"xiHatEstimate; n0 estimated: {self.xiHatEstimateWithn0}")
-        logger.debug(f"xiHatEstimate; n0 not estimated: {self.xiHatEstimateWithoutn0}")
+        # _ = self.constant_lines_inout()
+        # logger.debug(f"xiHatEstimate; n0 estimated: {self.xiHatEstimateWithn0}")
         logger.debug(f"lenInputPowerArr: {self.lenInputPowerArr}")
         logger.debug(f"lenInputPowerArrCumulative: {self.lenInputPowerArrCumulative}")
         logger.debug(f"maxInputPower/Idx: {self.maxInputPower}/{self.maxInputPowerIdx}")
         logger.debug(f"minInputPower/Idx: {self.minInputPower}/{self.minInputPowerIdx}")
         logger.debug(f"minInputPowerRange: {self.minInputPowerRange}")
         logger.debug(f"maxInputPowerRange: {self.maxInputPowerRange}")
+        logger.debug(f"cavityDecayRateEstimate: {self.cavityDecayRateEstimate}")
+        logger.debug(f"xiHatEstimate; n0 not estimated: {self.xiHatEstimateWithoutn0}")
         logger.debug("PlotPowerSeries object initialized.")
         self.read_powerseries_ini_file()
         if self.saveData:
@@ -149,12 +152,12 @@ class PlotPowerSeries:
         """
         return self.n0Max * hbar * self.QMax / self.tauSP / self.modeWavelength[0]
 
-    @property
-    def xiHatEstimateWithn0(self):
-        """Estimate for xiHat with the estimate for n0 using the linear tails of the
-        in-out-characteristic
-        """
-        return self.n0Estimate / self.cavityDecayRateEstimate / self.tauSP
+    # @property
+    # def xiHatEstimateWithn0(self):
+    #     """Estimate for xiHat with the estimate for n0 using the linear tails of the
+    #     in-out-characteristic
+    #     """
+    #     return self.n0Estimate / self.cavityDecayRateEstimate / self.tauSP
 
     @property
     def xiHatEstimateWithoutn0(self):
@@ -168,6 +171,8 @@ class PlotPowerSeries:
         of the 5 lowest input powers
         """
         lowerSInputPowers = self.inputPower[self.minInputPowerRange[0] : self.minInputPowerRange[1] + 1]
+        # logger.debug(f"lowerSInputPowers: {lowerSInputPowers}")
+        # logger.debug(f"inputpowers: {self.inputPower}")
         lowerSModeEnergys = self.modeWavelengthArr[self.minInputPowerRange[0] : self.minInputPowerRange[1] + 1]
         if lowerSInputPowers[0] < lowerSInputPowers[-1]:
             if len(lowerSModeEnergys) >= 5:
@@ -446,14 +451,14 @@ class PlotPowerSeries:
         # upperSInputPower = self.inputPower[self.maxInputPowerRange[0] : self.maxInputPowerRange[1] + 1]
         lowY = lowLinearFunc(self.inputPower)
         highY = highLinearFunc(self.inputPower)
-        self.n0Estimate = lowSlope / highSlope
-        """This estimate is only valid for beta << 1.
-        The approach is taken from:
+        # self.n0Estimate = lowSlope / highSlope
+        # """This estimate is only valid for beta << 1.
+        # The approach is taken from:
 
-        L. Andreoli, X. Porte, T. Heuser, J. Große, B. Moeglen-Paget, L. Furfaro, S. Reitzenstein, and D. Brunner,
-        "Optical pumping of quantum dot micropillar lasers," Opt. Express 29, 9084-9097 (2021)
-        """
-        logger.debug(f"n0Estimate: {self.n0Estimate}")
+        # L. Andreoli, X. Porte, T. Heuser, J. Große, B. Moeglen-Paget, L. Furfaro, S. Reitzenstein, and D. Brunner,
+        # "Optical pumping of quantum dot micropillar lasers," Opt. Express 29, 9084-9097 (2021)
+        # """
+        # logger.debug(f"n0Estimate: {self.n0Estimate}")
         return self.inputPower, lowY, self.inputPower, highY
 
     def decorator_in_out_fit(in_out_func):
