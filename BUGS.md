@@ -2,6 +2,7 @@
 
 > general
 
+- maxInitRange < not for None
 - constantPeakWidth has to be an integer [x]
   - I think that it should be that way [x]
 - setting constantPeakWidth to 50 might be a problem for small data sets [x]
