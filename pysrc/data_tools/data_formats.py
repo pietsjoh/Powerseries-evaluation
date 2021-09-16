@@ -106,7 +106,7 @@ class DataQlab2:
             self.columns = self.columns[idxSorted]
             self.fileName: str = self.dataPath.name
             assert len(self.data.columns) == self.lenInputPower, f"{len(self.data.columns)}, {self.lenInputPower}"
-            logger.info(f"Data from {self.fileName} successfully loaded.")
+            logger.debug(f"Data from {self.fileName} successfully loaded.")
 
     def __getitem__(self, idx: int) -> np.ndarray:
         """Get the intensities for each wavelength for one input power.
