@@ -342,10 +342,11 @@ Selecting the maximum value.""".format(inputPower, self.minInputPower, self.maxI
         logger.debug(f"Setting maxInitRange to {value}.")
         if value is None:
             self._maxInitRange = 0
-        if not np.issubdtype(type(value), np.integer):
+        elif not np.issubdtype(type(value), np.integer):
             logger.error(f"TypeError: {self._maxInitRange} is not a valid input. Setting maxInitRange to 0.")
             self._maxInitRange = 0
-        self._maxInitRange: int = value
+        else:
+            self._maxInitRange: int = value
         if self._maxInitRange < 0:
             logger.warning(f"ValueError: {self._maxInitRange} is smaller than 0. Setting maxInitRange to 0.")
             self._maxInitRange = 0
