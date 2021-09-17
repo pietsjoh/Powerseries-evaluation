@@ -124,6 +124,7 @@ Hence, addFileMode [{self.addFileMode}] is expected to be data. It will be set t
             logger.error(f"{value} is an invalid argument for addFileMode (only diameter and data are accepted). Using data mode.")
             self._addFileMode = "data"
 
+    @misc.input_loop
     def set_attribute(self):
         """Takes and handles values for the attribute.
 
@@ -140,11 +141,16 @@ Hence, addFileMode [{self.addFileMode}] is expected to be data. It will be set t
         else:
             attrInput = input(f"{self.attrName}: ").replace(" ", "")
             logger.debug(f"User input for set_attribute(): {attrInput}")
+            if attrInput == "q":
+                return 0
+            elif attrInput == "exit":
+                sys.exit()
             try:
                 self.attribute = attrInput
+                return 0
             except AssertionError:
                 logger.error(f"Invalid input [{attrInput}] for {self.attrName}. Keeping the current value.")
-                return 0
+                return 1
 
     @misc.input_loop
     def add_file(self, dataDirPath):
