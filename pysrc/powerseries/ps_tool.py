@@ -50,28 +50,28 @@ class PowerSeriesTool(EvalPowerSeries):
         elif case == "config":
             self.config()
             return 1
-        elif case == "bg":
+        elif case == "setbackground" or "bg":
             self.input_backgroundFitMode()
             return 1
-        elif case == "setinitrange":
+        elif case == "setinitrange" or "ir":
             minInitRangeEnergyStr, maxInitRangeEnergyStr, maxInitRangeStr = self.input_initial_range()
             self.check_input_initial_range(minInitRangeEnergyStr, maxInitRangeEnergyStr, maxInitRangeStr)
             return 1
-        elif case == "setfitmodel":
+        elif case == "setfitmodel" or "fm":
             fitModelStr = self.input_fitmodel()
             self.check_input_fitmodel(fitModelStr)
             return 1
-        elif case == "setsnapshots":
+        elif case == "setsnapshots" or "ss":
             self.input_snapshots()
             return 1
-        elif case == "setpeakwidth":
+        elif case == "setpeakwidth" or "pw":
             self.input_constantPeakWidth()
             return 1
-        elif case == "setexclude":
+        elif case == "setexclude" or "ex":
             minInputPowerRangeStr, maxInputPowerRangeStr = self.input_exclude()
             self.check_input_exclude(minInputPowerRangeStr, maxInputPowerRangeStr)
             return 1
-        elif case == "setfitrange":
+        elif case == "setfitrange" or "fr":
             self.input_fitRangeScale()
             return 1
         elif case == "run" or case == "":
