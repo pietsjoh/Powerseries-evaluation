@@ -2,7 +2,8 @@
 
 > general
 
-- maxInitRange < not for None
+- sometimes neither local_left nor local_right background fit works(20210304_NP7509_Ni_8µm_20K_Powerserie_1-01s_deteOD05_fine1AllSpectra.dat,20210304_NP7509_Ni_8µm_20K_Powerserie_1-01s_deteOD2-5_fine2AllSpectra.dat)
+- maxInitRange < not for None [x]
 - constantPeakWidth has to be an integer [x]
   - I think that it should be that way [x]
 - setting constantPeakWidth to 50 might be a problem for small data sets [x]
