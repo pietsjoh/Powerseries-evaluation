@@ -50,31 +50,31 @@ class PowerSeriesTool(EvalPowerSeries):
         elif case == "config":
             self.config()
             return 1
-        elif case == "setbackground" or "bg":
+        elif case in ["setbackground", "bg"]:
             self.input_backgroundFitMode()
             return 1
-        elif case == "setinitrange" or "ir":
+        elif case in ["setinitrange", "ir"]:
             minInitRangeEnergyStr, maxInitRangeEnergyStr, maxInitRangeStr = self.input_initial_range()
             self.check_input_initial_range(minInitRangeEnergyStr, maxInitRangeEnergyStr, maxInitRangeStr)
             return 1
-        elif case == "setfitmodel" or "fm":
+        elif case in ["setfitmodel", "fm"]:
             fitModelStr = self.input_fitmodel()
             self.check_input_fitmodel(fitModelStr)
             return 1
-        elif case == "setsnapshots" or "ss":
+        elif case in ["setsnapshots", "ss"]:
             self.input_snapshots()
             return 1
-        elif case == "setpeakwidth" or "pw":
+        elif case in ["setpeakwidth", "pw"]:
             self.input_constantPeakWidth()
             return 1
-        elif case == "setexclude" or "ex":
+        elif case in ["setexclude", "ex"]:
             minInputPowerRangeStr, maxInputPowerRangeStr = self.input_exclude()
             self.check_input_exclude(minInputPowerRangeStr, maxInputPowerRangeStr)
             return 1
-        elif case == "setfitrange" or "fr":
+        elif case in ["setfitrange", "fr"]:
             self.input_fitRangeScale()
             return 1
-        elif case == "run" or case == "":
+        elif case in ["run", ""]:
             self.get_power_dependent_data()
             return 1
         elif case == "beta":
