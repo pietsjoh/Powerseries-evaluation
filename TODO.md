@@ -4,6 +4,7 @@
 
 ### General
 
+- add config for PlotPowerSeries
 - linewidth fit
 - always use same boostrap/fitting setup and note it down to reproduce results
 - find min beta uncertainty for fixed xi fit -> using this for plotting
