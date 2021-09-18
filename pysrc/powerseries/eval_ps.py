@@ -586,7 +586,10 @@ backgroundFitMode=self.backgroundFitMode)
                 Fit.run()
                 if i % snap == 0 and snap <= self.lenInputPower:
                     logger.info(f"[{i}] input power: {round(self.inputPower[i], 3)} mW")
-                    logger.info(f"mode energy: {self.energies[Fit.peak]} eV")
+                    try:
+                        logger.info(f"mode energy: {self.energies[Fit.peak]} eV")
+                    except AttributeError:
+                        pass
                     self.select_debugging_plots(Fit)
                 modeWavelength, linewidth, outputPower = Fit.outputParameters
                 uncModeWavelength, uncLinewidth, uncOutputPower = Fit.uncertaintyOutputParameters
