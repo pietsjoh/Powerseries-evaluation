@@ -16,6 +16,7 @@
 
 > eval_ps.py
 
+- check select debugging plots in get power dependent data when no peak is found/fitted
 - crashed once because inputPower exceeded in get_power_dependent_data (maybe because fitting did not work) [x]
   - crashed again like that, this time after setting constantPeakWidth with excluded points [x]
   - do not know why yet, cannot reproduce this error [x]
