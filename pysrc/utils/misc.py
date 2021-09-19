@@ -175,8 +175,10 @@ def unc_mean(values: listOrArray, intv: str="1sigma") -> number:
     AssertionError:
         Input has not the correct datatype, or intv is outside of [0, 1]
     """
-    assert isinstance(values, (list, np.ndarray))
+    # assert isinstance(values, (list, np.ndarray))
     n: int = len(values)
+    if n == 1:
+        return 0
     dof: int = n - 1
     alpha: number
     if intv == "1sigma":
