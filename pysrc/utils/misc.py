@@ -26,14 +26,23 @@ numberOrNone = typing.Union[number, None]
 
 diameterList: listOfNums = sorted(list(range(1, 21, 1)) + list(np.arange(1.5, 8.5, 1)))
 
-def input_loop(func):
+def input_loop(func: typing.Callable) -> typing.Callable:
     """Decorator that calls the function until it returns false.
     """
     def wrapper(*args, **kwargs):
-        j = func(*args, **kwargs)
+        j: bool = func(*args, **kwargs)
         while j:
             j = func(*args, **kwargs)
     return wrapper
+
+def weighted_mean(data: np.ndarray, uncertainties: np.ndarray) -> tuple[np.number, np.number]:
+    """Calculates the weighted mean and its uncertainty of the data weighted with the uncertainties.
+    """
+    weights: np.ndarray = 1 / uncertainties **2
+    weightsSum: np.number = np.sum(weights)
+    mean: np.number = ( weights @ data ) / weightsSum
+    uncertaintyMean: np.number = 1 / np.sqrt(weightsSum)
+    return mean, uncertaintyMean
 
 def round_value(value: number, uncertainty: number, useScientific: bool = False, printWarning: bool = False) -> str:
     """Rounds the value and its uncertainty according to DIN 1333.
