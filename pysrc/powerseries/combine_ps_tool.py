@@ -61,7 +61,7 @@ class CombinePowerSeriesTool:
             try:
                 self.attribute: str = self.defaultAttribute
             except AssertionError:
-                logger.critical("The initial value read from the data_format.ini file is invalid. Aborting.")
+                logger.critical("The initial value read from the powerseries.ini file is invalid. Aborting.")
                 sys.exit()
         elif not self.useAttribute and self.distinguishFullFineSpectra:
             try:
