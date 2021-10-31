@@ -42,22 +42,36 @@ def main():
 
 
     headDir = Path(__file__).resolve().parents[2]
-    # print(headDir)
     filePathThreshold = (headDir / "output" / "threshold_mean.csv").resolve()
     filePathQFactor = (headDir / "output" / "Q-factor_mean.csv").resolve()
     filePathbetaBootstrap = (headDir / "output" / "beta_bt_mean.csv").resolve()
     filePathbetaFixedXi = (headDir / "output" / "beta_fix_mean.csv").resolve()
 
-    textboxFormat = dict(boxstyle='square', facecolor='white')
+    textboxFormat = dict(boxstyle='square', facecolor='white', linewidth=0.5)
     textboxStr = "\n".join((
         r"T$=20\,$K",
         r"Pump $\lambda = 785\,$nm"
     ))
 
-    dfThreshold = pd.read_csv(filePathThreshold, sep="\t")
+    dfThreshold = pd.read_csv(filePathThreshold, sep="\t", comment="#")
     diameterThreshold = dfThreshold["diameter"]
     threshold = dfThreshold["mean"]
     uncThreshold = dfThreshold["unc"]
+
+    dfQfactor = pd.read_csv(filePathQFactor, sep="\t", comment="#")
+    diameterQfactor = dfQfactor["diameter"]
+    Qfactor = dfQfactor["weighted mean"]
+    uncQfactor = dfQfactor["unc"]
+
+    dfBetaBootstrap = pd.read_csv(filePathbetaBootstrap, sep="\t")
+    diameterBetaBootstrap = dfBetaBootstrap["diameter"].to_numpy()
+    betaBootstrap = dfBetaBootstrap["weighted mean"]*100
+    uncBetaBootstrap = dfBetaBootstrap["unc"]*100
+
+    dfBetaFixedXi = pd.read_csv(filePathbetaFixedXi, sep="\t", comment="#")
+    diameterBetaFixedXi = dfBetaFixedXi["diameter"]
+    betaFixedXi = dfBetaFixedXi["weighted mean"]*100
+    uncBetaBFixedXi = dfBetaFixedXi["unc"]*100
 
     plt.errorbar(diameterThreshold, threshold, yerr=uncThreshold, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5)
     plt.ylabel("Laserschwelle [mW]")
@@ -71,11 +85,6 @@ def main():
     # plt.savefig("out.png", dpi=1000)
     plt.show()
 
-    dfQfactor = pd.read_csv(filePathQFactor, sep="\t")
-    diameterQfactor = dfQfactor["diameter"]
-    Qfactor = dfQfactor["weighted mean"]
-    uncQfactor = dfQfactor["unc"]
-
     plt.errorbar(diameterQfactor, Qfactor, yerr=uncQfactor, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5)
     plt.ylabel("Q-Faktor")
     plt.xlabel("Durchmesser [µm]")
@@ -88,11 +97,6 @@ def main():
     # plt.savefig("out.png", dpi=1000)
     plt.show()
 
-    dfBetaBootstrap = pd.read_csv(filePathbetaBootstrap, sep="\t")
-    diameterBetaBootstrap = dfBetaBootstrap["diameter"].to_numpy()
-    betaBootstrap = dfBetaBootstrap["weighted mean"]*100
-    uncBetaBootstrap = dfBetaBootstrap["unc"]*100
-
     plt.errorbar(diameterBetaBootstrap, betaBootstrap, yerr=uncBetaBootstrap, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5)
     plt.ylabel(r"$\beta$-Faktor [%]")
     plt.xlabel("Durchmesser [µm]")
@@ -101,14 +105,9 @@ def main():
     plt.ylim(0, 3)
     plt.gca().xaxis.set_minor_locator(AutoMinorLocator(n=2))
     plt.gca().yaxis.set_minor_locator(AutoMinorLocator(n=2))
-    plt.text(20, 16, textboxStr, fontsize=13, va="center", ha="right", bbox=textboxFormat)
+    plt.text(13.5, 2.65, textboxStr, fontsize=13, va="center", bbox=textboxFormat)
     # plt.savefig("out.png", dpi=1000)
     plt.show()
-
-    dfBetaFixedXi = pd.read_csv(filePathbetaFixedXi, sep="\t", comment="#")
-    diameterBetaFixedXi = dfBetaFixedXi["diameter"]
-    betaFixedXi = dfBetaFixedXi["weighted mean"]*100
-    uncBetaBFixedXi = dfBetaFixedXi["unc"]*100
 
     plt.errorbar(diameterBetaFixedXi, betaFixedXi, yerr=uncBetaBFixedXi, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5)
     plt.ylabel(r"$\beta$-Faktor [%]")
