@@ -12,6 +12,7 @@ if __name__ == "__main__":
     import utils.misc as misc
 
     fsrCsvPath = (HeadDir / "output" / "fsr.csv").resolve()
+    fsrMeanPath = (HeadDir / "output" / "fsr_mean.csv").resolve()
 
     data = pd.read_csv(fsrCsvPath, sep="\t")
     diameterList = data.loc[0].to_numpy()
@@ -35,7 +36,11 @@ if __name__ == "__main__":
         meanList.append(mean)
         uncList.append(uncMean)
 
-    plt.errorbar(diameterList, meanList, yerr=uncList, fmt="o", markersize=5, capsize=6)
-    plt.xlabel("diameter [µm]")
-    plt.ylabel("FSR [eV]")
-    plt.show()
+    dfDict = {"diameter" : diameterList, "mean" : meanList, "unc" : uncList}
+    df = pd.DataFrame(dfDict).set_index("diameter")
+    # print(df)
+    df.to_csv(fsrMeanPath, sep="\t")
+    # plt.errorbar(diameterList, meanList, yerr=uncList, fmt="o", markersize=5, capsize=6)
+    # plt.xlabel("diameter [µm]")
+    # plt.ylabel("FSR [eV]")
+    # plt.show()
