@@ -147,5 +147,47 @@ def main():
     plt.tight_layout()
     plt.show()
 
+    fig, ax1 = plt.subplots()
+    ax2 = ax1.twinx()
+    qFactor1 = ax1.errorbar(temperature[:-4], qFactor[:-4], yerr=qFactorUnc[:-4],
+            fmt=".", marker="^", markersize=5, capsize=2.5, elinewidth=0.8, color="black", label="Q-Faktor 1. Peak")
+    qFactor2 = ax1.errorbar(temperature[-4:], qFactor[-4:], yerr=qFactorUnc[-4:],
+            fmt=".", marker="s", markersize=5, capsize=2.5, elinewidth=0.8, color="black", label="Q-Faktor 2. Peak")
+    ax1.set_ylabel("Q-Faktor")
+    ax1.set_xlabel("Temperatur [K]")
+    ax1.locator_params(axis="x", nbins=12)
+    ax1.set_xlim(10, 190)
+    ax1.set_ylim(3000, 12500)
+    ax1.xaxis.set_minor_locator(AutoMinorLocator(n=2))
+    ax1.yaxis.set_minor_locator(AutoMinorLocator(n=2))
+    beta1 = ax2.errorbar(temperature[:-4], betaBootstrap[:-4], yerr=betaBootstrapUnc[:-4], fmt=".", marker="^",
+                markersize=5, color="red", capsize=2.5, elinewidth=0.8, label=r"$\beta$-Faktor 1. Peak")
+    beta2 = ax2.errorbar(temperature[-4:], betaBootstrap[-4:], yerr=betaBootstrapUnc[-4:], fmt=".", marker="s",
+                markersize=5, color="red", capsize=2.5, elinewidth=0.8, label=r"$\beta$-Faktor 2. Peak")
+    ax2.set_ylabel(r"$\beta$-Faktor [%]")
+    ax2.axvline(130, color="black", lw=1.1)
+    ax2.axvline(140, color="black", lw=1.1)
+    ax2.locator_params(axis="x", nbins=12)
+    ax2.set_ylim(0, 19)
+    ax2.spines["right"].set_color("red")
+    ax2.yaxis.label.set_color("red")
+    ax2.tick_params(axis="y", color="red", which="both")
+    plt.setp(ax2.get_yticklabels(), color="red")
+    ax2.xaxis.set_minor_locator(AutoMinorLocator(n=2))
+    ax2.yaxis.set_minor_locator(AutoMinorLocator(n=2))
+    ax1.text(132, 6300, "mode switching", rotation="vertical", fontsize=12)
+    extra1 = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0, label=r"Durchmesser$=4\,\mu$m")
+    extra2 = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0, label="Pump $\lambda = 785\,$nm")
+    # plt.legend()
+    legend = ax1.legend(edgecolor="black", fancybox=False, bbox_to_anchor=(0.445, 0.98), loc="upper center",
+            fontsize=10, labelspacing=0.3, handletextpad=0.3, borderpad=0.3,
+            handles=[extra1, extra2, qFactor1, qFactor2, beta1, beta2],
+            labels=[r"Durchmesser$=4\,\mu$m", "Pump $\lambda = 785\,$nm", "Q-Faktor 1. Peak",
+            "Q-Faktor 2. Peak", r"$\beta$-Faktor 1. Peak", r"$\beta$-Faktor 2. Peak"])
+    legend.get_frame().set_linewidth(0.5)
+    # plt.savefig("out.png", dpi=1000)
+    plt.tight_layout()
+    plt.show()
+
 if __name__ == "__main__":
     main()
