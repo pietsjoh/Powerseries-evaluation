@@ -54,7 +54,7 @@ class CombinePowerSeriesTool:
         if self.useAttribute:
             self.attrName: str = config["data format"]["attribute name"].replace(" ", "")
             self._sortedDataDirName: str = f"sorted_data_{self.attrName}"
-            self._possibleAttrList: typing.Union[list[str], None] = config["data format"]["attribute possibilities"].replace(" ", "").split(",")
+            self._possibleAttrList: typing.Union[typing.List[str], None] = config["data format"]["attribute possibilities"].replace(" ", "").split(",")
             if len(self._possibleAttrList) == 1 and self._possibleAttrList[0].lower() == "none":
                 self._possibleAttrList = None
             self.defaultAttribute: str = config["combine_ps_tool.py"]["default attribute"].replace(" ", "")

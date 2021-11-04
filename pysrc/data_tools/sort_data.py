@@ -109,7 +109,7 @@ class SortData:
             splitter: str = config["data format"]["splitter"].replace(" ", "")
             indicatorAtStart: bool = LoggingConfig.check_true_false(
                 config["data format"]["indicator at start"])
-            self.possibleAttrList: typing.Union[list[str], None] = config["data format"]["attribute possibilities"].replace(" ", "").split(",")
+            self.possibleAttrList: typing.Union[typing.List[str], None] = config["data format"]["attribute possibilities"].replace(" ", "").split(",")
             self.AttrReader: FileNameReader = FileNameReader(name=self.attrName, indicator=indicator,
                 splitter=splitter, indicatorAtStart=indicatorAtStart)
             if len(self.possibleAttrList) == 1 and self.possibleAttrList[0].upper() == "NONE":

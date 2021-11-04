@@ -18,7 +18,7 @@ loggerObj: LoggingConfig = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
 
 number = typing.Union[float, int, np.number]
-listOfNums = list[number]
+listOfNums = typing.List[number]
 listOrArray = typing.Union[list, np.ndarray]
 intOrNone = typing.Union[int, None]
 floatOrNone = typing.Union[float, None]
@@ -35,7 +35,7 @@ def input_loop(func: typing.Callable) -> typing.Callable:
             j = func(*args, **kwargs)
     return wrapper
 
-def weighted_mean(data: np.ndarray, uncertainties: np.ndarray) -> tuple[np.number, np.number]:
+def weighted_mean(data: np.ndarray, uncertainties: np.ndarray) -> typing.Tuple[np.number, np.number]:
     """Calculates the weighted mean and its uncertainty of the data weighted with the uncertainties.
     """
     weights: np.ndarray = 1 / uncertainties **2

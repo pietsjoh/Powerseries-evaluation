@@ -11,7 +11,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from peak_fit.single_peak_fit_base import PeakFitSuper
 
-tupleIntOrNone = typing.Union[tuple[int, int], None]
+tupleIntOrNone = typing.Union[typing.Tuple[int, int], None]
 number = typing.Union[int, float, np.number]
 arrayOrNumber = typing.Union[np.ndarray, number]
 
@@ -73,7 +73,7 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
         self.uncFwhmFit: number = 2*np.sqrt(2*np.log(2))*np.sqrt(self.cov[2, 2])
 
     @property
-    def paramBounds(self) -> tuple[list[number], list[number]]:
+    def paramBounds(self) -> typing.Tuple[typing.List[number], typing.List[number]]:
         """Sets bounds for the fit parameters. A and sigma are bound by (0, :math:`\infty`).
         mu is bound the (min, max) of the provided wavelengths.
         """
@@ -139,7 +139,7 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
         self.uncFwhmFit: number = 2 * np.sqrt(self.cov[2, 2])
 
     @property
-    def paramBounds(self) -> tuple[list[number], list[number]]:
+    def paramBounds(self) -> typing.Tuple[typing.List[number], typing.List[number]]:
         """Sets bounds for the fit parameters. A and \gamma are bound by (0, :math:`\infty`).
         \mu is bound the (min, max) of the provided wavelengths.
         """
@@ -230,7 +230,7 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
         + (fwhmGauss*uncFwhmGauss / np.sqrt(0.2166*fwhmLorentz**2 + fwhmGauss**2))**2)
 
     @property
-    def paramBounds(self) -> tuple[list[number], list[number]]:
+    def paramBounds(self) -> typing.Tuple[typing.List[number], typing.List[number]]:
         """Sets bounds for the fit parameters. A, \sigma and \gamma are bound by (0, :math:`\infty`).
         \mu is bound the (min, max) of the provided wavelengths.
         """
@@ -283,7 +283,7 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
                        + 4.47163*fwhmGauss**2*fwhmLorentz**3 + 0.07842*fwhmGauss*fwhmLorentz**4 + fwhmLorentz**5)**(1/5)
 
     @property
-    def paramBounds(self) -> tuple[list[number], list[number]]:
+    def paramBounds(self) -> typing.Tuple[typing.List[number], typing.List[number]]:
         lowerBounds: typing.List[number] = [0, self.minWavelength, 0, 0]
         upperBounds: typing.List[number] = [np.inf, self.maxWavelength, np.inf, 1]
         return (lowerBounds, upperBounds)

@@ -18,7 +18,7 @@ import utils.misc as misc
 loggerObj: LoggingConfig = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
 
-tupleIntOrNone = typing.Union[tuple[int, int], None]
+tupleIntOrNone = typing.Union[typing.Tuple[int, int], None]
 number = typing.Union[int, float, np.number]
 numberOrNone = typing.Optional[number]
 floatOrNone = typing.Union[float, None]
@@ -287,7 +287,7 @@ Selecting the maximum value.""".format(inputPower, self.minInputPower, self.maxI
         minIdx: int = self.energy_to_idx(self.minInitRangeEnergy)
         maxIdx: int = self.energy_to_idx(self.maxInitRangeEnergy)
         logger.debug(f"input_initial_range(), Initial range: [{minIdx}, {maxIdx}]")
-        self.initRange: tuple[int, int] = minIdx, maxIdx
+        self.initRange: typing.Tuple[int, int] = minIdx, maxIdx
 
     @property
     def initRange(self) -> tupleIntOrNone:
@@ -387,13 +387,13 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
         logger.debug(f"fitModel has been set to {value}")
 
     @property
-    def exclude(self) -> list[number]:
+    def exclude(self) -> typing.List[number]:
         """List of indices of the inputpower that shall be excluded.
         """
         return self._exclude
 
     @exclude.setter
-    def exclude(self, value: typing.Union[list[number], None]) -> None:
+    def exclude(self, value: typing.Union[typing.List[number], None]) -> None:
         logger.debug(f"Setting exclude to {value}.")
         self._exclude: typing.List[number]
         if value is None:

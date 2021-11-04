@@ -20,7 +20,7 @@ loggerObj: LoggingConfig = LoggingConfig()
 logger = loggerObj.init_logger(__name__)
 loggerObj.read_debugging_ini_file()
 
-tupleIntOrNone = typing.Union[tuple[int, int], None]
+tupleIntOrNone = typing.Union[typing.Tuple[int, int], None]
 number = typing.Union[int, float, np.number]
 
 class PeakFitSuper:
@@ -532,7 +532,7 @@ Either lower constantPeakWidth or use a different background fitting method. Now
                 lowerBounds, higherBounds = self.paramBounds  # type: ignore
                 lowerBounds.append(0)
                 higherBounds.append(np.inf)
-                paramBounds: tuple[list, list] = (lowerBounds, higherBounds)
+                paramBounds: typing.Tuple[list, list] = (lowerBounds, higherBounds)
                 self.p, self.cov = optimize.curve_fit(self, fitWavelengths, fitData, p0=self.p0, bounds=paramBounds)  # type: ignore
             else:
                 f: typing.Callable = partial(self, offset=0) # type: ignore
@@ -838,14 +838,14 @@ Either lower constantPeakWidth or use a different background fitting method. Now
         assert hasattr(cls, "paramBounds")
 
     @property
-    def outputParameters(self) -> tuple[number, number, number]:
+    def outputParameters(self) -> typing.Tuple[number, number, number]:
         """Results of the fitting process. Mode wavelength, FWHM and integrated intensity.
         Are set to np.nan when fitting or peak finding did not work.
         """
         return self.muFit, self.fwhmFit, self.integratedPeak
 
     @property
-    def uncertaintyOutputParameters(self) -> tuple[number, number, number]:
+    def uncertaintyOutputParameters(self) -> typing.Tuple[number, number, number]:
         """Uncertainty of the fit parameters (outputParameters)
         """
         return self.uncMuFit, self.uncFwhmFit, self.uncintegratedPeak
