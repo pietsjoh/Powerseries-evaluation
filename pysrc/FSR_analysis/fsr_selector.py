@@ -10,7 +10,7 @@ HeadDir = Path(__file__).resolve().parents[2]
 srcDirPath = (HeadDir / "pysrc").resolve()
 sys.path.append(str(srcDirPath))
 
-from data_tools.data_import import Data
+from data_tools.data_formats import DataQlab2
 from setup.config_logging import LoggingConfig
 
 loggerObj = LoggingConfig()
@@ -34,7 +34,7 @@ class FSRselector:
             logger.error("ValueError: The file name could not be extracted.")
             raise ValueError("The file name could not be extracted.")
         self.savePath = savePath
-        self.data = Data(filePath)
+        self.data = DataQlab2(filePath)
         self.wavelengths = self.data.wavelengths
         self.diameter = self.data.diameter
         self.numberOfPeaks = numberOfPeaks
@@ -63,12 +63,12 @@ Using the max possible value.""".format(self.numberOfPeaks, prominences.size))
 
     @powerIndex.setter
     def powerIndex(self, value):
-        if (0 <= value <= len(self.data) - 1):
+        if (0 <= value <= self.data.lenInputPower - 1):
             self._powerIndex = value
         else:
             logger.warning("""ValueError: {} is not in the valid range: [0, {}].
 The powerIndex will not be changed.
-The powerIndex is currently set to {}.""".format(value, len(self.data) - 1, self._powerIndex))
+The powerIndex is currently set to {}.""".format(value, self.data.lenInputPower - 1, self._powerIndex))
 
     def set_spectrum_and_power(self):
         self.power = self.data.inputPower[self.powerIndex]
@@ -187,18 +187,18 @@ The powerIndex is currently set to {}.""".format(value, len(self.data) - 1, self
 
     @powerScale.setter
     def powerScale(self, value):
-        if (1 <= value <= len(self.data) - 1):
+        if (1 <= value <= self.data.lenInputPower - 1):
             self._powerScale = value
         else:
             logger.warning("""ValueError: {} is not in the valid range: [1, {}].
 The value for powerScale will not be changed.
-Currently, powerScale is set to {}.""".format(value, len(self.data) - 1, self._powerScale))
+Currently, powerScale is set to {}.""".format(value, self.data.lenInputPower - 1, self._powerScale))
 
     def change_power(self, mode="+"):
         if mode == "+":
-            if self.powerIndex + self.powerScale >= len(self.data):
-                logger.warning(f"ValueError: index is out of bounce, maximum is selected [{len(self.data) - 1}]")
-                self.powerIndex = len(self.data) - 1
+            if self.powerIndex + self.powerScale >= self.data.lenInputPower:
+                logger.warning(f"ValueError: index is out of bounce, maximum is selected [{self.data.lenInputPower - 1}]")
+                self.powerIndex = self.data.lenInputPower - 1
             else:
                 self.powerIndex = self.powerIndex + self.powerScale
         else:
