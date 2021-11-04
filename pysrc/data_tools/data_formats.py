@@ -72,7 +72,7 @@ class DataQlab2:
     ValueError:
         When the data from the file could not be read from the file using pandas.read_csv()
     """
-    rowsToSkip: list[int] = [1, 3]
+    rowsToSkip: typing.List[int] = [1, 3]
     """list[int]: Specific rows that are skipped when reading the data.
     """
     name: str = "QLAB2"

@@ -27,7 +27,7 @@ class CombinePowerSeriesTool:
     Upon initialization the data format file is read.
     """
     fileDict: dict = {}
-    _addFileModeList: list[str] = ["data", "sorted_data"]
+    _addFileModeList: typing.List[str] = ["data", "sorted_data"]
     _dataDirPath: Path = (headDir / "data").resolve()
 
     def __init__(self):

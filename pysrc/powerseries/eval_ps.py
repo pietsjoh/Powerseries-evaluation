@@ -156,7 +156,7 @@ class EvalPowerSeries:
         minInputPowerRangeStr: str = config["eval_ps.py"]["min inputpower"].replace(" ", "")
         maxInputPowerRangeStr: str = config["eval_ps.py"]["max inputpower"].replace(" ", "")
         useExclude: bool
-        self.exclude: list[int]
+        self.exclude: typing.List[int]
         try:
             useExclude = LoggingConfig.check_true_false(config["eval_ps.py"]["use exclude"].replace(" ", ""))
         except ValueError:
@@ -306,7 +306,7 @@ Selecting the maximum value.""".format(inputPower, self.minInputPower, self.maxI
                 idx2: int
                 idx1, idx2 = self._initRange
                 if idx1 != idx2:
-                    idxList: list[int, int] = [idx1, idx2]
+                    idxList: typing.List[int, int] = [idx1, idx2]
                     i: int
                     idx: int
                     for i, idx in enumerate(idxList):
@@ -395,7 +395,7 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
     @exclude.setter
     def exclude(self, value: typing.Union[list[number], None]) -> None:
         logger.debug(f"Setting exclude to {value}.")
-        self._exclude: list[number]
+        self._exclude: typing.List[number]
         if value is None:
             self._exclude = []
         if isinstance(value, (list, np.ndarray)):
@@ -421,7 +421,7 @@ Setting maxInitRange to max possible value.""".format(self._maxInitRange, self.l
         minIdx: int = self.inputPower_to_idx(self.minInputPowerRange)
         maxIdx: int = self.inputPower_to_idx(self.maxInputPowerRange)
         logger.debug(f"input_exclude(), Exclude: [minIdx: {minIdx}, maxIdx: {maxIdx}]")
-        self.exclude: list[number] = list(range(0, minIdx)) + list(range(maxIdx, self.lenInputPower))
+        self.exclude: typing.List[number] = list(range(0, minIdx)) + list(range(maxIdx, self.lenInputPower))
 
     @property
     def fitRangeScale(self) -> number:

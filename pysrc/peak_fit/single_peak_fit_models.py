@@ -57,7 +57,7 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
         muEstimate: number = self.wavelengths[self.peak]
         sigmaEstimate: number = self.fwhmEstimate / 2 / np.sqrt(2*np.log(2)) * np.abs(self.wavelengths[1] - self.wavelengths[0])
         AEstimate: number = self.peakHeightEstimate*np.sqrt(2*np.pi)*sigmaEstimate
-        self.p0: list[number] = [AEstimate, muEstimate, sigmaEstimate]
+        self.p0: typing.List[number] = [AEstimate, muEstimate, sigmaEstimate]
 
     def set_fwhm(self) -> None:
         """Calculates the FWHM based on the fit results. Here the FWHM is calculated from the sigma parameter.
@@ -77,8 +77,8 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
         """Sets bounds for the fit parameters. A and sigma are bound by (0, :math:`\infty`).
         mu is bound the (min, max) of the provided wavelengths.
         """
-        lowerBounds: list[number] = [0, self.minWavelength, 0]
-        upperBounds: list[number] = [np.inf, self.maxWavelength, np.inf]
+        lowerBounds: typing.List[number] = [0, self.minWavelength, 0]
+        upperBounds: typing.List[number] = [np.inf, self.maxWavelength, np.inf]
         return (lowerBounds, upperBounds)
 
 ##############################################################################################################################################################
@@ -124,7 +124,7 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
         gammaEstimate: number = self.fwhmEstimate * np.abs(self.wavelengths[1] - self.wavelengths[0]) / 2
         AEstimate: number = self.peakHeightEstimate * np.pi * gammaEstimate
 # gammaEstimate = fwhm*np.sqrt(1 - (fwhm / 2 / w0Estimate)**2)
-        self.p0: list[number] = [AEstimate, muEstimate, gammaEstimate]
+        self.p0: typing.List[number] = [AEstimate, muEstimate, gammaEstimate]
 
     def set_fwhm(self) -> None:
         """Calculates the FWHM based on the fit results. Here the FWHM is calculated from the sigma parameter.
@@ -143,8 +143,8 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
         """Sets bounds for the fit parameters. A and \gamma are bound by (0, :math:`\infty`).
         \mu is bound the (min, max) of the provided wavelengths.
         """
-        lowerBounds: list[number] = [0, self.minWavelength, 0]
-        higherBounds: list[number] = [np.inf, self.maxWavelength, np.inf]
+        lowerBounds: typing.List[number] = [0, self.minWavelength, 0]
+        higherBounds: typing.List[number] = [np.inf, self.maxWavelength, np.inf]
         return (lowerBounds, higherBounds)
 ##############################################################################################################################################################
 
@@ -201,7 +201,7 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
         AEstimate: number = self.peakHeightEstimate * (1 / special.erfc(gammaEstimate / sigmaEstimate / np.sqrt(2)) 
                     * np.exp(gammaEstimate**2 / 2 / sigmaEstimate**2)) * np.sqrt(2*np.pi)*sigmaEstimate
 ## gammaEstimate = fwhm*np.sqrt(1 - (fwhm / 2 / muEstimate)**2)
-        self.p0: list[number] = [AEstimate, muEstimate, sigmaEstimate, gammaEstimate]
+        self.p0: typing.List[number] = [AEstimate, muEstimate, sigmaEstimate, gammaEstimate]
 
     def set_fwhm(self) -> None:
 ## uncGauss, uncLorentz are correlated -> use covariance matrix
@@ -234,8 +234,8 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
         """Sets bounds for the fit parameters. A, \sigma and \gamma are bound by (0, :math:`\infty`).
         \mu is bound the (min, max) of the provided wavelengths.
         """
-        lowerBounds: list[number] = [0, self.minWavelength, 0, 0]
-        upperBounds: list[number] = [np.inf, self.maxWavelength, np.inf, np.inf]
+        lowerBounds: typing.List[number] = [0, self.minWavelength, 0, 0]
+        upperBounds: typing.List[number] = [np.inf, self.maxWavelength, np.inf, np.inf]
         return (lowerBounds, upperBounds)
 
 ##############################################################################################################################################################
@@ -271,7 +271,7 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
         alphaEstimate: number = 0.5
         AEstimate: number = self.peakHeightEstimate / ((1 - alphaEstimate) / sigmaGaussEstimate / np.sqrt(2*np.pi) + alphaEstimate / np.pi / sigmaEstimate )
 # gammaEstimate = fwhm*np.sqrt(1 - (fwhm / 2 / w0Estimate)**2)
-        self.p0: list[number] = [AEstimate, muEstimate, sigmaEstimate, alphaEstimate]
+        self.p0: typing.List[number] = [AEstimate, muEstimate, sigmaEstimate, alphaEstimate]
 
     def set_fwhm(self) -> None:
 ## uncGauss, uncLorentz are correlated -> use covariance matrix
@@ -284,8 +284,8 @@ constantPeakWidth=constantPeakWidth, backgroundFitMode=backgroundFitMode)
 
     @property
     def paramBounds(self) -> tuple[list[number], list[number]]:
-        lowerBounds: list[number] = [0, self.minWavelength, 0, 0]
-        upperBounds: list[number] = [np.inf, self.maxWavelength, np.inf, 1]
+        lowerBounds: typing.List[number] = [0, self.minWavelength, 0, 0]
+        upperBounds: typing.List[number] = [np.inf, self.maxWavelength, np.inf, 1]
         return (lowerBounds, upperBounds)
 
 if __name__ == "__main__":

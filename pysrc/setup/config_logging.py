@@ -66,7 +66,7 @@ class LoggingConfig:
     _headDirPath: Path = Path(__file__).parents[2].resolve()
     _configLogJsonPath: Path = (_headDirPath / "pysrc" / "setup" / "config_logging.json").resolve()
     _logsDirPath: Path = (_headDirPath / "logs").resolve()
-    _loggingLevelList: list[str] = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+    _loggingLevelList: typing.List[str] = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     _configFileBase: dict = {
         "version": 1,
         "disable_existing_loggers": 0,
