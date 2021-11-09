@@ -1,3 +1,6 @@
+from scipy.sparse import dia
+
+
 if __name__ == "__main__":
     import sys
     from pathlib import Path
@@ -6,6 +9,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from matplotlib import rcParams, cycler
     from matplotlib.ticker import AutoMinorLocator
+    from matplotlib.patches import Rectangle
 
     rcParams['font.family'] = 'sans-serif'
     rcParams['font.sans-serif'] = ['Arial']
@@ -78,19 +82,52 @@ if __name__ == "__main__":
     # print(df)
     # df.to_csv(fsrMeanPath, sep="\t")
 
+    def fsr(d, A):
+        return 1 / (d*A)
+
+    def fsr_inv(d, A):
+        return A*d
+
+    import scipy.optimize as optimize
+
+    idx_25 = diameterList.index(2)
+    diameterList_wo_25 = [d for i, d in enumerate(diameterList) if i != idx_25]
+    meanList_wo_25 = [d for i, d in enumerate(meanList) if i != idx_25]
+    p, cov = optimize.curve_fit(fsr, diameterList_wo_25, meanList_wo_25)
+    p_inv, cov_inv = optimize.curve_fit(fsr_inv, 1 / np.array(diameterList_wo_25), meanList_wo_25)
+    print(p*1000, np.sqrt(cov)*1000)
+    print(p_inv*1000, np.sqrt(cov_inv)*1000)
+    plotArr = np.linspace(2, 20, 1000)
+
     textboxFormat = dict(boxstyle='square', facecolor='white', linewidth=0.5)
     textboxStr = "\n".join((
         r"T$=20\,$K",
         r"Pump $\lambda = 785\,$nm"
     ))
-    plt.errorbar(diameterList, meanList, yerr=uncList, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5)
-    plt.xlabel("Durchmesser [µm]")
-    plt.ylabel("FSR [nm]")
-    plt.locator_params(axis="x", nbins=12)
-    plt.xlim(0, 21)
-    plt.ylim(0, 27)
+    fig, ax = plt.subplots()
+    # ax.errorbar(diameterList, meanList, yerr=uncList, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5, label="Messpunkte", color="black")
+    # ax.plot(plotArr, fsr(plotArr, *p), label=r"Fit: FSR$=1/(A\cdot d)$", color="blue")
+    ax.errorbar(1 / np.array(diameterList), meanList, yerr=uncList, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5, label="Messpunkte", color="black")
+    ax.plot(1 / plotArr, fsr(plotArr, *p), label=r"Fit: FSR$=1/(A\cdot d)$", color="blue")
+    ax.plot(1 / plotArr, fsr_inv(1 / plotArr, *p_inv), label=r"Fit: FSR$=A\cdot d)$", color="yellow")
+    ax.set_xlabel(r"Durchmesser $d$ [µm]")
+    ax.set_ylabel(r"FSR $\Delta\lambda$ ([nm]")
+    ax.locator_params(axis="x", nbins=12)
+    # ax.set_xlim(0, 21)
+    # ax.set_ylim(0, 27)
+    ax.set_xlim(0, None)
+    ax.set_ylim(0, 27)
     plt.gca().xaxis.set_minor_locator(AutoMinorLocator(n=2))
     plt.gca().yaxis.set_minor_locator(AutoMinorLocator(n=2))
-    plt.text(13, 25, textboxStr, fontsize=13, va="top", bbox=textboxFormat)
+    # plt.text(13, 25, textboxStr, fontsize=13, va="top", bbox=textboxFormat)
+    extra1 = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0, label=r"T$=20\,$K")
+    extra2 = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0, label="Pump $\lambda = 785\,$nm")
+    extra3 = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0, label=r"A$=(14.91\pm 0.15)\,$µm$^{-2}$")
+    handles, labels = ax.get_legend_handles_labels()
+    handles_list = [extra1, extra2] + handles[::-1] + [extra3]
+    labels_list = [r"T$=20\,$K", "Pump $\lambda = 785\,$nm"] + labels[::-1] + [r"A$=(14.91\pm 0.15)\,$µm$^{-2}$"]
+    legend = ax.legend(edgecolor="black", fancybox=False, bbox_to_anchor=(0.4, 0.75), loc="center left", fontsize=12,
+            handles=handles_list, labels=labels_list)
+    legend.get_frame().set_linewidth(0.5)
     # plt.savefig("out.png", dpi=1000)
     plt.show()
