@@ -15,7 +15,7 @@ plot_color_cycle = cycler('color', ['000000', '0000FE', 'FE0000', '008001', 'FD8
 rcParams['axes.prop_cycle'] = plot_color_cycle
 rcParams['axes.xmargin'] = 0
 rcParams['axes.ymargin'] = 0
-rcParams.update({"figure.figsize" : (6.4, 4.8),
+rcParams.update({"figure.figsize" : (6.4, 4.8), #6.6, 5
                      "figure.subplot.left" : 0.177, "figure.subplot.right" : 0.946,
                      "figure.subplot.bottom" : 0.156, "figure.subplot.top" : 0.965,
                      "axes.autolimit_mode" : "round_numbers",
@@ -73,26 +73,26 @@ p = dfBetaFit["fitParamsBeta"]
 def in_out_model(x, beta, p, A, xiHat):
     return (A / beta) * ( p*x / (p*x + 1) * (1 + xiHat*beta) * (1 + beta*p*x) - (beta**2)*xiHat*p*x)
 
-# fig, ax = plt.subplots()
-# ax.errorbar(inp, Q, yerr=QUnc, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5)
-# ax.set_xscale("log")
-# ax.set_ylabel("Q-Faktor")
-# ax.set_xlabel("Eingangsleistung [mW]")
-# ax.set_xlim(0.15, None)
-# ax.set_ylim(0, None)
-# ax.text(0.2, 55000, textboxStr, fontsize=13, va="top", bbox=textboxFormat)
-# plt.show()
+fig, ax = plt.subplots()
+ax.errorbar(inp, Q, yerr=QUnc, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5)
+ax.set_xscale("log")
+ax.set_ylabel("Q-Faktor")
+ax.set_xlabel("Eingangsleistung [mW]")
+ax.set_xlim(0.15, None)
+ax.set_ylim(0, None)
+ax.text(0.2, 55000, textboxStr, fontsize=13, va="top", bbox=textboxFormat)
+plt.show()
 
-# fig, ax = plt.subplots()
-# ax.errorbar(inp, E, yerr=EUnc, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5)
-# ax.set_xscale("log")
-# ax.set_ylabel("Modenenergie [eV]")
-# ax.set_xlabel("Eingangsleistung [mW]")
-# ax.set_xlim(0.15, None)
-# ax.set_ylim(None, None)
-# ax.text(0.2, 1.4, textboxStr, fontsize=13, va="top", bbox=textboxFormat)
-# plt.tight_layout()
-# plt.show()
+fig, ax = plt.subplots()
+ax.errorbar(inp, E, yerr=EUnc, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5)
+ax.set_xscale("log")
+ax.set_ylabel("Modenenergie [eV]")
+ax.set_xlabel("Eingangsleistung [mW]")
+ax.set_xlim(0.15, None)
+ax.set_ylim(None, None)
+ax.text(2, 1.32343, textboxStr, fontsize=13, va="top", bbox=textboxFormat)
+plt.tight_layout()
+plt.show()
 
 # fig, ax1 = plt.subplots()
 # ax2 = ax1.twinx()
@@ -125,35 +125,56 @@ def in_out_model(x, beta, p, A, xiHat):
 outPlotArr = np.logspace(np.log10(min(out)), np.log10(max(out)), 100)
 inPlotArr = in_out_model(outPlotArr, *p)
 
-# fig, ax1 = plt.subplots()
-# ax2 = ax1.twinx()
-# ax1.errorbar(inp, out, yerr=outUnc, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5, color="black", label="gemessene Intensität")
-# ax1.plot(inPlotArr, outPlotArr, color="blue", label="Fit Intensität")
-# ax1.set_xscale("log")
-# ax1.set_yscale("log")
-# ax1.set_ylabel("PL Intensität [a. u.]")
-# ax1.set_xlabel("Eingangsleistung [mW]")
-# ax1.set_xlim(0.15, None)
-# ax1.set_ylim(None, 200)
-# lwPlot = ax2.errorbar(inp, lw*1000, yerr=lwUnc*1000, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5, color="red", label="FWHM")
-# ax2.set_xscale("log")
-# ax2.set_ylabel("FWHM [meV]")
-# ax2.set_xlabel("Eingangsleistung [mW]")
-# ax2.set_xlim(0.15, None)
-# ax2.set_ylim(0.02, 0.24)
-# ax2.spines["right"].set_color("red")
-# ax2.yaxis.label.set_color("red")
-# ax2.tick_params(axis="y", color="red", which="both")
-# plt.setp(ax2.get_yticklabels(), color="red")
-# extra1 = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0, label=r"T$=20\,$K")
-# extra2 = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0, label="Pump $\lambda = 785\,$nm")
-# # extra3 = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0, label=r"d$=4\,\mu$m")
-# handles, labels = ax1.get_legend_handles_labels()
-# handles_list = [extra1, extra2, lwPlot] + handles
-# labels_list = [r"T$=20\,$K, $d=4\,\mu$m", "Pump $\lambda = 785\,$nm", "FWHM"] + labels
-# legend = ax1.legend(edgecolor="black", fancybox=False, bbox_to_anchor=(0.99, 0.15), loc="lower right", fontsize=12, handles=handles_list, labels=labels_list)
-# legend.get_frame().set_linewidth(0.5)
-# plt.tight_layout()
-# plt.show()
+minInpIdx = np.argmin(inp)
+maxInpIdx = np.argmax(inp)
+minInp = inp[minInpIdx]
+maxInp = inp[maxInpIdx]
+minOut = out[minInpIdx]
+maxOut = out[maxInpIdx]
 
-## todo: plot single spectrum with lorentz fit, do constant lines, evtl. linewidth fit
+aLow = minOut / minInp
+aHigh = maxOut / maxInp
+
+lowInpPlot = np.logspace(np.log10(min(inp)), np.log10(1), 100)
+highInpPlot = np.logspace(np.log10(1), np.log10(max(inp)), 100)
+lowOutPlot = aLow * lowInpPlot
+highOutPlot = aHigh * highInpPlot
+# print(min(inp), minInp)
+# print(max(inp), maxInp)
+# print(min(out), minOut)
+# print(max(out), maxOut)
+
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+ax1.errorbar(inp, out, yerr=outUnc, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5, color="black", label="Intensität")
+ax1.plot(inPlotArr, outPlotArr, color="blue", label="Fit Intensität")
+ax1.plot(lowInpPlot, lowOutPlot, color="green", lw="0.9")
+ax1.plot(highInpPlot, highOutPlot, color="green", lw="0.9", label="lineare Funktion")
+ax1.set_xscale("log")
+ax1.set_yscale("log")
+ax1.set_ylabel("PL Intensität [a. u.]")
+ax1.set_xlabel("Eingangsleistung [mW]")
+ax1.set_xlim(0.15, None)
+ax1.set_ylim(None, 200)
+lwPlot = ax2.errorbar(inp, lw*1000, yerr=lwUnc*1000, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5, color="red", label="FWHM")
+ax2.set_xscale("log")
+ax2.set_ylabel("FWHM [meV]")
+ax2.set_xlabel("Eingangsleistung [mW]")
+ax2.set_xlim(0.15, None)
+ax2.set_ylim(0.02, 0.24)
+ax2.spines["right"].set_color("red")
+ax2.yaxis.label.set_color("red")
+ax2.tick_params(axis="y", color="red", which="both")
+plt.setp(ax2.get_yticklabels(), color="red")
+extra1 = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0, label=r"T$=20\,$K")
+extra2 = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0, label="Pump $\lambda = 785\,$nm")
+# extra3 = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0, label=r"d$=4\,\mu$m")
+handles, labels = ax1.get_legend_handles_labels()
+handles_list = [extra1, extra2, lwPlot] + handles[::-1]
+labels_list = [r"T$=20\,$K, $d=4\,\mu$m", "Pump $\lambda = 785\,$nm", "FWHM"] + labels[::-1]
+legend = ax1.legend(edgecolor="black", fancybox=False, bbox_to_anchor=(0.99, 0.15), loc="lower right", fontsize=12, handles=handles_list, labels=labels_list)
+legend.get_frame().set_linewidth(0.5)
+plt.tight_layout()
+plt.show()
+
+## todo: plot single spectrum with lorentz fit, evtl. linewidth fit
