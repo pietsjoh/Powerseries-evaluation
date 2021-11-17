@@ -25,3 +25,4 @@ docs/source/
 /*.py
 *.prof
 .mypy_cache
+/output_plots
