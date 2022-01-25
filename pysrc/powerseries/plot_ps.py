@@ -4,13 +4,47 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize as optimize
 from matplotlib.collections import PolyCollection
-import matplotlib.ticker as mticker
 import pandas as pd
 from configparser import ConfigParser
 import inspect
+from matplotlib import rcParams, cycler, ticker
 
 def log_tick_formatter(val, pos=None):
     return "{:.3}".format(10**val)
+
+rcParams['font.sans-serif'] = ['Arial']
+rcParams['font.size'] = 17
+rcParams['axes.linewidth'] = 1.1
+rcParams['axes.labelpad'] = 10.0
+plot_color_cycle = cycler('color', ['000000', '0000FE', 'FE0000', '008001', 'FD8000', '8c564b', 
+                                    'e377c2', '7f7f7f', 'bcbd22', '17becf'])
+rcParams['axes.prop_cycle'] = plot_color_cycle
+rcParams['axes.xmargin'] = 0
+rcParams['axes.ymargin'] = 0
+# rcParams.update({"figure.figsize" : (6.4, 4.8), #6.6, 5
+#                      "figure.subplot.left" : 0.177, "figure.subplot.right" : 0.946,
+#                      "figure.subplot.bottom" : 0.156, "figure.subplot.top" : 0.965,
+#                      "axes.autolimit_mode" : "round_numbers",
+#                      "xtick.major.size"     : 7,
+#                      "xtick.minor.size"     : 3.5,
+#                      "xtick.major.width"    : 1.1,
+#                      "xtick.minor.width"    : 1.1,
+#                      "xtick.major.pad"      : 5,
+#                      "xtick.minor.visible" : True,
+#                      "ytick.major.size"     : 7,
+#                      "ytick.minor.size"     : 3.5,
+#                      "ytick.major.width"    : 1.1,
+#                      "ytick.minor.width"    : 1.1,
+#                      "ytick.major.pad"      : 5,
+#                      "ytick.minor.visible" : True,
+#                      "lines.markersize" : 5,
+#                     #  "lines.markerfacecolor" : "none",
+#                      "lines.markeredgewidth"  : 0.8,
+#                      "xtick.direction" : "in",
+#                      "ytick.direction" : "in",
+#                      "ytick.right" : True,
+#                      "xtick.top" : True
+# })
 
 import sys
 from pathlib import Path
@@ -65,6 +99,7 @@ class PlotPowerSeries:
     def __init__(self, powerSeriesList, bootstrapSeed=None):
         assert isinstance(powerSeriesList, (list, np.ndarray))
         assert len(powerSeriesList) != 0
+        self.powerSeriesList = powerSeriesList
         self.bootstrapSeed = bootstrapSeed
         self.inputPower = np.array([])
         self.outputPowerArr = np.array([])
@@ -385,6 +420,8 @@ class PlotPowerSeries:
         maxEList = []
         inputPowerList = []
         for idx in idxList:
+            if self.inputPowerComplete[idx] <= 1:
+                continue
             Fit = self.access_single_spectrum(idx)
             try:
                 maxHeight = max(maxHeight, max(Fit.originalIntensity))
@@ -424,15 +461,22 @@ class PlotPowerSeries:
             poly.set_edgecolor('black')
             poly.set_alpha(1)
             ax.add_collection3d(poly, zs=inputPowerListLog, zdir='y')
-            ax.yaxis.set_major_formatter(mticker.FuncFormatter(log_tick_formatter))
-            ylimDistance = ( max(inputPowerListLog) - min(inputPowerListLog) ) / 10 / numPlots
-            ax.set_ylim3d(min(inputPowerListLog) - ylimDistance, max(inputPowerListLog) + ylimDistance)
+            # ylimDistance = ( max(inputPowerListLog) - min(inputPowerListLog) ) / 10 / numPlots
+            # ax.set_ylim3d(min(inputPowerListLog) - ylimDistance, max(inputPowerListLog) + ylimDistance)
+            ax.set_ylim3d(np.log10(0.95), np.log10(2.5))
             ax.set_zlim3d(0, maxHeight)
             ax.set_xlim3d(minEList[0], maxEList[0])
-            ax.set_ylabel("input power [mW]")
-            ax.set_xlabel("wavelength [eV]")
-            ax.set_zlabel("intensity [a.u.]")
-            plt.tight_layout()
+            ax.set_xlabel("Modenenergie [eV]", labelpad=5, fontsize=20)
+            ax.set_ylabel("Eingangsleistung [mW]", labelpad=15, fontsize=20)
+            ax.zaxis.set_rotate_label(False)
+            ax.set_zlabel("PL Intensität [a.u.]", labelpad=-10, rotation=90, fontsize=20)
+            ax.set_zticklabels([])
+            ax.xaxis.set_ticks(np.arange(1.295, 1.32, 0.005)[:-1])
+            ax.yaxis.set_ticks(np.round(inputPowerListLog, 2))
+            ax.set_yticklabels(ax.get_yticks(), verticalalignment='baseline', horizontalalignment='right')
+            ax.yaxis.set_major_formatter(ticker.FuncFormatter(log_tick_formatter))
+            ax.xaxis.set_tick_params(pad=-3)
+            ax.yaxis.set_tick_params(pad=1)
             plt.show()
 
     def constant_lines_inout(self):
@@ -643,7 +687,9 @@ Hence, the Q-factor (taken at the inputpower which is closest to the threshold) 
     def plot_mode_wavelength(self, block=True):
         """Plots the mode energy vs inputpower
         """
-        plt.errorbar(self.inputPower, self.modeWavelengthArr, yerr=self.uncModeWavelengthArr, capsize=3, fmt=".")
+        for powerseries in self.powerSeriesList:
+            plt.errorbar(powerseries.inputPowerPlotArr, powerseries.modeWavelengthArr, yerr=powerseries.uncModeWavelengthArr, capsize=3, fmt=".")
+        # plt.errorbar(self.inputPower, self.modeWavelengthArr, yerr=self.uncModeWavelengthArr, capsize=3, fmt=".")
         plt.xscale("log")
         plt.xlabel("input power [mW]")
         plt.ylabel("wavelength [eV]")
