@@ -7,7 +7,7 @@ from matplotlib.patches import Rectangle
 
 rcParams['font.family'] = 'sans-serif'
 rcParams['font.sans-serif'] = ['Arial']
-rcParams['font.size'] = 15
+rcParams['font.size'] = 17
 rcParams['axes.linewidth'] = 1.1
 rcParams['axes.labelpad'] = 10.0
 plot_color_cycle = cycler('color', ['000000', '0000FE', 'FE0000', '008001', 'FD8000', '8c564b', 
@@ -49,7 +49,7 @@ textboxStr = "\n".join((
 
 headDirPath: Path = Path(__file__).parents[2]
 
-outDirPath: Path = (headDirPath / "output").resolve()
+outDirPath: Path = (headDirPath / "output_plots" / "single").resolve()
 filePathPowerseries: Path = (outDirPath / "powerseries.csv").resolve()
 filePathBetaFit: Path = (outDirPath / "beta_fit.csv").resolve()
 filePathSettings: Path = (outDirPath / "settings.csv").resolve()
@@ -65,8 +65,11 @@ lwUnc = dfPowerseries["uncLw"]
 out = dfPowerseries["out"].to_numpy()
 outUnc = dfPowerseries["uncOut"]
 inp = dfPowerseries["in"].to_numpy()
-E = dfPowerseries["modeEnergy"]
-EUnc = dfPowerseries["uncModeEnergy"]
+E = dfPowerseries["modeEnergy"].to_numpy()
+EUnc = dfPowerseries["uncModeEnergy"].to_numpy()
+minEnergyIdx = np.argmin(E)
+energyShift = (E - E[minEnergyIdx])*1e6
+energyShiftUnc = (EUnc + EUnc[minEnergyIdx])*1e6
 
 p = dfBetaFit["fitParamsBeta"]
 
@@ -76,21 +79,22 @@ def in_out_model(x, beta, p, A, xiHat):
 fig, ax = plt.subplots()
 ax.errorbar(inp, Q, yerr=QUnc, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5)
 ax.set_xscale("log")
-ax.set_ylabel("Q-Faktor")
-ax.set_xlabel("Eingangsleistung [mW]")
+ax.set_ylabel(r"$E_M / \gamma_M$", fontsize=20)
+ax.set_xlabel("Eingangsleistung [mW]", fontsize=20)
 ax.set_xlim(0.15, None)
 ax.set_ylim(0, None)
-ax.text(0.2, 55000, textboxStr, fontsize=13, va="top", bbox=textboxFormat)
+ax.text(0.2, 55000, textboxStr, fontsize=17, va="top", bbox=textboxFormat)
+plt.tight_layout()
 plt.show()
 
 fig, ax = plt.subplots()
-ax.errorbar(inp, E, yerr=EUnc, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5)
+ax.errorbar(inp, energyShift, yerr=energyShiftUnc, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5)
 ax.set_xscale("log")
-ax.set_ylabel("Modenenergie [eV]")
-ax.set_xlabel("Eingangsleistung [mW]")
+ax.set_ylabel(r"Änderung von $E_M$ [µeV]", fontsize=20)
+ax.set_xlabel("Eingangsleistung [mW]", fontsize=20)
 ax.set_xlim(0.15, None)
 ax.set_ylim(None, None)
-ax.text(2, 1.32343, textboxStr, fontsize=13, va="top", bbox=textboxFormat)
+ax.text(1.5, 100, textboxStr, fontsize=17, va="top", bbox=textboxFormat)
 plt.tight_layout()
 plt.show()
 
@@ -144,7 +148,7 @@ highOutPlot = aHigh * highInpPlot
 # print(min(out), minOut)
 # print(max(out), maxOut)
 
-resolutionLimit = 30e-3
+resolutionLimit = 20e-3
 
 fig, ax1 = plt.subplots()
 ax2 = ax1.twinx()
@@ -154,6 +158,7 @@ ax1.plot(lowInpPlot, lowOutPlot, color="blue", lw="0.9", ls="--")
 ax1.plot(highInpPlot, highOutPlot, color="blue", lw="0.9", ls="--", label="lineare Funktion")
 ax1.set_xscale("log")
 ax1.set_yscale("log")
+ax1.set_yticklabels([])
 ax1.set_ylabel("PL Intensität [a. u.]")
 ax1.set_xlabel("Eingangsleistung [mW]")
 ax1.set_xlim(0.15, None)
@@ -161,7 +166,7 @@ ax1.set_ylim(None, 200)
 lwPlot = ax2.errorbar(inp, lw*1000, yerr=lwUnc*1000, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5, color="red", label="FWHM")
 lwResolution = ax2.axhline(y=resolutionLimit, xmin=0, xmax=22, ls="--", lw=0.9, color="red", label="Auflösungsgrenze")
 ax2.set_xscale("log")
-ax2.set_ylabel("FWHM [meV]")
+ax2.set_ylabel("Emissionslinienbreite [meV]")
 ax2.set_xlabel("Eingangsleistung [mW]")
 ax2.set_xlim(0.15, None)
 ax2.set_ylim(0.01, 0.24)

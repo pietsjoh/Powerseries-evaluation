@@ -7,7 +7,7 @@ def main() -> None:
 
     headDir = Path(__file__).resolve().parents[2]
     srcDir = (headDir / "pysrc").resolve()
-    outputDir = (headDir / "output").resolve()
+    outputDir = (headDir / "output_plots").resolve()
     sys.path.append(str(srcDir))
     import utils.misc as misc
 
@@ -18,7 +18,9 @@ def main() -> None:
 
     filePathThresholdMean = (outputDir / "threshold_mean.csv").resolve()
     filePathQfactorMean = (outputDir / "Q-factor_mean.csv").resolve()
+    filePathBetaBtWeightedMean = (outputDir / "beta_bt_weighted_mean.csv").resolve()
     filePathBetaBtMean = (outputDir / "beta_bt_mean.csv").resolve()
+    filePathBetaFixWeightedMean = (outputDir / "beta_fix_weighted_mean.csv").resolve()
     filePathBetaFixMean = (outputDir / "beta_fix_mean.csv").resolve()
 
     thresholdAll = pd.read_csv(filePathThresholdAll, comment="#", sep="\t")
@@ -45,23 +47,37 @@ def main() -> None:
     BetaBtAll["_weights"] = 1 / BetaBtAll["unc"] ** 2
     BetaBtAll["_weight_times_data"] = BetaBtAll["_weights"] * BetaBtAll["beta"]
     groupedBetaBt = BetaBtAll.groupby(["diameter"])
-    BetaBtMean = (groupedBetaBt["_weight_times_data"].sum() / groupedBetaBt["_weights"].sum()).rename("weighted mean").to_frame()
-    BetaBtMean["unc"] = (1 / np.sqrt(groupedBetaBt["_weights"].sum())).rename("unc")
+    BetaBtWeightedMean = (groupedBetaBt["_weight_times_data"].sum() / groupedBetaBt["_weights"].sum()).rename("weighted mean").to_frame()
+    BetaBtWeightedMean["unc"] = (1 / np.sqrt(groupedBetaBt["_weights"].sum())).rename("unc")
     # print(BetaBtMean)
     # plt.errorbar(BetaBtMean.index, BetaBtMean["weighted mean"], yerr=BetaBtMean["unc"], fmt="b.")
     # plt.show()
-    BetaBtMean.to_csv(filePathBetaBtMean, sep="\t")
+    BetaBtWeightedMean.to_csv(filePathBetaBtWeightedMean, sep="\t")
 
     BetaFixAll = pd.read_csv(filePathBetaFixAll, comment="#", sep="\t")
     BetaFixAll["_weights"] = 1 / BetaFixAll["unc"] ** 2
     BetaFixAll["_weight_times_data"] = BetaFixAll["_weights"] * BetaFixAll["beta"]
     groupedBetaFix = BetaFixAll.groupby(["diameter"])
-    BetaFixMean = (groupedBetaFix["_weight_times_data"].sum() / groupedBetaFix["_weights"].sum()).rename("weighted mean").to_frame()
-    BetaFixMean["unc"] = (1 / np.sqrt(groupedBetaFix["_weights"].sum())).rename("unc")
+    BetaFixWeightedMean = (groupedBetaFix["_weight_times_data"].sum() / groupedBetaFix["_weights"].sum()).rename("weighted mean").to_frame()
+    BetaFixWeightedMean["unc"] = (1 / np.sqrt(groupedBetaFix["_weights"].sum())).rename("unc")
     # print(BetaFixMean)
     # plt.errorbar(BetaFixMean.index, BetaFixMean["weighted mean"], yerr=BetaFixMean["unc"], fmt="b.")
     # plt.show()
+    BetaFixWeightedMean.to_csv(filePathBetaFixWeightedMean, sep="\t")
+
+    BetaFixAll = pd.read_csv(filePathBetaFixAll, comment="#", sep="\t")
+    BetaFixAll.drop("unc", axis=1, inplace=True)
+    groupedBetaFix = BetaFixAll.groupby(["diameter"])
+    BetaFixMean = groupedBetaFix.agg([np.mean, misc.unc_mean])
+    BetaFixMean.columns = ["mean", "unc"]
     BetaFixMean.to_csv(filePathBetaFixMean, sep="\t")
+
+    BetaBtAll = pd.read_csv(filePathBetaBtAll, comment="#", sep="\t")
+    BetaBtAll.drop("unc", axis=1, inplace=True)
+    groupedBetaBt = BetaBtAll.groupby(["diameter"])
+    BetaBtMean = groupedBetaBt.agg([np.mean, misc.unc_mean])
+    BetaBtMean.columns = ["mean", "unc"]
+    BetaBtMean.to_csv(filePathBetaBtMean, sep="\t")
 
 if __name__ == "__main__":
     main()
