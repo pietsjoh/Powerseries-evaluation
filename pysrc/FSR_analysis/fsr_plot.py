@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     rcParams['font.family'] = 'sans-serif'
     rcParams['font.sans-serif'] = ['Arial']
-    rcParams['font.size'] = 15
+    rcParams['font.size'] = 17
     rcParams['axes.linewidth'] = 1.1
     rcParams['axes.labelpad'] = 10.0
     plot_color_cycle = cycler('color', ['000000', '0000FE', 'FE0000', '008001', 'FD8000', '8c564b', 
@@ -105,16 +105,16 @@ if __name__ == "__main__":
         r"Pump $\lambda = 785\,$nm"
     ))
     fig, ax = plt.subplots()
-    # ax.errorbar(diameterList, meanList, yerr=uncList, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5, label="Messpunkte", color="black")
-    # ax.plot(plotArr, fsr(plotArr, *p), label=r"Fit: FSR$=1/(A\cdot d)$", color="blue")
-    ax.errorbar(1 / np.array(diameterList), meanList, yerr=uncList, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5, label="Messpunkte", color="black")
-    ax.plot(1 / plotArr, fsr(plotArr, *p), label=r"Fit: FSR$=1/(A\cdot d)$", color="blue")
-    ax.plot(1 / plotArr, fsr_inv(1 / plotArr, *p_inv), label=r"Fit: FSR$=A\cdot d)$", color="yellow")
-    ax.set_xlabel(r"Durchmesser $d$ [µm]")
-    ax.set_ylabel(r"FSR $\Delta\lambda$ ([nm]")
+    ax.errorbar(diameterList, meanList, yerr=uncList, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5, label="Messwerte", color="black")
+    ax.plot(plotArr, fsr(plotArr, *p), label=r"Fit: FSR$=1/(A\cdot d)$", color="blue")
+    # ax.errorbar(1 / np.array(diameterList), meanList, yerr=uncList, capsize=2.5, elinewidth=0.8, fmt=".", marker="s", markersize=5, label="Messpunkte", color="black")
+    # ax.plot(1 / plotArr, fsr(plotArr, *p), label=r"Fit: FSR$=1/(A\cdot d)$", color="blue")
+    # ax.plot(1 / plotArr, fsr_inv(1 / plotArr, *p_inv), label=r"Fit: FSR$=1 / (A\cdot d)$", color="yellow")
+    ax.set_xlabel(r"Durchmesser $d$ [µm]", fontsize=20)
+    ax.set_ylabel(r"FSR $\Delta\lambda$ [nm]", fontsize=20)
     ax.locator_params(axis="x", nbins=12)
-    # ax.set_xlim(0, 21)
-    # ax.set_ylim(0, 27)
+    ax.set_xlim(0, 21)
+    ax.set_ylim(0, 27)
     ax.set_xlim(0, None)
     ax.set_ylim(0, 27)
     plt.gca().xaxis.set_minor_locator(AutoMinorLocator(n=2))
@@ -126,7 +126,7 @@ if __name__ == "__main__":
     handles, labels = ax.get_legend_handles_labels()
     handles_list = [extra1, extra2] + handles[::-1] + [extra3]
     labels_list = [r"T$=20\,$K", "Pump $\lambda = 785\,$nm"] + labels[::-1] + [r"A$=(14.91\pm 0.15)\,$µm$^{-2}$"]
-    legend = ax.legend(edgecolor="black", fancybox=False, bbox_to_anchor=(0.4, 0.75), loc="center left", fontsize=12,
+    legend = ax.legend(edgecolor="black", fancybox=False, bbox_to_anchor=(0.3, 0.73), loc="center left", fontsize=15,
             handles=handles_list, labels=labels_list)
     legend.get_frame().set_linewidth(0.5)
     # plt.savefig("out.png", dpi=1000)
