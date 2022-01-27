@@ -12,15 +12,15 @@ from matplotlib import rcParams, cycler, ticker
 def log_tick_formatter(val, pos=None):
     return "{:.3}".format(10**val)
 
-rcParams['font.sans-serif'] = ['Arial']
-rcParams['font.size'] = 17
-rcParams['axes.linewidth'] = 1.1
-rcParams['axes.labelpad'] = 10.0
-plot_color_cycle = cycler('color', ['000000', '0000FE', 'FE0000', '008001', 'FD8000', '8c564b', 
-                                    'e377c2', '7f7f7f', 'bcbd22', '17becf'])
-rcParams['axes.prop_cycle'] = plot_color_cycle
-rcParams['axes.xmargin'] = 0
-rcParams['axes.ymargin'] = 0
+# rcParams['font.sans-serif'] = ['Arial']
+# rcParams['font.size'] = 17
+# rcParams['axes.linewidth'] = 1.1
+# rcParams['axes.labelpad'] = 10.0
+# plot_color_cycle = cycler('color', ['000000', '0000FE', 'FE0000', '008001', 'FD8000', '8c564b', 
+#                                     'e377c2', '7f7f7f', 'bcbd22', '17becf'])
+# rcParams['axes.prop_cycle'] = plot_color_cycle
+# rcParams['axes.xmargin'] = 0
+# rcParams['axes.ymargin'] = 0
 # rcParams.update({"figure.figsize" : (6.4, 4.8), #6.6, 5
 #                      "figure.subplot.left" : 0.177, "figure.subplot.right" : 0.946,
 #                      "figure.subplot.bottom" : 0.156, "figure.subplot.top" : 0.965,
